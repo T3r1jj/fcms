@@ -1,6 +1,7 @@
 import * as React from 'react';
 import './App.css';
-import Record from './Record';
+import Record from './component/Record';
+import Upload from './component/Upload';
 
 import logo from './logo.svg';
 import { IRecord } from './model/IRecord';
@@ -22,6 +23,7 @@ this.recordData.id = "test";
           To get started, edit <code>src/App.tsx</code> and save to reload.
         </p>
         <Record {...this.recordData}/>
+        <Upload/>
       </div>
     );
   }

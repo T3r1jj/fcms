@@ -1,5 +1,5 @@
-interface IConfiguration {
-    primaryServices: string[];
-    secondaryServices: string[];
-    apiKeys: IApiKey;
+import IApiKey from "./IApiKey";
+
+export default interface IConfiguration {
+    apiKeys: IApiKey[];
 }

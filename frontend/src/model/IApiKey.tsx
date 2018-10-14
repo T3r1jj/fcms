@@ -1,4 +1,6 @@
-interface IApiKey {
+export default interface IApiKey {
+    primary: boolean;
     name: string;
-    key: string;
+    key?: string;
+    enabled?: boolean;
 }

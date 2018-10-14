@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Dropzone from 'react-dropzone';
+import * as Dropzone from 'react-dropzone';
 
 interface IUploadState {
     files: File[]
@@ -33,7 +33,6 @@ export default class Upload extends React.Component<{}, IUploadState> {
                         {
                             this.state.files.map(f => <li key={f.name}>{f.name} - {f.size} bytes</li>)
                         }
-                        { this.state.files.length }
                     </ul>
                 </aside>
             </section>

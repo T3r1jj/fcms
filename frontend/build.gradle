@@ -10,3 +10,12 @@ task test(type: YarnTask) {
   environment = [ CI: 'true' ]
   args = ['test']
 }
+
+task check(type: YarnTask) {
+  environment = [ CI: 'true' ]
+  args = ['test:ci']
+}
+
+task build(type: YarnTask) {
+  args = ['install']
+}

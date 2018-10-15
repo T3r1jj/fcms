@@ -10,9 +10,9 @@ import Configuration from './component/Configuration';
 import Record from './component/Record';
 import Upload from './component/Upload';
 import logo from './logo.svg';
-import IApiKey from './model/IApiKey';
 import IConfiguration from './model/IConfiguration';
 import IRecord from './model/IRecord';
+import IService from './model/IService';
 
 class App extends React.Component<{}, IAppProps> {
   private readonly theme = createMuiTheme({
@@ -22,7 +22,7 @@ class App extends React.Component<{}, IAppProps> {
   });
   private recordData = {} as IRecord;
   private configData: IConfiguration = {
-    apiKeys: [{ name: "Api 1", key: "key 1", primary: true, enabled: true } as IApiKey] as IApiKey[]
+    apiKeys: [{ name: "Api 1", apiKey: "key 1", primary: true, enabled: true } as IService] as IService[]
   };
 
   constructor(props: any) {

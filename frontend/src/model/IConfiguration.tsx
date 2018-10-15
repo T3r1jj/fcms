@@ -1,5 +1,5 @@
-import IApiKey from "./IApiKey";
+import IService from "./IService";
 
 export default interface IConfiguration {
-    apiKeys: IApiKey[];
+    apiKeys: IService[]
 }

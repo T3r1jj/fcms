@@ -1,14 +1,14 @@
 import Checkbox from '@material-ui/core/Checkbox';
 import TextField from '@material-ui/core/TextField';
 import * as React from 'react';
-import IApiKey from 'src/model/IApiKey';
+import IService from 'src/model/IService';
 
-export const ApiKey: React.StatelessComponent<IApiKeyProps> = props => {
+export const Service: React.StatelessComponent<IServiceProps> = props => {
     const handleApiKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        props.onApiKeyChange({ ...props, key: event.target.value });
+        props.onApiKeyChange({ ...props, apiKey: event.target.value })
     }
     const handleApiKeyToggle = (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        props.onApiKeyChange({ ...props, enabled: checked });
+        props.onApiKeyChange({ ...props, enabled: checked })
     }
 
     return (
@@ -17,7 +17,7 @@ export const ApiKey: React.StatelessComponent<IApiKeyProps> = props => {
             <TextField
                 id={props.name + "-key"}
                 label="API key"
-                value={props.key}
+                value={props.apiKey}
                 onChange={handleApiKeyChange}
                 margin="normal"
             />
@@ -29,7 +29,7 @@ export const ApiKey: React.StatelessComponent<IApiKeyProps> = props => {
     );
 }
 
-export interface IApiKeyProps extends IApiKey {
-    onApiKeyChange: (apiKey: IApiKey) => void;
+export interface IServiceProps extends IService {
+    onApiKeyChange: (apiKey: IService) => void;
 }
 

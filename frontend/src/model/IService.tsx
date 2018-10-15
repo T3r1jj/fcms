@@ -1,6 +1,6 @@
-export default interface IApiKey {
+export default interface IService {
     primary: boolean;
     name: string;
-    key?: string;
+    apiKey?: string;
     enabled?: boolean;
 }

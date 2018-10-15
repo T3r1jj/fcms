@@ -3,9 +3,9 @@ import './App.css';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import * as React from 'react';
 
-import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import Configuration from './component/Configuration';
 import Record from './component/Record';
 import Upload from './component/Upload';

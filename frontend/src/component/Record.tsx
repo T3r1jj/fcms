@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IRecord } from '../model/IRecord';
+import IRecord from '../model/IRecord';
 
 export default class Record extends React.Component<IRecord, IRecord> {
     constructor(props: IRecord) {

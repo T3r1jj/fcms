@@ -6,6 +6,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import * as React from 'react';
 
+import { List, ListItem } from '@material-ui/core';
 import Configuration from './component/Configuration';
 import Record from './component/Record';
 import Upload from './component/Upload';
@@ -20,7 +21,8 @@ class App extends React.Component<{}, IAppProps> {
       useNextVariants: true,
     },
   });
-  private recordData = {} as IRecord;
+  private recordData = { name: "test", id: "1", description: "test", versions: [], meta: [], backups: [] } as IRecord;
+  private records = [this.recordData]
   private configData: IConfiguration = {
     apiKeys: [{ name: "Api 1", apiKey: "key 1", primary: true, enabled: true } as IService] as IService[]
   };
@@ -40,18 +42,24 @@ class App extends React.Component<{}, IAppProps> {
         <div className="App">
           <header className="App-header">
             <img src={logo} className="App-logo" alt="logo" />
-            <h1 className="App-title">Welcome to React</h1>
+            <h1 className="App-title">FCMS</h1>
           </header>
           <p className="App-intro">
-            To get started, edit <code>src/App.tsx</code> and save to reload.
-        </p>
-          <Record {...this.recordData} />
+            Upload file or a new version for a backup management
+          </p>
           <Upload />
-          <Button onClick={this.handleConfigClick}>Configuration</Button>
+          <Button variant="contained" onClick={this.handleConfigClick}>Configuration</Button>
           <Dialog onClose={this.handleConfigClose} aria-labelledby="simple-dialog-title" open={this.state.configOpen}>
             <DialogTitle id="simple-dialog-title">Configuration</DialogTitle>
             <Configuration {...this.configData} />
           </Dialog>
+          <List className="list">
+            {this.records.map(r =>
+              <ListItem key={r.id}>
+                <Record {...this.recordData} />
+              </ListItem>
+            )}
+          </List>
         </div>
       </MuiThemeProvider>
     );

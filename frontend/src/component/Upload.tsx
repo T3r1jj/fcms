@@ -1,3 +1,4 @@
+import { Button, Checkbox, FormControlLabel, TextField } from '@material-ui/core';
 import * as React from 'react';
 import Dropzone from 'react-dropzone';
 
@@ -23,9 +24,20 @@ export default class Upload extends React.Component<{}, IUploadState> {
         return (
             <section>
                 <div className="dropzone">
-                    <Dropzone onDrop={this.onDrop}>
+                    <Dropzone onDrop={this.onDrop} >
                         <p>Try dropping some files here, or click to select files to upload.</p>
                     </Dropzone>
+                    <TextField title="name" label="name" />
+                    <TextField title="tag" label="tag" />
+                    <TextField title="parent" label="parent" />
+                    <br />
+                    <Button variant="contained" color="primary">Upload</Button>
+                    <FormControlLabel
+                        control={
+                            <Checkbox />
+                        }
+                        label="through server"
+                    />
                 </div>
                 <aside>
                     <h2>Dropped files</h2>

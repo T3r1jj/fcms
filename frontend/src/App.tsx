@@ -1,14 +1,14 @@
 import './App.css';
 
+import { List, ListItem } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import * as React from 'react';
 
-import { List, ListItem } from '@material-ui/core';
 import Configuration from './component/Configuration';
-import Record from './component/Record';
+import Record, { IRecordProps } from './component/Record';
 import Upload from './component/Upload';
 import logo from './logo.svg';
 import IConfiguration from './model/IConfiguration';
@@ -21,8 +21,8 @@ class App extends React.Component<{}, IAppProps> {
       useNextVariants: true,
     },
   });
-  private recordData = { name: "test", id: "1", description: "test", versions: [], meta: [], backups: [] } as IRecord;
-  private records = [this.recordData]
+  private recordData: IRecord = { name: "test", id: "1", description: "test", versions: [{ name: "test", id: "2", description: "test", tag: "v2", versions: [], meta: [], backups: [] }], meta: [], backups: [] };
+  private records = [this.recordData, { ...this.recordData, id: "2", name: "Another" }]
   private configData: IConfiguration = {
     apiKeys: [{ name: "Api 1", apiKey: "key 1", primary: true, enabled: true } as IService] as IService[]
   };
@@ -54,9 +54,9 @@ class App extends React.Component<{}, IAppProps> {
             <Configuration {...this.configData} />
           </Dialog>
           <List className="list">
-            {this.records.map(r =>
+            {this.prepareRecordsProps(this.records).map(r =>
               <ListItem key={r.id}>
-                <Record {...this.recordData} />
+                <Record {...r} />
               </ListItem>
             )}
           </List>
@@ -70,6 +70,12 @@ class App extends React.Component<{}, IAppProps> {
   }
   private handleConfigClose() {
     this.setState({ configOpen: false })
+  }
+  private prepareRecordsProps(records: IRecord[]): IRecordProps[] {
+    return records.map(r => {
+      const props: IRecordProps = { ...r, hierarchyTooltipEnabled: records[0] === r }
+      return props
+    })
   }
 }
 

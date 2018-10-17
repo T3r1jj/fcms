@@ -5,10 +5,11 @@ import VersionIcon from '@material-ui/icons/FiberNew';
 import TextIcon from '@material-ui/icons/TextFormat';
 import * as React from 'react';
 
+import { Tooltip } from '@material-ui/core';
 import IRecord from '../model/IRecord';
 
-export default class Record extends React.Component<IRecord, IRecordState> {
-    constructor(props: IRecord) {
+export default class Record extends React.Component<IRecordProps, IRecordState> {
+    constructor(props: IRecordProps) {
         super(props);
         this.state = { selectedRecord: undefined }
         this.onRecordSelected = this.onRecordSelected.bind(this)
@@ -18,22 +19,48 @@ export default class Record extends React.Component<IRecord, IRecordState> {
         return (
             <div>
                 {this.props.name} :: Records: {this.getRecordsCount(this.props)}, Depth: {this.getVersionsDepth(this.props)}, Backups: {this.getBackupsCount(this.props)}
-                {this.props.backups.map(b => <IconButton key={b.service} aria-label="Backup"><BackupIcon /></IconButton>)}
-                <IconButton aria-label="Text"><TextIcon /></IconButton>
-                {this.props.meta.map(m => <IconButton key={m.id} aria-label="Meta" onClick={this.onRecordSelected}><AttachmentIcon /></IconButton>)}
-                {this.props.versions.map(m => <IconButton key={m.id} aria-label="Version" onClick={this.onRecordSelected}><VersionIcon /></IconButton>)}
-                {this.state.selectedRecord ? <Record {...this.state.selectedRecord} /> : <div>Select child record for more info</div>}
+                {this.props.backups.map(b =>
+                    <Tooltip key={b.service} title={"Backup " + b.service}>
+                        <IconButton aria-label="Backup"><BackupIcon /></IconButton>
+                    </Tooltip>
+                )}
+                <Tooltip title="Description">
+                    <IconButton aria-label="Description"><TextIcon /></IconButton>
+                </Tooltip>
+                {this.props.meta.map(m =>
+                    <Tooltip key={m.id} title={"Meta " + m.name}>
+                        <IconButton id={m.id} aria-label="Meta" onClick={this.onRecordSelected}><AttachmentIcon /></IconButton>
+                    </Tooltip>
+                )}
+                {this.props.versions.map(v =>
+                    <Tooltip key={v.id} title={"Version " + v.tag}>
+                        <IconButton id={v.id} aria-label="Version" onClick={this.onRecordSelected}><VersionIcon /></IconButton>
+                    </Tooltip>
+                )}
+                {this.state.selectedRecord ? <Record {...this.state.selectedRecord} /> :
+                    (this.props.hierarchyTooltipEnabled ? <div>Select child record for more info</div> : null)
+                }
             </div>
         );
     }
 
     private onRecordSelected(event: React.SyntheticEvent<HTMLElement>) {
-        const recordId = (event.target as any)._reactInternalFiber.key
-        let record = this.props.meta.find(e => e.id === recordId);
-        if (record === undefined) {
-            record = this.props.versions.find(v => v.id === recordId);
+        let eventTarget = event.target as any
+        let recordId = eventTarget.getAttribute('id')
+        while (recordId == null) {
+            eventTarget = eventTarget.parentElement
+            recordId = eventTarget.getAttribute('id')
         }
-        this.setState({ selectedRecord: record })
+        let record = this.props.meta.find(e => e.id === recordId)
+        if (record === undefined) {
+            record = this.props.versions.find(v => v.id === recordId)
+        }
+        const newlySelectedRecord: IRecordProps = { ...record!, hierarchyTooltipEnabled: false }
+        this.setState({
+            selectedRecord: this.state.selectedRecord ?
+                (this.state.selectedRecord.id === newlySelectedRecord.id ? undefined : newlySelectedRecord)
+                : newlySelectedRecord
+        })
     }
 
     private getRecordsCount(props: IRecord): number {
@@ -44,7 +71,7 @@ export default class Record extends React.Component<IRecord, IRecordState> {
     }
 
     private getVersionsDepth(props: IRecord): number {
-        return Math.max(0, Math.max.apply(props.versions.map(v => 1 + this.getVersionsDepth(props))))
+        return Math.max(0, Math.max.apply(Math, props.versions.map(v => 1 + this.getVersionsDepth(v))))
     }
 
     private getBackupsCount(props: IRecord): number {
@@ -57,5 +84,9 @@ export default class Record extends React.Component<IRecord, IRecordState> {
 }
 
 interface IRecordState {
-    selectedRecord?: IRecord
+    selectedRecord?: IRecordProps
+}
+
+export interface IRecordProps extends IRecord {
+    hierarchyTooltipEnabled: boolean
 }

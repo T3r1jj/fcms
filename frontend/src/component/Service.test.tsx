@@ -8,7 +8,7 @@ describe('component', () => {
     let props: IServiceProps
 
     beforeEach(() => {
-        props = { name: "api name", apiKey: "key name", enabled: true, primary: true, onApiKeyChange: (apiKey: IService) => { window.console.log(apiKey); } }
+        props = { name: "api name", apiKey: "key name", enabled: true, primary: true, onApiKeyChange: (apiKey: IService) => undefined }
     })
 
     describe('rendering', () => {

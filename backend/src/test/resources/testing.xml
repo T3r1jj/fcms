@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="All Test Suite">
+    <test verbose="2" preserve-order="true"
+          name="F:/dev/fcms/backend/src/test/java/io/github/t3r1jj/fcms/controller/ConfigurationControllerTest.java">
+        <classes>
+            <class name="io.github.t3r1jj.fcms.controller.ConfigurationControllerTest">
+                <methods>
+                    <include name="testGetConfigurationShouldBeMocked"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

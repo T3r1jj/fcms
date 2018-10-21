@@ -1,3 +1,6 @@
+import Button from "@material-ui/core/Button/Button";
+import Dialog from "@material-ui/core/Dialog/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle/DialogTitle";
 import IconButton from '@material-ui/core/IconButton';
 import AttachmentIcon from '@material-ui/icons/Attachment';
 import BackupIcon from '@material-ui/icons/Backup';
@@ -5,41 +8,57 @@ import VersionIcon from '@material-ui/icons/FiberNew';
 import TextIcon from '@material-ui/icons/TextFormat';
 import * as React from 'react';
 
-import { Tooltip } from '@material-ui/core';
+import {Tooltip} from '@material-ui/core';
 import IRecord from '../model/IRecord';
+import Description from "./Description";
 
 export default class Record extends React.Component<IRecordProps, IRecordState> {
     constructor(props: IRecordProps) {
         super(props);
-        this.state = { selectedRecord: undefined }
+        this.state = {selectedRecord: undefined, descriptionOpen: false, description: this.props.description}
         this.onRecordSelected = this.onRecordSelected.bind(this)
+        this.handleDescriptionClose = this.handleDescriptionClose.bind(this)
+        this.handleDescriptionOpen = this.handleDescriptionOpen.bind(this)
+        this.handleDescriptionChange = this.handleDescriptionChange.bind(this)
+        this.handleDescriptionSave = this.handleDescriptionSave.bind(this)
     }
 
     public render() {
         return (
             <div>
-                {this.props.name} :: Records: {this.getRecordsCount(this.props)}, Depth: {this.getVersionsDepth(this.props)}, Backups: {this.getBackupsCount(this.props)}
+                {this.props.name} :: Records: {this.getRecordsCount(this.props)},
+                Depth: {this.getVersionsDepth(this.props)}, Backups: {this.getBackupsCount(this.props)}
                 {this.props.backups.map(b =>
                     <Tooltip key={b.service} title={"Backup " + b.service}>
-                        <IconButton aria-label="Backup"><BackupIcon /></IconButton>
+                        <IconButton aria-label="Backup"><BackupIcon/></IconButton>
                     </Tooltip>
                 )}
-                <Tooltip title="Description">
-                    <IconButton aria-label="Description"><TextIcon /></IconButton>
+                <Tooltip title="Description" onClick={this.handleDescriptionOpen}>
+                    <IconButton aria-label="Description"><TextIcon/></IconButton>
                 </Tooltip>
                 {this.props.meta.map(m =>
                     <Tooltip key={m.id} title={"Meta " + m.name}>
-                        <IconButton id={m.id} aria-label="Meta" onClick={this.onRecordSelected}><AttachmentIcon /></IconButton>
+                        <IconButton id={m.id} aria-label="Meta"
+                                    onClick={this.onRecordSelected}><AttachmentIcon/></IconButton>
                     </Tooltip>
                 )}
                 {this.props.versions.map(v =>
                     <Tooltip key={v.id} title={"Version " + v.tag}>
-                        <IconButton id={v.id} aria-label="Version" onClick={this.onRecordSelected}><VersionIcon /></IconButton>
+                        <IconButton id={v.id} aria-label="Version"
+                                    onClick={this.onRecordSelected}><VersionIcon/></IconButton>
                     </Tooltip>
                 )}
                 {this.state.selectedRecord ? <Record {...this.state.selectedRecord} /> :
                     (this.props.hierarchyTooltipEnabled ? <div>Select child record for more info</div> : null)
                 }
+                <Dialog onClose={this.handleDescriptionClose}
+                        aria-labelledby={"description-dialog-title" + this.props.id}
+                        open={this.state.descriptionOpen}>
+                    <DialogTitle id={"description-dialog-title" + this.props.id}>Description</DialogTitle>
+                    <Description rawText={this.props.description} onChange={this.handleDescriptionChange}/>
+                    <Button onClick={this.handleDescriptionSave}>Save</Button>
+                    <Button onClick={this.handleDescriptionClose}>Cancel</Button>
+                </Dialog>
             </div>
         );
     }
@@ -55,7 +74,11 @@ export default class Record extends React.Component<IRecordProps, IRecordState> 
         if (record === undefined) {
             record = this.props.versions.find(v => v.id === recordId)
         }
-        const newlySelectedRecord: IRecordProps = { ...record!, hierarchyTooltipEnabled: false }
+        const newlySelectedRecord: IRecordProps = {
+            ...record!,
+            hierarchyTooltipEnabled: false,
+            onDescriptionChange: this.props.onDescriptionChange
+        }
         this.setState({
             selectedRecord: this.state.selectedRecord ?
                 (this.state.selectedRecord.id === newlySelectedRecord.id ? undefined : newlySelectedRecord)
@@ -81,12 +104,31 @@ export default class Record extends React.Component<IRecordProps, IRecordState> 
         props.meta.forEach(m => backupsCount += this.getRecordsCount(m))
         return backupsCount
     }
+
+    private handleDescriptionClose() {
+        this.setState({descriptionOpen: false})
+    }
+
+    private handleDescriptionOpen() {
+        this.setState({descriptionOpen: true})
+    }
+
+    private handleDescriptionChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+        this.setState({description: event.target.value})
+    }
+
+    private handleDescriptionSave() {
+        this.props.onDescriptionChange(this.props.id, this.state.description)
+    }
 }
 
 interface IRecordState {
     selectedRecord?: IRecordProps
+    descriptionOpen: boolean
+    description: string
 }
 
 export interface IRecordProps extends IRecord {
     hierarchyTooltipEnabled: boolean
+    onDescriptionChange: (id: string, description: string) => void
 }

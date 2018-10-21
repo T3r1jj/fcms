@@ -1,0 +1,9 @@
+.flex-wrapper {
+    display: flex;
+}
+.flex-left {
+    flex: 0 0 50%;
+}
+.flex-right {
+    flex: 1;
+}

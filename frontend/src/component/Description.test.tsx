@@ -1,7 +1,6 @@
-import "./Description.css"
-import Description, {IDescriptionProps} from "./Description";
 import {shallow} from "enzyme";
 import * as React from "react";
+import {Description, IDescriptionProps} from "./Description";
 
 
 describe("component", () => {

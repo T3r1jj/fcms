@@ -22,12 +22,12 @@ class App extends React.Component<{}, IAppProps> {
         },
     });
     private recordData: IRecord = {
-        name: "test",
-        id: "1",
+        backups: [],
         description: "test",
-        versions: [{name: "test", id: "2", description: "test", tag: "v2", versions: [], meta: [], backups: []}],
+        id: "1",
         meta: [],
-        backups: []
+        name: "test",
+        versions: [{name: "test", id: "2", description: "test", tag: "v2", versions: [], meta: [], backups: []}]
     };
     private records = [this.recordData, {...this.recordData, id: "2", name: "Another"}]
     private configData: IConfiguration = {
@@ -87,7 +87,7 @@ class App extends React.Component<{}, IAppProps> {
                 ...r,
                 hierarchyTooltipEnabled: records[0] === r,
                 onDescriptionChange: (id, description) => {
-                    console.log("Changed " + id + " description to " + description)
+                    window.console.log("Changed " + id + " description to " + description)
                 }
             }
             return props

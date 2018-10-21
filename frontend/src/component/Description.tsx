@@ -1,8 +1,8 @@
 import "./Description.css"
 
 import TextField from "@material-ui/core/TextField/TextField"
-import ReactMarkdown from "react-markdown"
 import * as React from "react"
+import ReactMarkdown from "react-markdown"
 
 export const Description: React.StatelessComponent<IDescriptionProps> = props => {
     return (

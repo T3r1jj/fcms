@@ -1,22 +1,22 @@
+import Dialog from "@material-ui/core/Dialog/Dialog";
 import {mount, shallow} from 'enzyme';
 import * as React from 'react';
 
-import Record, {IRecordProps} from './Record';
 import Description from "./Description";
-import Dialog from "@material-ui/core/Dialog/Dialog";
+import Record, {IRecordProps} from './Record';
 
 describe('component', () => {
     let props: IRecordProps
     beforeEach(() => {
         props = {
-            name: "Record name",
-            id: "1",
-            description: "some description",
-            meta: [],
-            versions: [],
             backups: [],
+            description: "some description",
             hierarchyTooltipEnabled: true,
-            onDescriptionChange: () => undefined
+            id: "1",
+            meta: [],
+            name: "Record name",
+            onDescriptionChange: () => undefined,
+            versions: []
         }
     })
 

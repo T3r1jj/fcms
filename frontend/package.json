@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@material-ui/core": "^3.2.0",
+    "@material-ui/icons": "^3.0.1",
     "@types/enzyme": "^3.1.14",
     "@types/enzyme-adapter-react-16": "^1.0.3",
     "@types/sinon": "^5.0.5",
@@ -12,7 +13,8 @@
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
     "react-dropzone": "^6.0.2",
-    "react-scripts-ts": "3.1.0",
+    "react-markdown": "^4.0.3",
+    "react-scripts-ts": "4.0.8",
     "react-test-renderer": "^16.5.2",
     "sinon": "^7.0.0"
   },
@@ -30,5 +32,11 @@
     "@types/react-dom": "^16.0.8",
     "jest-junit": "^5.2.0",
     "typescript": "^3.1.1"
-  }
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
 }

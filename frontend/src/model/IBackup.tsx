@@ -1,4 +1,5 @@
 interface IBackup {
-    privatePath: string;
-    publicPath: string;
+    service: string;
+    privatePath?: string;
+    publicPath?: string;
 }

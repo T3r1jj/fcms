@@ -54,7 +54,7 @@ class App extends React.Component<{}, IAppProps> {
                     <p className="App-intro">
                         Upload file or a new version for a backup management
                     </p>
-                    <Upload/>
+                    <Upload isUploadValid={this.isUploadValid}/>
                     <Button variant="contained" onClick={this.handleConfigClick}>Configuration</Button>
                     <Dialog onClose={this.handleConfigClose} aria-labelledby="simple-dialog-title"
                             open={this.state.configOpen}>
@@ -92,6 +92,10 @@ class App extends React.Component<{}, IAppProps> {
             }
             return props
         })
+    }
+
+    private isUploadValid(file: File, name: string, parent: string, tag: string): boolean {
+        return false
     }
 }
 

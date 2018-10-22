@@ -1,10 +1,10 @@
 import Dialog from "@material-ui/core/Dialog/Dialog";
 import {mount, shallow} from 'enzyme';
 import * as React from 'react';
+import * as sinon from "sinon";
 
 import Description from "./Description";
 import Record, {IRecordProps} from './Record';
-import * as sinon from "sinon";
 
 describe('component', () => {
     let props: IRecordProps

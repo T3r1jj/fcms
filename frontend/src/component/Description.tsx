@@ -8,7 +8,7 @@ export const Description: React.StatelessComponent<IDescriptionProps> = props =>
     return (
         <div className="flex-wrapper">
             <div className="flex-left">
-                <TextField multiline={true} onChange={props.onChange}/>
+                <TextField multiline={true} onChange={props.onChange} value={props.rawText}/>
             </div>
             <div className="flex-right">
                 <ReactMarkdown source={props.rawText}/>

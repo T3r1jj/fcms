@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import Description from "./Description";
 import Record, {IRecordProps} from './Record';
+import * as sinon from "sinon";
 
 describe('component', () => {
     let props: IRecordProps
@@ -129,6 +130,48 @@ describe('component', () => {
             expect(wrapper.find(Dialog).prop('open')).toEqual(false)
             button.simulate('click')
             expect(wrapper.find(Dialog).prop('open')).toEqual(true)
+        })
+    })
+
+    describe("state", () => {
+        it("state update after in dialog", () => {
+            const wrapper = mount(<Record {...props} />)
+            const button = wrapper.findWhere(w => w.prop("title") === "Description").first()
+            button.simulate('click')
+            expect(wrapper.findWhere(c => c.prop("rawText") === props.description).length).toEqual(1)
+            const updatedText = "new text";
+            wrapper.find('textarea').last().simulate('change', {target: {value: updatedText}})
+            expect(wrapper.findWhere(c => c.prop("rawText") === props.description).length).toEqual(0)
+            expect(wrapper.findWhere(c => c.prop("rawText") === updatedText).length).toEqual(1)
+        })
+
+        it("state reset after closing dialog", () => {
+            const wrapper = mount(<Record {...props} />)
+            const openButton = wrapper.findWhere(w => w.prop("title") === "Description").first()
+            openButton.simulate('click')
+            const updatedText = "new text";
+            wrapper.find('textarea').last().simulate('change', {target: {value: updatedText}})
+            const closeButton = wrapper.find('Button').last()
+            closeButton.simulate('click')
+            openButton.simulate('click')
+            expect(wrapper.findWhere(c => c.prop("rawText") === props.description).length).toEqual(1)
+        })
+
+        it("state update callback", () => {
+            const spyOnSave = sinon.spy(props, 'onDescriptionChange');
+            const wrapper = mount(<Record {...props} />)
+            const button = wrapper.findWhere(w => w.prop("title") === "Description").first()
+            button.simulate('click')
+            expect(wrapper.findWhere(c => c.prop("rawText") === props.description).length).toEqual(1)
+            const updatedText = "new text";
+            wrapper.find('textarea').last().simulate('change', {target: {value: updatedText}})
+            const allButtons = wrapper.find('Button')
+            const saveButton = allButtons.at(allButtons.length - 2)
+            saveButton.simulate('click')
+            expect(spyOnSave.callCount).toEqual(1)
+            expect(spyOnSave.args[0][0]).toEqual(props.id)
+            expect(spyOnSave.args[0][1]).not.toEqual(props.description)
+            expect(spyOnSave.args[0][1]).toEqual(updatedText)
         })
     })
 })

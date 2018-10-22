@@ -55,7 +55,7 @@ export default class Record extends React.Component<IRecordProps, IRecordState> 
                         aria-labelledby={"description-dialog-title" + this.props.id}
                         open={this.state.descriptionOpen}>
                     <DialogTitle id={"description-dialog-title" + this.props.id}>Description</DialogTitle>
-                    <Description rawText={this.props.description} onChange={this.handleDescriptionChange}/>
+                    <Description rawText={this.state.description} onChange={this.handleDescriptionChange}/>
                     <Button onClick={this.handleDescriptionSave}>Save</Button>
                     <Button onClick={this.handleDescriptionClose}>Cancel</Button>
                 </Dialog>
@@ -106,7 +106,7 @@ export default class Record extends React.Component<IRecordProps, IRecordState> 
     }
 
     private handleDescriptionClose() {
-        this.setState({descriptionOpen: false})
+        this.setState({description: this.props.description, descriptionOpen: false})
     }
 
     private handleDescriptionOpen() {

@@ -17,6 +17,19 @@ describe("component", () => {
         it("renders raw text in the textarea", () => {
             const wrapper = shallow(<Description {...props}/>)
             expect(wrapper.html()).toContain(props.rawText)
+            expect(wrapper.html()).toContain(props.rawText + "</textarea>")
+        })
+
+        it("renders markdown bold text", () => {
+            const boldRawTextProps: IDescriptionProps = {...props, rawText: "**" + props.rawText + "**"}
+            const wrapper = shallow(<Description {...boldRawTextProps}/>)
+            expect(wrapper.html()).toContain(props.rawText + "</strong>")
+        })
+
+        it("renders markdown italic text", () => {
+            const boldRawTextProps: IDescriptionProps = {...props, rawText: "*" + props.rawText + "*"}
+            const wrapper = shallow(<Description {...boldRawTextProps}/>)
+            expect(wrapper.html()).toContain(props.rawText + "</em>")
         })
     })
 })

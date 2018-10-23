@@ -1,5 +1,7 @@
 package io.github.t3r1jj.fcms.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 public class ExternalService {
@@ -12,7 +14,10 @@ public class ExternalService {
         this(name, primary, "", false);
     }
 
-    public ExternalService(String name, boolean primary, String apiKey, boolean enabled) {
+    public ExternalService(@JsonProperty("name") String name,
+                           @JsonProperty("primary") boolean primary,
+                           @JsonProperty("apiKey") String apiKey,
+                           @JsonProperty("enabled") boolean enabled) {
         this.primary = primary;
         this.name = name;
         this.apiKey = apiKey;

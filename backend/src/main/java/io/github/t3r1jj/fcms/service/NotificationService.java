@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.t3r1jj.fcms.model.Event;
 import org.atmosphere.config.managed.Encoder;
 import org.atmosphere.cpr.AtmosphereResource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -13,7 +14,12 @@ import java.util.List;
 @Service
 public class NotificationService {
     public final List<AtmosphereResource> resources = new ArrayList<>();
-    private final JacksonEncoder jacksonEncoder = new JacksonEncoder();
+    private final JacksonEncoder jacksonEncoder;
+
+    @Autowired
+    public NotificationService(ObjectMapper objectMapper) {
+        this.jacksonEncoder = new JacksonEncoder(objectMapper);
+    }
 
     public void broadcast(Event event) {
         String json = jacksonEncoder.encode(event);
@@ -24,7 +30,11 @@ public class NotificationService {
 
     public static class JacksonEncoder implements Encoder<Event, String> {
 
-        private final ObjectMapper mapper = new ObjectMapper();
+        private final ObjectMapper mapper;
+
+        JacksonEncoder(ObjectMapper mapper) {
+            this.mapper = mapper;
+        }
 
         @Override
         public String encode(Event e) {

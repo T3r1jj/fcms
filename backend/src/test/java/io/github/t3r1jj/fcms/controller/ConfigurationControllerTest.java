@@ -7,7 +7,7 @@ import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.hamcrest.Matchers.hasKey;
@@ -19,8 +19,7 @@ public class ConfigurationControllerTest {
     private ConfigurationService configurationService;
     private Configuration defaultConfig;
 
-
-    @BeforeTest
+    @BeforeMethod
     public void setUp() {
         defaultConfig = new Configuration(new ExternalService[]{new ExternalService("Mocked service name", true)});
         MockitoAnnotations.initMocks(this);

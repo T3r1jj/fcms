@@ -1,11 +1,14 @@
 package io.github.t3r1jj.fcms.model;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.time.Instant;
 
 public class Event {
     private final String title;
     private final String description;
     private final EventType type;
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     private final Instant time;
 
     public Event(String title, String description, EventType type) {
@@ -33,6 +36,16 @@ public class Event {
 
     public Instant getTime() {
         return time;
+    }
+
+    @Override
+    public String toString() {
+        return "Event{" +
+                "title='" + title + '\'' +
+                ", description='" + description + '\'' +
+                ", type=" + type +
+                ", time=" + time +
+                '}';
     }
 
     public enum EventType {

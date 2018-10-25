@@ -1,5 +1,7 @@
 package io.github.t3r1jj.fcms.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.t3r1jj.fcms.FcmsApplication;
 import io.github.t3r1jj.fcms.WebSocketClientConfiguration;
 import io.github.t3r1jj.fcms.model.Event;
@@ -11,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -25,16 +27,16 @@ public class NotificationControllerIT extends AbstractTestNGSpringContextTests {
 
     @Autowired
     private NotificationService notificationService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private Event event;
-    private String json;
+    private String eventJson;
     private Thread broadcastingThread;
 
-    @BeforeTest
-    public void setUp() {
+    @BeforeMethod
+    public void setUp() throws JsonProcessingException {
         event = new Event("evenTitle", "eventDescription", Event.EventType.ERROR);
-        json = "{\"title\":\"evenTitle\",\"description\":\"eventDescription\",\"type\":\"ERROR\",\"time\":{\"epochSecond\":"
-                + event.getTime().getEpochSecond() + ",\"nano\":" + event.getTime().getNano() + "}}";
         broadcastingThread = new Thread(() -> {
             try {
                 while (!Thread.interrupted()) {
@@ -44,6 +46,7 @@ public class NotificationControllerIT extends AbstractTestNGSpringContextTests {
             } catch (InterruptedException ignored) {
             }
         });
+        eventJson = objectMapper.writeValueAsString(event);
     }
 
     @Test
@@ -61,7 +64,7 @@ public class NotificationControllerIT extends AbstractTestNGSpringContextTests {
         broadcastingThread.interrupt();
         context.close();
         assertEquals(count, 0L);
-        assertEquals(messagePayloadReference.get(), json);
+        assertEquals(messagePayloadReference.get(), eventJson);
     }
 
 }

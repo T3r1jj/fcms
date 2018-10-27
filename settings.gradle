@@ -1,3 +1,4 @@
 rootProject.name = 'fcms'
 include 'frontend'
 include 'backend'
+include 'external'

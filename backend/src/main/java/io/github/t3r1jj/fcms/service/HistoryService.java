@@ -13,10 +13,12 @@ import java.util.List;
 public class HistoryService {
 
     private final EventRepository eventRepository;
+    private final NotificationService notificationService;
 
     @Autowired
-    public HistoryService(EventRepository eventRepository) {
+    public HistoryService(EventRepository eventRepository, NotificationService notificationService) {
         this.eventRepository = eventRepository;
+        this.notificationService = notificationService;
     }
 
     public List<Event> getAll() {
@@ -27,8 +29,12 @@ public class HistoryService {
         return eventRepository.getAll(pageable);
     }
 
+    /**
+     * @param event to add to the history and broadcast to listeners
+     */
     public void add(Event event) {
         eventRepository.add(event);
+        notificationService.broadcast(event);
     }
 
     public void deleteAll() {

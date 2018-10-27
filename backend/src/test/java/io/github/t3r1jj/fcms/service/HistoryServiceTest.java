@@ -2,27 +2,33 @@ package io.github.t3r1jj.fcms.service;
 
 import io.github.t3r1jj.fcms.model.Event;
 import io.github.t3r1jj.fcms.repository.InMemoryEventRepository;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
 
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
 public class HistoryServiceTest {
 
+    @Mock
+    private NotificationService notificationService;
     private InMemoryEventRepository repository;
     private HistoryService service;
 
     @BeforeMethod
     public void setUp() {
+        MockitoAnnotations.initMocks(this);
         repository = new InMemoryEventRepository();
-        service = new HistoryService(repository);
+        service = new HistoryService(repository, notificationService);
     }
 
     @Test
@@ -96,6 +102,13 @@ public class HistoryServiceTest {
         Event event1 = new Event("a", "b", Event.EventType.INFO);
         service.add(event1);
         assertTrue(repository.getAll().contains(event1));
+    }
+
+    @Test
+    public void addShouldBroadcastNotification() {
+        Event event1 = new Event("a", "b", Event.EventType.INFO);
+        service.add(event1);
+        verify(notificationService, times(1)).broadcast(event1);
     }
 
     @Test

@@ -61,7 +61,7 @@ public class HistoryControllerTest {
         PageImpl<Event> eventsPage = new PageImpl<>(wholeHistory, PageRequest.of(page, size), 5);
         when(historyService.getAll(notNull())).thenReturn(eventsPage);
         RestAssuredMockMvc
-                .given().log().everything()
+                .given()
                 .standaloneSetup(new HistoryController(historyService))
                 .param("size", size)
                 .param("page", page)

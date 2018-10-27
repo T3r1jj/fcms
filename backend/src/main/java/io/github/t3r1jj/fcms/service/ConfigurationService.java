@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ConfigurationService implements ConfigurationRepository {
+public class ConfigurationService {
 
     private final ConfigurationRepository configurationRepository;
 
@@ -15,12 +15,10 @@ public class ConfigurationService implements ConfigurationRepository {
         this.configurationRepository = configurationRepository;
     }
 
-    @Override
     public Configuration get() {
         return configurationRepository.get();
     }
 
-    @Override
     public void update(Configuration configuration) {
         configurationRepository.update(configuration);
     }

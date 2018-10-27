@@ -4,11 +4,10 @@ import io.github.t3r1jj.fcms.model.Configuration;
 import io.github.t3r1jj.fcms.model.ExternalService;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -21,16 +20,15 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
 
     private Configuration defaultConfig;
 
-    @BeforeTest
+    @BeforeMethod
     public void setUp() {
         defaultConfig = new Configuration(new ExternalService[]{new ExternalService("Mocked service name", true)});
-        MockitoAnnotations.initMocks(this);
+        RestAssured.port = port;
     }
 
     @Test
     public void testGetConfigurationShouldReturnMockedConfiguration() {
         RestAssured.given()
-                .port(port)
                 .when()
                 .get("/api/configuration")
                 .then()
@@ -44,7 +42,6 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
     @Test
     public void testPostConfigurationShouldBe200() {
         RestAssured.given()
-                .port(port)
                 .contentType(ContentType.JSON)
                 .body(defaultConfig)
                 .when()
@@ -57,7 +54,6 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
     @Test
     public void testPostConfigurationShouldUpdateGetConfiguration() {
         RestAssured.given()
-                .port(port)
                 .contentType(ContentType.JSON)
                 .body(defaultConfig)
                 .when()
@@ -67,7 +63,6 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
                 .statusCode(200);
 
         RestAssured.given()
-                .port(port)
                 .when()
                 .get("/api/configuration")
                 .then()

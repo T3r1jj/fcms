@@ -51,6 +51,11 @@ dependencies {
     testCompile group: 'org.springframework', name: 'spring-websocket'
 }
 
+configurations {
+    providedRuntime
+    compile.exclude(group: 'ch.qos.logback')
+}
+
 test {
     useTestNG {}
 }

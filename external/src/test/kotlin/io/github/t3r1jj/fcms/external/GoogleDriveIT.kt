@@ -5,18 +5,26 @@ import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
-class DropboxIT {
+class GoogleDriveIT {
     companion object {
-        private const val DROPBOX_TOKEN_TEST_KEY = "FCMS_TEST_DROPBOX_ACCESS_TOKEN"
-        private val accessToken = System.getenv(DROPBOX_TOKEN_TEST_KEY)
+        private const val GOOGLEDRIVE_CLIENT_ID_TEST_KEY = "FCMS_TEST_GOOGLEDRIVE_CLIENT_ID"
+        private const val GOOGLEDRIVE_CLIENT_SECRET_TEST_KEY = "FCMS_TEST_GOOGLEDRIVE_CLIENT_SECRET"
+        private const val GOOGLEDRIVE_REFRESH_TOKEN_TEST_KEY = "FCMS_TEST_GOOGLEDRIVE_REFRESH_TOKEN"
+        private val clientId = System.getenv(GOOGLEDRIVE_CLIENT_ID_TEST_KEY)
+        private val clientSecret = System.getenv(GOOGLEDRIVE_CLIENT_SECRET_TEST_KEY)
+        private val refreshToken = System.getenv(GOOGLEDRIVE_REFRESH_TOKEN_TEST_KEY)
+
         private val testRootPath = "/" + this::class.java.`package`.name
 
         @AfterAll
         @JvmStatic
         fun cleanStorage() {
-            val storage = Dropbox(accessToken)
+            val storage = GoogleDrive(clientId, clientSecret, refreshToken)
             storage.login()
             storage.findAll("")
                     .filter { it.path.contains(testRootPath) }
@@ -24,18 +32,18 @@ class DropboxIT {
         }
     }
 
-    private val storage = Dropbox(accessToken)
+    private val storage = GoogleDrive(clientId, clientSecret, refreshToken)
 
     @Test
     fun testIsNotLogged() {
-        val storage = Dropbox("")
+        val storage = GoogleDrive("", "", "")
         assertFalse(storage.isLogged())
     }
 
     @Test
     fun testIsNotLoggedWrongCredentials() {
-        val storage = Dropbox("")
-        assertFailsWith(com.dropbox.core.BadRequestException::class) {
+        val storage = GoogleDrive("", "", "")
+        assertFailsWith(com.google.api.client.auth.oauth2.TokenResponseException::class) {
             storage.login()
             storage.isLogged()
         }
@@ -106,7 +114,7 @@ class DropboxIT {
     fun testGetInfo() {
         storage.login()
         val info = storage.getInfo()
-        assertThat(info.name.toLowerCase(), containsString("dropbox"))
+        assertThat(info.name.toLowerCase(), containsString("googledrive"))
         assertThat(info.totalSpace, greaterThan(BigInteger.ZERO))
     }
 

@@ -25,9 +25,11 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
-    compile 'com.google.apis:google-api-services-drive:v2-rev332-1.25.0'
     compile 'com.dropbox.core:dropbox-core-sdk:3.0.10'
     compile group: 'org.apache.directory.studio', name: 'org.apache.commons.io', version: '2.4'
+    compile 'com.google.api-client:google-api-client:1.25.0'
+    compile 'com.google.oauth-client:google-oauth-client-jetty:1.25.0'
+    compile 'com.google.apis:google-api-services-drive:v3-rev110-1.25.0'
 
     testImplementation "org.jetbrains.kotlin:kotlin-test"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit5"

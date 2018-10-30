@@ -3,6 +3,7 @@ package io.github.t3r1jj.fcms.external
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import kotlin.test.assertEquals
@@ -10,21 +11,19 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class GoogleDriveIT {
+class MegaIT {
     companion object {
-        private const val GOOGLEDRIVE_CLIENT_ID_TEST_KEY = "FCMS_TEST_GOOGLEDRIVE_CLIENT_ID"
-        private const val GOOGLEDRIVE_CLIENT_SECRET_TEST_KEY = "FCMS_TEST_GOOGLEDRIVE_CLIENT_SECRET"
-        private const val GOOGLEDRIVE_REFRESH_TOKEN_TEST_KEY = "FCMS_TEST_GOOGLEDRIVE_REFRESH_TOKEN"
-        private val clientId = System.getenv(GOOGLEDRIVE_CLIENT_ID_TEST_KEY)
-        private val clientSecret = System.getenv(GOOGLEDRIVE_CLIENT_SECRET_TEST_KEY)
-        private val refreshToken = System.getenv(GOOGLEDRIVE_REFRESH_TOKEN_TEST_KEY)
+        private const val MEGA_USERNAME_TEST_KEY = "FCMS_TEST_MEGA_USERNAME"
+        private const val MEGA_PASSWORD_TEST_KEY = "FCMS_TEST_MEGA_PASSWORD"
+        private val userName = System.getenv(MEGA_USERNAME_TEST_KEY)
+        private val password = System.getenv(MEGA_PASSWORD_TEST_KEY)
 
         private val testRootPath = "/" + this::class.java.`package`.name
 
         @AfterAll
         @JvmStatic
         fun cleanStorage() {
-            val storage = GoogleDrive(clientId, clientSecret, refreshToken)
+            val storage = Mega(userName, password)
             storage.login()
             storage.findAll("")
                     .filter { it.path.contains(testRootPath) }
@@ -32,18 +31,23 @@ class GoogleDriveIT {
         }
     }
 
-    private val storage = GoogleDrive(clientId, clientSecret, refreshToken)
+    private val storage = Mega(userName, password)
+
+    @AfterEach
+    fun tearDown() {
+        storage.logout()
+    }
 
     @Test
     fun testIsNotLogged() {
-        val storage = GoogleDrive("", "", "")
+        val storage = Mega("", "")
         assertFalse(storage.isLogged())
     }
 
     @Test
     fun testIsNotLoggedWrongCredentials() {
-        val storage = GoogleDrive("", "", "")
-        assertFailsWith(com.google.api.client.auth.oauth2.TokenResponseException::class) {
+        val storage = Mega("", "")
+        assertFailsWith(com.github.eliux.mega.error.MegaWrongArgumentsException::class) {
             storage.login()
             storage.isLogged()
         }
@@ -114,7 +118,7 @@ class GoogleDriveIT {
     fun testGetInfo() {
         storage.login()
         val info = storage.getInfo()
-        assertThat(info.name.toLowerCase(), containsString("googledrive"))
+        assertThat(info.name.toLowerCase(), containsString("mega"))
         assertThat(info.totalSpace, greaterThan(BigInteger.ZERO))
     }
 

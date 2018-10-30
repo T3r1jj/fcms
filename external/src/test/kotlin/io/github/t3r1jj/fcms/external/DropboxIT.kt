@@ -96,8 +96,8 @@ class DropboxIT {
     }
 
     @Test
-    fun testIsNotPresentEmptyPath() {
-        val record = Record("test.txt", "", "Some text".byteInputStream())
+    fun testIsNotPresentInvalidPath() {
+        val record = Record("test.txt", "(*&@()*!*IJUDE wjiasddj", "Some text".byteInputStream())
         storage.login()
         assertFalse(storage.isPresent(record.path))
     }

@@ -1,6 +1,7 @@
 package io.github.t3r1jj.fcms.external
 
 import com.google.api.client.auth.oauth2.Credential
+import com.google.api.client.auth.oauth2.TokenResponseException
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.http.FileContent
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -13,7 +14,9 @@ import java.io.InputStream
 import java.math.BigInteger
 
 //TODO: path is stored as description while we operate on ids
-class GoogleDrive(val clientId: String, val clientSecret: String, val refreshToken: String) : Storage {
+class GoogleDrive(private val clientId: String,
+                  private val clientSecret: String,
+                  private val refreshToken: String) : AbstractStorage() {
     companion object {
         private const val FILE_FIELDS_DEFAULT_DESCRIPTION = "kind,incompleteSearch,files(kind,id,name,mimeType,description)"
         private const val FILE_FIELDS_DEFAULT_DESCRIPTION_SIZE = "kind,incompleteSearch,files(kind,id,name,mimeType,description,size)"
@@ -36,12 +39,16 @@ class GoogleDrive(val clientId: String, val clientSecret: String, val refreshTok
                 httpTransport, jsonFactory, credential)
                 .setApplicationName("mydriveapp")
                 .build()
+        try {
+            drive?.files()?.list()
+                    ?.setPageSize(1)
+                    ?.execute()
+        } catch (e: TokenResponseException) {
+            throw StorageException("Exception during login", e)
+        }
     }
 
     override fun isLogged(): Boolean {
-        drive?.files()?.list()
-                ?.setPageSize(1)
-                ?.execute()
         return credential != null && drive != null && credential!!.accessToken != null
     }
 
@@ -107,7 +114,7 @@ class GoogleDrive(val clientId: String, val clientSecret: String, val refreshTok
                 .get()
                 .setFields(ABOUT_FIELDS_QUOTA)
                 .execute()
-        return StorageInfo("GoogleDrive",
+        return StorageInfo(this.toString(),
                 BigInteger.valueOf(about.storageQuota.limit),
                 BigInteger.valueOf(about.storageQuota.usage))
     }

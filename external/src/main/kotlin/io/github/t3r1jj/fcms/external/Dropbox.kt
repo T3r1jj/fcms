@@ -1,5 +1,6 @@
 package io.github.t3r1jj.fcms.external
 
+import com.dropbox.core.BadRequestException
 import com.dropbox.core.DbxRequestConfig
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.FileMetadata
@@ -10,7 +11,7 @@ import java.io.ByteArrayOutputStream
 import java.math.BigInteger
 
 
-class Dropbox(private val accessToken: String) : Storage {
+class Dropbox(private val accessToken: String) : AbstractStorage() {
     companion object : Loggable {
         private val logger = logger()
     }
@@ -19,9 +20,13 @@ class Dropbox(private val accessToken: String) : Storage {
     private var account: FullAccount? = null
 
     override fun login() {
-        val config = DbxRequestConfig.newBuilder("fcms").build()
-        client = DbxClientV2(config, accessToken)
-        account = client!!.users().currentAccount
+        try {
+            val config = DbxRequestConfig.newBuilder("fcms").build()
+            client = DbxClientV2(config, accessToken)
+            account = client!!.users().currentAccount
+        } catch (e: BadRequestException) {
+            throw StorageException("Exception during login", e)
+        }
     }
 
     override fun isLogged(): Boolean {
@@ -79,7 +84,7 @@ class Dropbox(private val accessToken: String) : Storage {
 
     override fun getInfo(): StorageInfo {
         val spaceUsage = client!!.users().spaceUsage
-        return StorageInfo("Dropbox",
+        return StorageInfo(this.toString(),
                 BigInteger.valueOf(spaceUsage.allocation.individualValue.allocated),
                 BigInteger.valueOf(spaceUsage.used)
         )

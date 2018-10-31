@@ -1,65 +1,69 @@
 package io.github.t3r1jj.fcms.external
 
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.*
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Test
+import io.github.t3r1jj.fcms.external.factory.DropboxFactory
+import io.github.t3r1jj.fcms.external.factory.GoogleDriveFactory
+import io.github.t3r1jj.fcms.external.factory.MegaFactory
+import io.github.t3r1jj.fcms.external.factory.StorageFactory
+import org.hamcrest.MatcherAssert
+import org.hamcrest.Matchers
+import org.junit.After
+import org.junit.Before
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.math.BigInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class MegaIT {
+@RunWith(Parameterized::class)
+class StorageIT(private val storageFactory: StorageFactory, private val storageName: String) {
+    private lateinit var storageWithoutAccess: Storage
+    private lateinit var storage: Storage
+
     companion object {
-        private const val MEGA_USERNAME_TEST_KEY = "FCMS_TEST_MEGA_USERNAME"
-        private const val MEGA_PASSWORD_TEST_KEY = "FCMS_TEST_MEGA_PASSWORD"
-        private val userName = System.getenv(MEGA_USERNAME_TEST_KEY)
-        private val password = System.getenv(MEGA_PASSWORD_TEST_KEY)
-
         private val testRootPath = "/" + this::class.java.`package`.name
-
-        @AfterAll
         @JvmStatic
-        fun cleanStorage() {
-            val storage = Mega(userName, password)
-            storage.login()
-            storage.findAll("")
-                    .filter { it.path.contains(testRootPath) }
-                    .forEach { storage.delete(it.path) }
-        }
+        @Parameterized.Parameters(name = "{1}")
+        fun data() = listOf(
+                DropboxFactory(), GoogleDriveFactory(), MegaFactory()
+        ).map { arrayOf(it, it.createStorage().toString()) }
     }
 
-    private val storage = Mega(userName, password)
+    @Before
+    fun setUp() {
+        storage = storageFactory.createStorage()
+        storageWithoutAccess = storageFactory.createStorageWithoutAccess()
+    }
 
-    @AfterEach
+    @After
     fun tearDown() {
+        storage.login()
+        storage.findAll("")
+                .filter { it.path.contains(testRootPath) }
+                .forEach { storage.delete(it.path) }
         storage.logout()
     }
 
-    @Test
+    @org.junit.Test
     fun testIsNotLogged() {
-        val storage = Mega("", "")
-        assertFalse(storage.isLogged())
+        assertFalse(storageWithoutAccess.isLogged())
     }
 
-    @Test
-    fun testIsNotLoggedWrongCredentials() {
-        val storage = Mega("", "")
-        assertFailsWith(com.github.eliux.mega.error.MegaWrongArgumentsException::class) {
-            storage.login()
-            storage.isLogged()
+    @org.junit.Test
+    fun testLoginWrongCredentials() {
+        assertFailsWith(StorageException::class) {
+            storageWithoutAccess.login()
         }
     }
 
-    @Test
+    @org.junit.Test
     fun testIsLogged() {
         storage.login()
         assertTrue(storage.isLogged())
     }
 
-    @Test
+    @org.junit.Test
     fun testUpload() {
         val name = System.currentTimeMillis().toString()
         val record = Record("$name.tmp", "$testRootPath/$name.tmp", "Some text".byteInputStream())
@@ -68,17 +72,17 @@ class MegaIT {
         assertTrue(storage.isPresent(record.path))
     }
 
-    @Test
+    @org.junit.Test
     fun testFindAll() {
         val name = System.currentTimeMillis().toString()
         val text = "Some text"
         val record = Record("$name.tmp", "$testRootPath/$name.tmp", text.byteInputStream())
         storage.login()
         storage.upload(record)
-        assertThat(storage.findAll(""), hasItem(RecordMeta(record.name, record.path, text.length.toLong())))
+        MatcherAssert.assertThat(storage.findAll(""), Matchers.hasItem(RecordMeta(record.name, record.path, text.length.toLong())))
     }
 
-    @Test
+    @org.junit.Test
     fun testDownload() {
         val name = System.currentTimeMillis().toString()
         val text = "Some text"
@@ -90,7 +94,7 @@ class MegaIT {
         assertEquals(unreadRecord, storedRecord)
     }
 
-    @Test
+    @org.junit.Test
     fun testDelete() {
         val name = System.currentTimeMillis().toString()
         val record = Record("$name.tmp", "$testRootPath/$name.tmp", "Some text".byteInputStream())
@@ -100,40 +104,40 @@ class MegaIT {
         assertFalse(storage.isPresent(record.path))
     }
 
-    @Test
+    @org.junit.Test
     fun testIsNotPresent() {
         val record = Record("test.txt", "/XXXXXXXXXXXXXXXXXXXX", "Some text".byteInputStream())
         storage.login()
         assertFalse(storage.isPresent(record.path))
     }
 
-    @Test
+    @org.junit.Test
     fun testIsNotPresentInvalidPath() {
         val record = Record("test.txt", "(*&@()*!*IJUDE wjiasddj", "Some text".byteInputStream())
         storage.login()
         assertFalse(storage.isPresent(record.path))
     }
 
-    @Test
+    @org.junit.Test
     fun testGetInfo() {
         storage.login()
         val info = storage.getInfo()
-        assertThat(info.name.toLowerCase(), containsString("mega"))
-        assertThat(info.totalSpace, greaterThan(BigInteger.ZERO))
+        MatcherAssert.assertThat(info.name.toLowerCase(), Matchers.containsString(storageName.toLowerCase()))
+        MatcherAssert.assertThat(info.totalSpace, Matchers.greaterThan(BigInteger.ZERO))
     }
 
-    @Test
+    @org.junit.Test
     fun testGetInfoSpaceUsed() {
         val name = System.currentTimeMillis().toString()
         val record = Record("$name.tmp", "$testRootPath/$name.tmp", "Some text".byteInputStream())
         storage.login()
         storage.upload(record)
         val info = storage.getInfo()
-        assertThat(info.usedSpace, greaterThan(BigInteger.ZERO))
-        assertThat(info.totalSpace, greaterThan(info.usedSpace))
+        MatcherAssert.assertThat(info.usedSpace, Matchers.greaterThan(BigInteger.ZERO))
+        MatcherAssert.assertThat(info.totalSpace, Matchers.greaterThan(info.usedSpace))
     }
 
-    @Test
+    @org.junit.Test
     fun testLogout() {
         storage.login()
         storage.logout()

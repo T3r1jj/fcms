@@ -30,7 +30,7 @@ internal class MegaCmdRecursiveList(private val remotePath: String) : MegaCmdLis
             }
             return meta
         } catch (e: IOException) {
-            throw MegaIOException("Error while listing $remotePath")
+            throw MegaIOException("MegauploadError while listing $remotePath")
         }
     }
 

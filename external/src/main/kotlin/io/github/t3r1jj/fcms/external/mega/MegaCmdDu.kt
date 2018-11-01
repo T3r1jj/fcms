@@ -23,7 +23,7 @@ internal class MegaCmdDu : AbstractMegaCmdCaller<StorageInfo>() {
                     results[1].toBigInteger()
             ) //no endpoint for total storage space, using default 15GB quota
         } catch (e: IOException) {
-            throw MegaIOException("Error while executing du")
+            throw MegaIOException("MegauploadError while executing du")
         }
 
     }

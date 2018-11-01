@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import io.github.t3r1jj.fcms.external.Record
 import io.github.t3r1jj.fcms.external.RecordMeta
 import io.github.t3r1jj.fcms.external.StorageException
-import io.github.t3r1jj.fcms.external.upstream.data.MegauploadErrorResponse
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -19,7 +18,9 @@ import java.net.URL
 
 class Megaupload : UpstreamStorage {
     fun getClient(): Retrofit {
-
+//https://forumfiles.com
+        //https://anonfile.com
+        //https://bayfiles.com
         val interceptor = HttpLoggingInterceptor()
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
         val client = OkHttpClient.Builder().addInterceptor(interceptor).build()

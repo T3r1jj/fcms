@@ -21,6 +21,8 @@ class Megaupload : UpstreamStorage {
 //https://forumfiles.com
         //https://anonfile.com
         //https://bayfiles.com
+        //https://file.bz
+        //https://upload.st
         val interceptor = HttpLoggingInterceptor()
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
         val client = OkHttpClient.Builder().addInterceptor(interceptor).build()

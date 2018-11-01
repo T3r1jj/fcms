@@ -1,6 +1,7 @@
 package io.github.t3r1jj.fcms.external.upstream
 
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.*
 
@@ -23,4 +24,13 @@ interface OpenloadApi {
 
     @GET("/1/file/info")
     fun getInfo(@Query("file") id: String): Call<OpenloadDefaultResponse>
+}
+
+interface PutApi {
+    @Multipart
+    @POST("/upload")
+    fun upload(@Part file: MultipartBody.Part): Call<PutSuccessfulResponse>
+
+    @GET("/delete/{name}/{deleteToken}")
+    fun delete(@Path("name") name: String, @Path("deleteToken") deleteToken: String): Call<ResponseBody>
 }

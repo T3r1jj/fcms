@@ -1,5 +1,6 @@
 package io.github.t3r1jj.fcms.external
 //TODO: close streams
+//TODO: refactor interfaces
 interface Storage {
     fun login()
     fun isLogged(): Boolean

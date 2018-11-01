@@ -11,7 +11,6 @@ data class MegauploadMetadata(val id: String,
                               val size: MegauploadSize)
 
 data class MegauploadSize(val bytes: Long, val readable: String)
-
 data class MegauploadErrorResponse(val status: Boolean, val error: MegauploadError)
 data class MegauploadError(val message: String, val type: String, val code: Int)
 
@@ -22,3 +21,8 @@ data class OpenloadResult(val url: String, val valid_until: String)
 data class OpenloadErrorResponse(val status: Int, val message: String)
 data class OpenloadFileInfo(val id: String, val status: Int, val name: String, val size: Long)
 data class OpenloadFileError(val id: String, val status: Int)
+
+data class PutSuccessfulResponse(val status: String, val data: PutData)
+data class PutData(val originalName: String, val name: String, val extension: String,
+                   val deleteToken: String, val size: Long, val thumbnailLink: String,
+                   val link: String, val deleteLink: String)

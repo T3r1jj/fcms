@@ -29,6 +29,9 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://dl.bintray.com/mediafire/maven/"
+    }
 }
 
 dependencies {
@@ -42,6 +45,10 @@ dependencies {
     compile group: 'com.github.eliux', name: 'megacmd4j', version: '1.2.1-alpha'
     compile group: 'net.bytebuddy', name: 'byte-buddy', version: "$byteBuddyVersion"
     compile group: 'net.bytebuddy', name: 'byte-buddy-agent', version: "$byteBuddyVersion"
+    compile "com.squareup.retrofit2:retrofit:2.3.0"
+    compile "com.squareup.retrofit2:converter-gson:2.3.0"
+    compile 'com.squareup.okhttp3:logging-interceptor:3.9.1'
+    compile group: 'org.jsoup', name: 'jsoup', version: '1.7.2'
 
     testImplementation "org.jetbrains.kotlin:kotlin-test"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit"

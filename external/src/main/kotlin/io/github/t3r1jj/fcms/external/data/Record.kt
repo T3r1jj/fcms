@@ -1,11 +1,10 @@
-package io.github.t3r1jj.fcms.external
+package io.github.t3r1jj.fcms.external.data
 
 import org.apache.commons.io.IOUtils
 import java.io.InputStream
 import java.util.*
 
 data class Record(val name: String, val path: String, val data: InputStream) {
-    internal var id: String? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

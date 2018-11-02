@@ -1,9 +1,9 @@
 package io.github.t3r1jj.fcms.external.factory
 
-import io.github.t3r1jj.fcms.external.GoogleDrive
-import io.github.t3r1jj.fcms.external.Storage
+import io.github.t3r1jj.fcms.external.authorized.GoogleDrive
+import io.github.t3r1jj.fcms.external.authorized.Storage
 
-class GoogleDriveFactory : StorageFactory {
+class GoogleDriveFactory : NamedByStorageFactory<Storage>(), StorageFactory<Storage> {
     companion object {
         private const val GOOGLEDRIVE_CLIENT_ID_TEST_KEY = "FCMS_TEST_GOOGLEDRIVE_CLIENT_ID"
         private const val GOOGLEDRIVE_CLIENT_SECRET_TEST_KEY = "FCMS_TEST_GOOGLEDRIVE_CLIENT_SECRET"

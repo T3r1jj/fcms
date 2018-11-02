@@ -1,4 +1,4 @@
-package io.github.t3r1jj.fcms.external
+package io.github.t3r1jj.fcms.external.authorized
 
 import com.dropbox.core.BadRequestException
 import com.dropbox.core.DbxRequestConfig
@@ -6,12 +6,17 @@ import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.FileMetadata
 import com.dropbox.core.v2.files.GetMetadataErrorException
 import com.dropbox.core.v2.users.FullAccount
+import io.github.t3r1jj.fcms.external.*
+import io.github.t3r1jj.fcms.external.data.Record
+import io.github.t3r1jj.fcms.external.data.RecordMeta
+import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.data.StorageInfo
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.math.BigInteger
 
 
-class Dropbox(private val accessToken: String) : AbstractStorage() {
+class Dropbox(private val accessToken: String) : NamedStorage(), Storage {
     companion object : Loggable {
         private val logger = logger()
     }
@@ -33,9 +38,12 @@ class Dropbox(private val accessToken: String) : AbstractStorage() {
         return account?.name?.displayName?.isNotBlank() ?: false
     }
 
-    override fun upload(record: Record) {
-        client!!.files().uploadBuilder(record.path)
+    override fun upload(record: Record): RecordMeta {
+        val result = client!!.files()
+                .uploadBuilder(record.path)
                 .uploadAndFinish(record.data)
+        return RecordMeta(record.name, record.path, result.size)
+                .apply { result.id }
     }
 
     override fun download(filePath: String): Record {
@@ -62,8 +70,8 @@ class Dropbox(private val accessToken: String) : AbstractStorage() {
         return meta
     }
 
-    override fun delete(filePath: String) {
-        client!!.files().deleteV2(filePath)
+    override fun delete(meta: RecordMeta) {
+        client!!.files().deleteV2(meta.path)
     }
 
     override fun isPresent(filePath: String): Boolean {

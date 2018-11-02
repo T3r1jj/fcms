@@ -1,4 +1,4 @@
-package io.github.t3r1jj.fcms.external.mega
+package io.github.t3r1jj.fcms.external.authorized.mega
 
 import com.github.eliux.mega.MegaSession
 import com.github.eliux.mega.MegaUtils
@@ -6,6 +6,11 @@ import com.github.eliux.mega.auth.MegaAuthCredentials
 import com.github.eliux.mega.cmd.AbstractMegaCmdPathHandler
 import com.github.eliux.mega.error.*
 import io.github.t3r1jj.fcms.external.*
+import io.github.t3r1jj.fcms.external.authorized.Storage
+import io.github.t3r1jj.fcms.external.data.Record
+import io.github.t3r1jj.fcms.external.data.RecordMeta
+import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.data.StorageInfo
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.agent.ByteBuddyAgent
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy
@@ -17,7 +22,7 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.file.Paths
 
-class Mega(private val userName: String, private val password: String) : AbstractStorage() {
+class Mega(private val userName: String, private val password: String) : NamedStorage(), Storage {
     companion object {
         init {
             ByteBuddyAgent.install()
@@ -74,11 +79,12 @@ class Mega(private val userName: String, private val password: String) : Abstrac
         }
     }
 
-    override fun upload(record: Record) {
+    override fun upload(record: Record): RecordMeta {
         val file = stream2file(record.data)
         session!!.uploadFile(file.absolutePath, record.path)
                 .createRemoteIfNotPresent<AbstractMegaCmdPathHandler>()
                 .run()
+        return RecordMeta(record.name, record.path, file.length())
     }
 
     private fun stream2file(`in`: InputStream): java.io.File {
@@ -107,8 +113,8 @@ class Mega(private val userName: String, private val password: String) : Abstrac
         }
     }
 
-    override fun delete(filePath: String) {
-        session!!.remove(filePath).run()
+    override fun delete(meta: RecordMeta) {
+        session!!.remove(meta.path).run()
     }
 
     override fun isPresent(filePath: String): Boolean {

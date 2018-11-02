@@ -1,10 +1,10 @@
-package io.github.t3r1jj.fcms.external.mega
+package io.github.t3r1jj.fcms.external.authorized.mega
 
 import com.github.eliux.mega.MegaUtils
 import com.github.eliux.mega.cmd.FileInfo
 import com.github.eliux.mega.cmd.MegaCmdList
 import com.github.eliux.mega.error.MegaIOException
-import io.github.t3r1jj.fcms.external.RecordMeta
+import io.github.t3r1jj.fcms.external.data.RecordMeta
 import java.io.IOException
 import java.util.*
 

@@ -1,8 +1,7 @@
 package io.github.t3r1jj.fcms.external.factory
 
-import io.github.t3r1jj.fcms.external.Storage
+import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage
 
-interface StorageFactory {
-    fun createStorage(): Storage
-    fun createStorageWithoutAccess(): Storage
+interface StorageFactory<S : UpstreamStorage> : UpstreamStorageFactory<S> {
+    fun createStorageWithoutAccess(): S
 }

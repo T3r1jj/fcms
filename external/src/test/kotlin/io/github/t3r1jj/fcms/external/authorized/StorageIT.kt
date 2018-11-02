@@ -1,5 +1,8 @@
-package io.github.t3r1jj.fcms.external
+package io.github.t3r1jj.fcms.external.authorized
 
+import io.github.t3r1jj.fcms.external.data.Record
+import io.github.t3r1jj.fcms.external.data.RecordMeta
+import io.github.t3r1jj.fcms.external.data.StorageException
 import io.github.t3r1jj.fcms.external.factory.DropboxFactory
 import io.github.t3r1jj.fcms.external.factory.GoogleDriveFactory
 import io.github.t3r1jj.fcms.external.factory.MegaFactory
@@ -17,23 +20,23 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @RunWith(Parameterized::class)
-class StorageIT(private val storageFactory: StorageFactory, private val storageName: String) {
+class StorageIT(private val factory: StorageFactory<Storage>) {
     private lateinit var storageWithoutAccess: Storage
     private lateinit var storage: Storage
 
     companion object {
         private val testRootPath = "/" + this::class.java.`package`.name
         @JvmStatic
-        @Parameterized.Parameters(name = "{1}")
+        @Parameterized.Parameters(name = "{0}")
         fun data() = listOf(
                 DropboxFactory(), GoogleDriveFactory(), MegaFactory()
-        ).map { arrayOf(it, it.createStorage().toString()) }
+        )
     }
 
     @Before
     fun setUp() {
-        storage = storageFactory.createStorage()
-        storageWithoutAccess = storageFactory.createStorageWithoutAccess()
+        storage = factory.createStorage()
+        storageWithoutAccess = factory.createStorageWithoutAccess()
     }
 
     @After
@@ -41,7 +44,7 @@ class StorageIT(private val storageFactory: StorageFactory, private val storageN
         storage.login()
         storage.findAll("")
                 .filter { it.path.contains(testRootPath) }
-                .forEach { storage.delete(it.path) }
+                .forEach { storage.delete(RecordMeta("", it.path, 0)) }
         storage.logout()
     }
 
@@ -98,9 +101,10 @@ class StorageIT(private val storageFactory: StorageFactory, private val storageN
     fun testDelete() {
         val name = System.currentTimeMillis().toString()
         val record = Record("$name.tmp", "$testRootPath/$name.tmp", "Some text".byteInputStream())
+        val meta = RecordMeta("", record.path, 0L)
         storage.login()
         storage.upload(record)
-        storage.delete(record.path)
+        storage.delete(meta)
         assertFalse(storage.isPresent(record.path))
     }
 
@@ -122,7 +126,7 @@ class StorageIT(private val storageFactory: StorageFactory, private val storageN
     fun testGetInfo() {
         storage.login()
         val info = storage.getInfo()
-        MatcherAssert.assertThat(info.name.toLowerCase(), Matchers.containsString(storageName.toLowerCase()))
+        MatcherAssert.assertThat(info.name.toLowerCase(), Matchers.containsString(storage.toString().toLowerCase()))
         MatcherAssert.assertThat(info.totalSpace, Matchers.greaterThan(BigInteger.ZERO))
     }
 

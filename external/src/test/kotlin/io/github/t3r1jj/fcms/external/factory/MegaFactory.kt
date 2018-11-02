@@ -1,9 +1,9 @@
 package io.github.t3r1jj.fcms.external.factory
 
-import io.github.t3r1jj.fcms.external.mega.Mega
-import io.github.t3r1jj.fcms.external.Storage
+import io.github.t3r1jj.fcms.external.authorized.mega.Mega
+import io.github.t3r1jj.fcms.external.authorized.Storage
 
-class MegaFactory : StorageFactory {
+class MegaFactory : NamedByStorageFactory<Storage>(), StorageFactory<Storage> {
     companion object {
         private const val MEGA_USERNAME_TEST_KEY = "FCMS_TEST_MEGA_USERNAME"
         private const val MEGA_PASSWORD_TEST_KEY = "FCMS_TEST_MEGA_PASSWORD"

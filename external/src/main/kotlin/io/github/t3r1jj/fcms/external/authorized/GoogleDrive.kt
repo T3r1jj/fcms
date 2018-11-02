@@ -1,4 +1,4 @@
-package io.github.t3r1jj.fcms.external
+package io.github.t3r1jj.fcms.external.authorized
 
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.auth.oauth2.TokenResponseException
@@ -8,6 +8,11 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
+import io.github.t3r1jj.fcms.external.*
+import io.github.t3r1jj.fcms.external.data.Record
+import io.github.t3r1jj.fcms.external.data.RecordMeta
+import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.data.StorageInfo
 import org.apache.commons.io.IOUtils
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -16,10 +21,11 @@ import java.math.BigInteger
 //TODO: path is stored as description while we operate on ids
 class GoogleDrive(private val clientId: String,
                   private val clientSecret: String,
-                  private val refreshToken: String) : AbstractStorage() {
+                  private val refreshToken: String) : NamedStorage(), Storage {
     companion object {
         private const val FILE_FIELDS_DEFAULT_DESCRIPTION = "kind,incompleteSearch,files(kind,id,name,mimeType,description)"
         private const val FILE_FIELDS_DEFAULT_DESCRIPTION_SIZE = "kind,incompleteSearch,files(kind,id,name,mimeType,description,size)"
+        private const val FILE_FIELDS_DEFAULT_UPLOAD_SIZE = "kind,id,name,mimeType,size"
         private const val ABOUT_FIELDS_QUOTA = "storageQuota(limit,usage)"
     }
 
@@ -52,14 +58,16 @@ class GoogleDrive(private val clientId: String,
         return credential != null && drive != null && credential!!.accessToken != null
     }
 
-    override fun upload(record: Record) {
+    override fun upload(record: Record): RecordMeta {
         val fileMeta = File()
         fileMeta.name = record.name
         fileMeta.description = record.path
         val fileContent = FileContent("application/octet-stream", stream2file(record.data))
-        drive!!.files()
+        val result = drive!!.files()
                 .create(fileMeta, fileContent)
+                .setFields(FILE_FIELDS_DEFAULT_UPLOAD_SIZE)
                 .execute()
+        return RecordMeta(record.name, record.path, result.getSize())
     }
 
     private fun stream2file(`in`: InputStream): java.io.File {
@@ -91,12 +99,20 @@ class GoogleDrive(private val clientId: String,
                 }
     }
 
-    override fun delete(filePath: String) {
+    override fun delete(meta: RecordMeta) {
+        if (meta.id != null) {
+            drive!!.files().delete(meta.id)
+        } else {
+            deleteBasedOnDescription(meta.path)
+        }
+    }
+
+    private fun deleteBasedOnDescription(path: String) {
         drive!!.files()
                 .list()
                 .setFields(FILE_FIELDS_DEFAULT_DESCRIPTION)
                 .execute().files
-                .filter { it.description == filePath }
+                .filter { it.description == path }
                 .map { it.id }
                 .forEach { drive!!.files().delete(it).execute() }
     }

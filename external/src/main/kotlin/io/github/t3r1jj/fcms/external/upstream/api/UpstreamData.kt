@@ -1,4 +1,4 @@
-package io.github.t3r1jj.fcms.external.upstream
+package io.github.t3r1jj.fcms.external.upstream.api
 
 import com.google.gson.JsonObject
 

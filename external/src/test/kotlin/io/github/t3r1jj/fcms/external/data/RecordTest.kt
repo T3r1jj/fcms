@@ -1,4 +1,4 @@
-package io.github.t3r1jj.fcms.external
+package io.github.t3r1jj.fcms.external.data
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

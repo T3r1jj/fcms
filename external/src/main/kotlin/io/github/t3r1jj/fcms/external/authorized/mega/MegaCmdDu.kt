@@ -1,9 +1,9 @@
-package io.github.t3r1jj.fcms.external.mega
+package io.github.t3r1jj.fcms.external.authorized.mega
 
 import com.github.eliux.mega.MegaUtils
 import com.github.eliux.mega.cmd.AbstractMegaCmdCaller
 import com.github.eliux.mega.error.MegaIOException
-import io.github.t3r1jj.fcms.external.StorageInfo
+import io.github.t3r1jj.fcms.external.data.StorageInfo
 import java.io.IOException
 import java.math.BigInteger
 

@@ -1,8 +1,6 @@
-package io.github.t3r1jj.fcms.external
+package io.github.t3r1jj.fcms.external.authorized.mega
 
 import com.github.eliux.mega.cmd.AbstractMegaCmd
-import io.github.t3r1jj.fcms.external.mega.MegaCmdDu
-import io.github.t3r1jj.fcms.external.mega.MegaCmdRecursiveList
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals

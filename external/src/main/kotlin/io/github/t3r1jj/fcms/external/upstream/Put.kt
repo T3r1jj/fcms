@@ -1,47 +1,24 @@
 package io.github.t3r1jj.fcms.external.upstream
 
-import com.google.gson.Gson
-import io.github.t3r1jj.fcms.external.Record
-import io.github.t3r1jj.fcms.external.StorageException
-import okhttp3.MediaType
-import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody
-import okhttp3.logging.HttpLoggingInterceptor
+import io.github.t3r1jj.fcms.external.data.Record
+import io.github.t3r1jj.fcms.external.data.RecordMeta
+import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.upstream.api.MegauploadErrorResponse
+import io.github.t3r1jj.fcms.external.upstream.api.PutApi
 import org.apache.commons.io.FileUtils
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.net.HttpURLConnection
 import java.net.URL
 
-class Put : UpstreamStorage, CleanableStorage {
+class Put(baseUrl: String) : StorageClient<PutApi>(baseUrl, PutApi::class.java), UpstreamStorage, CleanableStorage {
+    constructor() : this("https://api.put.re")
 
-    fun getClient(): Retrofit {
-        val interceptor = HttpLoggingInterceptor()
-        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
-        val client = OkHttpClient.Builder().addInterceptor(interceptor).build()
-
-
-        val retrofit = Retrofit.Builder()
-                .baseUrl("https://api.put.re")
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(client)
-                .build()
-
-
-
-        return retrofit
-    }
-
-    override fun upload(record: Record): Record {
-        val client = getClient().create(PutApi::class.java)
-        val requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), record.data.readBytes())
-        val body = MultipartBody.Part.createFormData("file", record.name, requestFile)
+    override fun upload(record: Record): RecordMeta {
+        val (size, body) = createFileForm(record)
         val response = client.upload(body).execute()
         if (response.isSuccessful) {
-            return record.copy(path = response.body()!!.data.link).apply { id = response.body()!!.data.deleteToken }
+            return RecordMeta(record.name, response.body()!!.data.link, size)
+                    .apply { id = response.body()!!.data.deleteToken }
         } else {
-            val gson = Gson()
             val error = gson.fromJson(response.errorBody()!!.charStream(), MegauploadErrorResponse::class.java)
             throw StorageException(error.error.message)
         }
@@ -71,17 +48,11 @@ class Put : UpstreamStorage, CleanableStorage {
         return code == 200
     }
 
-    override fun delete(record: Record) {
-        val client = getClient().create(PutApi::class.java)
-        val response = client.delete(getName(record.path), record.id!!).execute()
+    override fun delete(meta: RecordMeta) {
+        val response = client.delete(getIdFromPath(meta.path), meta.id!!).execute()
         if (!response.isSuccessful) {
             throw StorageException(response.errorBody()!!.string())
         }
-    }
-
-    private fun getName(filePath: String): String {
-        val pathParts = java.lang.String(filePath).split("/")
-        return pathParts[pathParts.size - 2]
     }
 
 }

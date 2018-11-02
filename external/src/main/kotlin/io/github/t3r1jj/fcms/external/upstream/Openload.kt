@@ -11,7 +11,7 @@ import org.jsoup.Jsoup
 import java.io.ByteArrayInputStream
 
 
-class Openload(baseUrl: String) : StorageInfoClient<OpenloadApi>(baseUrl, OpenloadApi::class.java), UpstreamStorage {
+open class Openload(baseUrl: String) : StorageInfoClient<OpenloadApi>(baseUrl, OpenloadApi::class.java), UpstreamStorage {
     constructor() : this("https://api.openload.co")
 
     override fun upload(record: Record): RecordMeta {

@@ -22,7 +22,7 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.file.Paths
 
-class Mega(private val userName: String, private val password: String) : NamedStorage(), Storage {
+open class Mega(private val userName: String, private val password: String) : NamedStorage(), Storage {
     companion object {
         init {
             ByteBuddyAgent.install()
@@ -85,13 +85,6 @@ class Mega(private val userName: String, private val password: String) : NamedSt
                 .createRemoteIfNotPresent<AbstractMegaCmdPathHandler>()
                 .run()
         return RecordMeta(record.name, record.path, file.length())
-    }
-
-    private fun stream2file(`in`: InputStream): java.io.File {
-        val tempFile = java.io.File.createTempFile(System.currentTimeMillis().toString(), null)
-        tempFile.deleteOnExit()
-        FileOutputStream(tempFile).use { out -> IOUtils.copy(`in`, out) }
-        return tempFile
     }
 
     override fun download(filePath: String): Record {

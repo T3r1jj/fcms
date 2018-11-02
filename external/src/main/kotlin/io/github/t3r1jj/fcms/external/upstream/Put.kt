@@ -9,7 +9,7 @@ import org.apache.commons.io.FileUtils
 import java.net.HttpURLConnection
 import java.net.URL
 
-class Put(baseUrl: String) : StorageClient<PutApi>(baseUrl, PutApi::class.java), UpstreamStorage, CleanableStorage {
+open class Put(baseUrl: String) : StorageClient<PutApi>(baseUrl, PutApi::class.java), UpstreamStorage, CleanableStorage {
     constructor() : this("https://api.put.re")
 
     override fun upload(record: Record): RecordMeta {
@@ -32,7 +32,8 @@ class Put(baseUrl: String) : StorageClient<PutApi>(baseUrl, PutApi::class.java),
             val filename = fieldValue.substring(fieldValue.indexOf("filename=\"") + 10, fieldValue.length - 1)
             val tempFile = java.io.File.createTempFile(System.currentTimeMillis().toString(), null)
             tempFile.deleteOnExit()
-            FileUtils.copyInputStreamToFile(connection.getInputStream(), tempFile)
+            val inputStream = connection.getInputStream()
+            FileUtils.copyInputStreamToFile(inputStream, tempFile)
             return Record(filename, filePath, tempFile.inputStream())
         } catch (e: RuntimeException) {
             throw StorageException("File not found", e)

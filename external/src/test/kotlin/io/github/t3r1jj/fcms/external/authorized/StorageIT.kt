@@ -76,6 +76,22 @@ class StorageIT(private val factory: StorageFactory<Storage>) {
     }
 
     @org.junit.Test
+    fun testUploadOverride() {
+        val name = System.currentTimeMillis().toString()
+        val samePath = "$testRootPath/$name.tmp"
+        val text = "Some text"
+        val differentText = "Some text2"
+        val record = Record("$name.tmp", samePath, text.byteInputStream())
+        val record2 = Record("$name.tmp", samePath, differentText.byteInputStream())
+        val record2Unread = record2.copy(data = differentText.byteInputStream())
+        storage.login()
+        storage.upload(record)
+        storage.upload(record2)
+        val uploadedRecord = storage.download(record2.path)
+        assertEquals(record2Unread, uploadedRecord)
+    }
+
+    @org.junit.Test
     fun testFindAll() {
         val name = System.currentTimeMillis().toString()
         val text = "Some text"

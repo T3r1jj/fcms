@@ -8,20 +8,16 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
-import io.github.t3r1jj.fcms.external.*
+import io.github.t3r1jj.fcms.external.NamedStorage
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
 import io.github.t3r1jj.fcms.external.data.StorageException
 import io.github.t3r1jj.fcms.external.data.StorageInfo
-import org.apache.commons.io.IOUtils
-import java.io.FileOutputStream
-import java.io.InputStream
 import java.math.BigInteger
 
-//TODO: path is stored as description while we operate on ids
-class GoogleDrive(private val clientId: String,
-                  private val clientSecret: String,
-                  private val refreshToken: String) : NamedStorage(), Storage {
+open class GoogleDrive(private val clientId: String,
+                       private val clientSecret: String,
+                       private val refreshToken: String) : NamedStorage(), Storage {
     companion object {
         private const val FILE_FIELDS_DEFAULT_DESCRIPTION = "kind,incompleteSearch,files(kind,id,name,mimeType,description)"
         private const val FILE_FIELDS_DEFAULT_DESCRIPTION_SIZE = "kind,incompleteSearch,files(kind,id,name,mimeType,description,size)"
@@ -59,6 +55,7 @@ class GoogleDrive(private val clientId: String,
     }
 
     override fun upload(record: Record): RecordMeta {
+        deleteBasedOnDescription(record.path)
         val fileMeta = File()
         fileMeta.name = record.name
         fileMeta.description = record.path
@@ -68,13 +65,6 @@ class GoogleDrive(private val clientId: String,
                 .setFields(FILE_FIELDS_DEFAULT_UPLOAD_SIZE)
                 .execute()
         return RecordMeta(record.name, record.path, result.getSize())
-    }
-
-    private fun stream2file(`in`: InputStream): java.io.File {
-        val tempFile = java.io.File.createTempFile(System.currentTimeMillis().toString(), null)
-        tempFile.deleteOnExit()
-        FileOutputStream(tempFile).use { out -> IOUtils.copy(`in`, out) }
-        return tempFile
     }
 
     override fun download(filePath: String): Record {

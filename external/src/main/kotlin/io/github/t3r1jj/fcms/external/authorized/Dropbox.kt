@@ -5,8 +5,10 @@ import com.dropbox.core.DbxRequestConfig
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.FileMetadata
 import com.dropbox.core.v2.files.GetMetadataErrorException
+import com.dropbox.core.v2.files.WriteMode
 import com.dropbox.core.v2.users.FullAccount
-import io.github.t3r1jj.fcms.external.*
+import io.github.t3r1jj.fcms.external.Loggable
+import io.github.t3r1jj.fcms.external.NamedStorage
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
 import io.github.t3r1jj.fcms.external.data.StorageException
@@ -16,7 +18,7 @@ import java.io.ByteArrayOutputStream
 import java.math.BigInteger
 
 
-class Dropbox(private val accessToken: String) : NamedStorage(), Storage {
+open class Dropbox(private val accessToken: String) : NamedStorage(), Storage {
     companion object : Loggable {
         private val logger = logger()
     }
@@ -41,6 +43,7 @@ class Dropbox(private val accessToken: String) : NamedStorage(), Storage {
     override fun upload(record: Record): RecordMeta {
         val result = client!!.files()
                 .uploadBuilder(record.path)
+                .withMode(WriteMode.OVERWRITE)
                 .uploadAndFinish(record.data)
         return RecordMeta(record.name, record.path, result.size)
                 .apply { result.id }

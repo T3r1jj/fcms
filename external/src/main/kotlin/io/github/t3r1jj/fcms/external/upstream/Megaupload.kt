@@ -10,7 +10,7 @@ import org.jsoup.Jsoup
 import java.net.URL
 
 
-class Megaupload(baseUrl: String) : StorageInfoClient<MegauploadApi>(baseUrl, MegauploadApi::class.java), UpstreamStorage {
+open class Megaupload(baseUrl: String) : StorageInfoClient<MegauploadApi>(baseUrl, MegauploadApi::class.java), UpstreamStorage {
     constructor() : this("https://megaupload.nz")
 
     override fun upload(record: Record): RecordMeta {

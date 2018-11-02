@@ -37,9 +37,16 @@ abstract class StorageClient<T>(private val baseUrl: String, service: Class<T>) 
         return Pair(bytes.size.toLong(), body)
     }
 
+    /**
+     * @return id of file (second part of url from end after splitting by '/') or "null"string if invalid url
+     */
     protected open fun getIdFromPath(filePath: String): String {
         val pathParts = java.lang.String(filePath).split("/")
-        return pathParts[pathParts.size - 2]
+        return if (pathParts.size > 1) {
+            pathParts[pathParts.size - 2]
+        } else {
+            "null"
+        }
     }
 
 }

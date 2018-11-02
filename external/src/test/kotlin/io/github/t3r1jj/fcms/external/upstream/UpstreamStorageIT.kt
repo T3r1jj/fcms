@@ -2,6 +2,7 @@ package io.github.t3r1jj.fcms.external.upstream
 
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
+import io.github.t3r1jj.fcms.external.data.StorageException
 import io.github.t3r1jj.fcms.external.factory.DefaultUpstreamStorageFactory
 import io.github.t3r1jj.fcms.external.factory.UpstreamStorageFactory
 import org.apache.commons.io.IOUtils
@@ -11,9 +12,11 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 
 @RunWith(Parameterized::class)
-internal class UpstreamStorageIT(private val factory: UpstreamStorageFactory<UpstreamStorage>) {
+class UpstreamStorageIT(private val factory: UpstreamStorageFactory<UpstreamStorage>) {
 
     lateinit var uploadedRecord: RecordMeta
     lateinit var storage: UpstreamStorage
@@ -24,7 +27,13 @@ internal class UpstreamStorageIT(private val factory: UpstreamStorageFactory<Ups
         fun data() = DefaultUpstreamStorageFactory.listOf(
                 Megaupload::class,
                 Openload::class,
-                Put::class
+                Put::class,
+
+                ForumFiles::class,
+                AnonFile::class,
+                BayFiles::class,
+                FileBz::class,
+                UploadSt::class
         )
     }
 
@@ -35,7 +44,16 @@ internal class UpstreamStorageIT(private val factory: UpstreamStorageFactory<Ups
 
     @After
     fun tearDown() {
-        factory.asCleanable(storage)?.delete(uploadedRecord)
+        factory.asCleanable(storage)?.let {
+            if (uploadedRecord.id != null) {
+                it.delete(uploadedRecord)
+            } else {
+                uploadedRecord.id = ""
+                assertFailsWith(StorageException::class) {
+                    it.delete(uploadedRecord)
+                }
+            }
+        }
     }
 
     @org.junit.Test
@@ -66,5 +84,16 @@ internal class UpstreamStorageIT(private val factory: UpstreamStorageFactory<Ups
         val record = Record("$name.tmp", "", "Some text".byteInputStream())
         uploadedRecord = storage.upload(record)
         assertTrue(storage.isPresent(uploadedRecord.path))
+    }
+
+    @org.junit.Test
+    fun isNotPresent() {
+        val name = System.currentTimeMillis().toString()
+        uploadedRecord = RecordMeta("", "", 0L)
+        if (storage.toString().toLowerCase() == "put") {
+            assertFalse(storage.isPresent("https://s.put.re/$name.tmp"))
+        } else {
+            assertFalse(storage.isPresent("/$name/something"))
+        }
     }
 }

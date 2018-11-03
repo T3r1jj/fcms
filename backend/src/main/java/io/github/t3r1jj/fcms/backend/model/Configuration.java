@@ -1,10 +1,19 @@
 package io.github.t3r1jj.fcms.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Objects;
 
+@Document
 public class Configuration {
+    public static String getDefaultId() {
+        return "DEFAULT";
+    }
+
+    @Id
+    private final String id = getDefaultId();
     private ExternalService[] apiKeys;
 
     public Configuration(@JsonProperty("apiKeys") ExternalService[] apiKeys) {

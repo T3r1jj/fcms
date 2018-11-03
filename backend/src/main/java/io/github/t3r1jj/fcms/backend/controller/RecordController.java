@@ -9,7 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
 
-@RestController("/api/records")
+@RestController
+@RequestMapping("/api/records")
 public class RecordController {
     private final RecordService recordService;
 

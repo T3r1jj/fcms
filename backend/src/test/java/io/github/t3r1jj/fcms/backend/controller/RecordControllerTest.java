@@ -73,7 +73,7 @@ public class RecordControllerTest {
     }
 
     @Test
-    public void deleteShouldCallServiceToDeleteAndReturn200() {
+    public void deleteShouldCallServiceDeleteAndReturn200() {
         String id = "abc";
         RestAssuredMockMvc
                 .given()

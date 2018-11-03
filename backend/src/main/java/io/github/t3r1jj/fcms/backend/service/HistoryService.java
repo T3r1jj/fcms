@@ -21,19 +21,19 @@ public class HistoryService {
         this.notificationService = notificationService;
     }
 
-    public List<Event> getAll() {
-        return eventRepository.getAll();
+    public List<Event> findAll() {
+        return eventRepository.findAll();
     }
 
-    public Page<Event> getAll(Pageable pageable) {
-        return eventRepository.getAll(pageable);
+    public Page<Event> findAll(Pageable pageable) {
+        return eventRepository.findAll(pageable);
     }
 
     /**
-     * @param event to add to the history and broadcast to listeners
+     * @param event to save to the history and broadcast to listeners
      */
     public void add(Event event) {
-        eventRepository.add(event);
+        eventRepository.save(event);
         notificationService.broadcast(event);
     }
 

@@ -45,7 +45,7 @@ public class HistoryControllerIT extends AbstractTestNGSpringContextTests {
 
     @Test
     public void getAllNoParamsShouldReturn200AndCorrectDataWithFormattedDate() throws JsonProcessingException {
-        wholeHistory.forEach(eventRepository::add);
+        wholeHistory.forEach(eventRepository::save);
         RestAssured
                 .given()
                 .when()

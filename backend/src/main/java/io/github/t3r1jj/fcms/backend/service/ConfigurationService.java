@@ -1,9 +1,13 @@
 package io.github.t3r1jj.fcms.backend.service;
 
-import io.github.t3r1jj.fcms.backend.repository.ConfigurationRepository;
 import io.github.t3r1jj.fcms.backend.model.Configuration;
+import io.github.t3r1jj.fcms.backend.model.ExternalService;
+import io.github.t3r1jj.fcms.backend.repository.ConfigurationRepository;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.stream.Stream;
 
 @Service
 public class ConfigurationService {
@@ -16,10 +20,12 @@ public class ConfigurationService {
     }
 
     public Configuration get() {
-        return configurationRepository.get();
+        configurationRepository.findAll().stream().flatMap(a -> Stream.of(a.getApiKeys())).forEach(a -> System.out.println(a.getName()));
+        return configurationRepository.findById(Configuration.getDefaultId())
+                .orElse(new Configuration(new ExternalService[]{new ExternalService("In memory service", false)}));
     }
 
     public void update(Configuration configuration) {
-        configurationRepository.update(configuration);
+        configurationRepository.save(configuration);
     }
 }

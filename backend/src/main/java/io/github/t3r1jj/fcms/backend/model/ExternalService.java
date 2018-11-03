@@ -1,6 +1,7 @@
 package io.github.t3r1jj.fcms.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.data.annotation.PersistenceConstructor;
 
 import java.util.Objects;
 
@@ -14,6 +15,7 @@ public class ExternalService {
         this(name, primary, "", false);
     }
 
+    @PersistenceConstructor
     public ExternalService(@JsonProperty("name") String name,
                            @JsonProperty("primary") boolean primary,
                            @JsonProperty("apiKey") String apiKey,

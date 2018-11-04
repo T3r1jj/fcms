@@ -53,6 +53,6 @@ public class Event {
     }
 
     public enum EventType {
-        INFO, WARNING, ERROR
+        INFO, WARNING, ERROR, DEBUG
     }
 }

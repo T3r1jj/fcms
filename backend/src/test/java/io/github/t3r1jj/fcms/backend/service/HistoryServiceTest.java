@@ -115,14 +115,14 @@ public class HistoryServiceTest {
     @Test
     public void addShouldAddEventToRepo() {
         Event event1 = new Event("a", "b", Event.EventType.INFO);
-        service.add(event1);
+        service.addAndNotify(event1);
         assertTrue(repository.findAll().contains(event1));
     }
 
     @Test
     public void addShouldBroadcastNotification() {
         Event event1 = new Event("a", "b", Event.EventType.INFO);
-        service.add(event1);
+        service.addAndNotify(event1);
         verify(notificationService, times(1)).broadcast(event1);
     }
 

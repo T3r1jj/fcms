@@ -19,7 +19,7 @@ public class ConfigurationService {
         this.configurationRepository = configurationRepository;
     }
 
-    public Configuration get() {
+    public Configuration getConfiguration() {
         configurationRepository.findAll().stream().flatMap(a -> Stream.of(a.getApiKeys())).forEach(a -> System.out.println(a.getName()));
         return configurationRepository.findById(Configuration.getDefaultId())
                 .orElse(new Configuration(new ExternalService[]{new ExternalService("In memory service", false)}));

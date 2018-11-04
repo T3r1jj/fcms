@@ -32,7 +32,7 @@ public class HistoryService {
     /**
      * @param event to save to the history and broadcast to listeners
      */
-    public void add(Event event) {
+    public void addAndNotify(Event event) {
         eventRepository.save(event);
         notificationService.broadcast(event);
     }

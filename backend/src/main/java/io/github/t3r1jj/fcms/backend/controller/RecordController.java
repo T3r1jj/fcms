@@ -38,12 +38,7 @@ public class RecordController {
                            @RequestParam(required = false) String parentId) throws Exception {
         if (!file.isEmpty()) {
             byte[] data = file.getBytes();
-            StoredRecord recordToStore = new StoredRecord(name, tag, data);
-            if (parentId == null) {
-                recordService.store(recordToStore);
-            } else {
-                recordService.store(recordToStore, parentId);
-            }
+            recordService.store(new StoredRecord(name, tag, data, parentId));
         } else {
             throw new UnprocessableException("Empty file");
         }
@@ -57,6 +52,11 @@ public class RecordController {
     @DeleteMapping
     public void deleteStoredRecords(@RequestParam String id) {
         recordService.delete(id);
+    }
+
+    @PatchMapping
+    public void forceDeleteStoredRecords(@RequestParam String id) {
+        recordService.forceDelete(id);
     }
 
 }

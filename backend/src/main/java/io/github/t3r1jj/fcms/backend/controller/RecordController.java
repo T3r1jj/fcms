@@ -44,6 +44,11 @@ public class RecordController {
         }
     }
 
+    @PutMapping
+    public void updateDescription(@RequestParam String id, @RequestBody String description) {
+        recordService.updateDescription(id, description);
+    }
+
     @GetMapping
     public Collection<StoredRecord> getStoredRecords() {
         return recordService.findAll();

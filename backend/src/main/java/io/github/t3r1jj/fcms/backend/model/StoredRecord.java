@@ -81,6 +81,17 @@ public class StoredRecord {
         this.rootId = rootId;
     }
 
+    public StoredRecord findParent(ObjectId id) {
+        if (getVersions().stream().anyMatch(c -> c.getId().equals(id))) {
+            return this;
+        } else {
+            return getVersions().stream()
+                    .map(c -> c.findParent(id))
+                    .findAny()
+                    .orElse(null);
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

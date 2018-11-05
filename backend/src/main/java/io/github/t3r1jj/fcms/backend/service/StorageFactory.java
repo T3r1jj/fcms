@@ -9,15 +9,15 @@ import java.util.Optional;
 class StorageFactory {
     private final Configuration configuration;
 
-    public StorageFactory(Configuration configuration) {
+    StorageFactory(Configuration configuration) {
         this.configuration = configuration;
     }
 
-    public Storage create(String externalService) {
+    Storage create(String externalService) {
         return null;
     }
 
-    public Optional<CleanableStorage> createCleanable(String externalService) {
-        return null;
+    Optional<CleanableStorage> createCleanable(String externalService) {
+        return Optional.empty();
     }
 }

@@ -28,4 +28,12 @@ public class ConfigurationService {
     public void update(Configuration configuration) {
         configurationRepository.save(configuration);
     }
+
+    StorageFactory createStorageFactory() {
+        return new StorageFactory(getConfiguration());
+    }
+
+    StorageFactory createStorageFactory(Configuration configuration) {
+        return new StorageFactory(configuration);
+    }
 }

@@ -35,7 +35,7 @@ public class ReplicationService {
                 .filter(ExternalService::isPrimary)
                 .findAny()
                 .orElseThrow(() -> new RecordController.ResourceNotFoundException("No enabled primary service found for replication. Update your config."));
-        Storage storage = new StorageFactory(configuration).create(primaryService.getName());
+        Storage storage = configurationService.createStorageFactory(configuration).create(primaryService.getName());
         storage.login();
         Record recordToUpload = new Record(
                 recordToStore.getName(),
@@ -46,9 +46,9 @@ public class ReplicationService {
         storage.logout();
     }
 
-    public void deleteCascading(StoredRecord storedRecord, boolean force) {
-        StoredRecord root = recordService.getRoot(storedRecord);
+    public void deleteCascading(StoredRecord storedRecord, boolean force, StoredRecord root) {
         deleteVersionsBackups(storedRecord, force, root);
+        root.findParent(storedRecord.getId()).getVersions().remove(storedRecord);
     }
 
     private void deleteVersionsBackups(StoredRecord storedRecord, boolean force, StoredRecord root) {
@@ -98,8 +98,7 @@ public class ReplicationService {
      * @return true if deleted (some services don't support removal)
      */
     private boolean deleteBackup(String externalService, RecordMeta backup, boolean force) {
-        Configuration configuration = configurationService.getConfiguration();
-        Optional<CleanableStorage> cleanableStorage = new StorageFactory(configuration).createCleanable(externalService);
+        Optional<CleanableStorage> cleanableStorage = configurationService.createStorageFactory().createCleanable(externalService);
         return cleanableStorage.map(it -> {
             if (force) {
                 forceDeleteBackup(it, backup);

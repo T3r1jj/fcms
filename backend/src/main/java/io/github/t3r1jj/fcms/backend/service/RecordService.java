@@ -42,7 +42,7 @@ public class RecordService {
 
     public void delete(String id) {
         StoredRecord storedRecord = getOne(id);
-        replicationService.deleteCascading(storedRecord, false);
+        replicationService.deleteCascading(storedRecord, false, getRoot(storedRecord));
         recordRepository.deleteById(storedRecord.getId());
     }
 
@@ -85,11 +85,17 @@ public class RecordService {
 
     public void forceDelete(String id) {
         StoredRecord storedRecord = getOne(id);
-        replicationService.deleteCascading(storedRecord, true);
+        replicationService.deleteCascading(storedRecord, true, getRoot(storedRecord));
         recordRepository.deleteById(storedRecord.getId());
     }
 
     StoredRecord getRoot(StoredRecord storedRecord) {
         return storedRecord.getRootId().map(this::getOne).orElse(storedRecord);
+    }
+
+    public void updateDescription(String id, String description) {
+        StoredRecord record = getOne(id);
+        record.setDescription(description);
+        update(record);
     }
 }

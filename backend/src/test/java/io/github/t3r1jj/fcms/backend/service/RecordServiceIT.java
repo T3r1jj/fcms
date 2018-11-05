@@ -11,7 +11,10 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 @SpringBootTest
 public class RecordServiceIT extends AbstractTestNGSpringContextTests {
@@ -34,7 +37,7 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void testStore() {
+    public void store() {
         StoredRecord storedRecord = new StoredRecord("a", "a");
         StoredRecord childRecord = new StoredRecord("2", "2", null, storedRecord.getId().toString());
         recordService.store(storedRecord);
@@ -45,7 +48,7 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void testUpdateRoot() {
+    public void updateRoot() {
         StoredRecord storedRecord = new StoredRecord("a", "a");
         recordService.store(storedRecord);
         String newDescription = "new description";
@@ -57,7 +60,7 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void testUpdateChild() {
+    public void updateChild() {
         StoredRecord storedRecord = new StoredRecord("a", "a");
         StoredRecord childRecord = new StoredRecord("2", "2", null, storedRecord.getId().toString());
         recordService.store(storedRecord);
@@ -81,5 +84,23 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
         assertEquals(recordService.findAll().size(), 2);
         recordService.store(storedRecord3);
         assertEquals(recordService.findAll().size(), 2);
+    }
+
+    @Test
+    public void updateDescription() {
+        StoredRecord storedRecord = new StoredRecord("a", "a");
+        assertNull(storedRecord.getDescription());
+        recordService.store(storedRecord);
+        String newDescription = "new description";
+        recordService.updateDescription(storedRecord.getId().toString(), newDescription);
+        assertEquals(recordRepository.findById(storedRecord.getId()).get().getDescription(), newDescription);
+    }
+
+    @Test
+    public void storeShouldCauseReplication() {
+        StoredRecord storedRecord = new StoredRecord("a", "a");
+        assertNull(storedRecord.getDescription());
+        recordService.store(storedRecord);
+        verify(replicationService, times(1)).replicateToPrimary(storedRecord);
     }
 }

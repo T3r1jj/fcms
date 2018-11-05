@@ -25,7 +25,7 @@ public class RecordControllerTest {
     }
 
     @Test
-    public void uploadValidFileShouldResultIn200() {
+    public void uploadValidFileShouldResultIn200AndReplication() {
         RestAssuredMockMvc
                 .given()
                 .param("name", "filename")
@@ -37,6 +37,7 @@ public class RecordControllerTest {
                 .then()
                 .assertThat()
                 .statusCode(200);
+        verify(recordService, times(1)).store(any());
     }
 
     @Test
@@ -86,4 +87,37 @@ public class RecordControllerTest {
                 .statusCode(200);
         verify(recordService, times(1)).delete(id);
     }
+
+    @Test
+    public void forceDeleteShouldCallServiceDeleteAndReturn200() {
+        String id = "abc";
+        RestAssuredMockMvc
+                .given()
+                .param("id", id)
+                .standaloneSetup(new RecordController(recordService))
+                .when()
+                .patch("/api/records")
+                .then()
+                .assertThat()
+                .statusCode(200);
+        verify(recordService, times(1)).forceDelete(id);
+    }
+
+    @Test
+    public void updateDescriptionShouldCallServiceUpdateDescriptionAndReturn200() {
+        String id = "abc";
+        String description = "description text";
+        RestAssuredMockMvc
+                .given()
+                .param("id", id)
+                .body(description)
+                .standaloneSetup(new RecordController(recordService))
+                .when()
+                .put("/api/records")
+                .then()
+                .assertThat()
+                .statusCode(200);
+        verify(recordService, times(1)).updateDescription(id, description);
+    }
+
 }

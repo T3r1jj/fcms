@@ -78,6 +78,7 @@ jacocoTestReport {
 test {
     useJUnitPlatform()
     jvmArgs "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap"
+    maxHeapSize = "512m"
 }
 
 check.dependsOn jacocoTestReport

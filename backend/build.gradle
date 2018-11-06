@@ -61,6 +61,7 @@ configurations {
 test {
     useTestNG {}
     jvmArgs "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap"
+    maxHeapSize = "512m"
 }
 
 tasks.withType(Test) {

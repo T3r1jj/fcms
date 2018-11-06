@@ -24,34 +24,40 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - gradle-cache-{{ checksum "backend/build.gradle" }}
-            - gradle-cache-{{ checksum "frontend/build.gradle" }}
-            - dependency-cache-{{ checksum "frontend/package.json" }}
-            - dependency-cache-{{ checksum "frontend/yarn.lock" }}
+            - gradle-cache2-{{ checksum "external/build.gradle" }}
+            - gradle-cache2-{{ checksum "backend/build.gradle" }}
+            - gradle-cache2-{{ checksum "frontend/build.gradle" }}
+            - dependency-cache2-{{ checksum "frontend/package.json" }}
+            - dependency-cache2-{{ checksum "frontend/yarn.lock" }}
 
       - run: ./gradlew build
 
       - save_cache:
           paths:
             - ~/.gradle
-          key: gradle-cache-{{ checksum "backend/build.gradle" }}
+          key: gradle-cache2-{{ checksum "external/build.gradle" }}
 
       - save_cache:
           paths:
             - ~/.gradle
-          key: gradle-cache-{{ checksum "frontend/build.gradle" }}
+          key: gradle-cache2-{{ checksum "backend/build.gradle" }}
+
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: gradle-cache2-{{ checksum "frontend/build.gradle" }}
 
       - save_cache:
           paths:
             - ~/usr/local/lib/node_modules
             - frontend/node_modules
-          key: dependency-cache-{{ checksum "frontend/package.json" }}
+          key: dependency-cache2-{{ checksum "frontend/package.json" }}
 
       - save_cache:
           paths:
             - ~/usr/local/lib/node_modules
             - frontend/node_modules
-          key: dependency-cache-{{ checksum "frontend/yarn.lock" }}
+          key: dependency-cache2-{{ checksum "frontend/yarn.lock" }}
 
         
       # run tests!

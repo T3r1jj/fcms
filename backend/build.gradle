@@ -60,7 +60,7 @@ configurations {
 
 test {
     useTestNG {}
-    jvmArgs '-Xmx1024m'
+    jvmArgs "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap"
 }
 
 tasks.withType(Test) {

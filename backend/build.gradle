@@ -60,6 +60,7 @@ configurations {
 
 test {
     useTestNG {}
+    jvmArgs '-Xmx1024m'
 }
 
 tasks.withType(Test) {

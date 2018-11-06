@@ -30,7 +30,7 @@ jobs:
             - dependency-cache2-{{ checksum "frontend/package.json" }}
             - dependency-cache2-{{ checksum "frontend/yarn.lock" }}
 
-      - run: ./gradlew build
+      - run: ./gradlew build --no-daemon --max-workers 2
 
       - save_cache:
           paths:
@@ -61,7 +61,7 @@ jobs:
 
         
       # run tests!
-      - run: gradle check
+      - run: ./gradlew check --no-daemon --max-workers 2
 
       - run: bash <(curl -s https://codecov.io/bash)
 

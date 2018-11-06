@@ -1,9 +1,9 @@
 package io.github.t3r1jj.fcms.external.factory
 
-import io.github.t3r1jj.fcms.external.authorized.GoogleDrive
-import io.github.t3r1jj.fcms.external.authorized.Storage
+import io.github.t3r1jj.fcms.external.authenticated.GoogleDrive
+import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorage
 
-class GoogleDriveFactory : NamedByStorageFactory<Storage>(), StorageFactory<Storage> {
+class GoogleDriveFactory : NamedByStorageFactory<AuthenticatedStorage>(), StorageFactory<AuthenticatedStorage> {
     companion object {
         private const val GOOGLEDRIVE_CLIENT_ID_TEST_KEY = "FCMS_TEST_GOOGLEDRIVE_CLIENT_ID"
         private const val GOOGLEDRIVE_CLIENT_SECRET_TEST_KEY = "FCMS_TEST_GOOGLEDRIVE_CLIENT_SECRET"
@@ -13,11 +13,11 @@ class GoogleDriveFactory : NamedByStorageFactory<Storage>(), StorageFactory<Stor
         private val refreshToken = System.getenv(GOOGLEDRIVE_REFRESH_TOKEN_TEST_KEY)
     }
 
-    override fun createStorage(): Storage {
+    override fun createStorage(): AuthenticatedStorage {
         return GoogleDrive(clientId, clientSecret, refreshToken)
     }
 
-    override fun createStorageWithoutAccess(): Storage {
+    override fun createStorageWithoutAccess(): AuthenticatedStorage {
         return GoogleDrive("", "", "")
     }
 }

@@ -1,9 +1,10 @@
 package io.github.t3r1jj.fcms.external.upstream
 
+import io.github.t3r1jj.fcms.external.Storage
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
 
-interface UpstreamStorage {
+interface UpstreamStorage : Storage {
     /**
      * Returns [RecordMeta] for uploaded [record], filePath may be different than provided one.
      */

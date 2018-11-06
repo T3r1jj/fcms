@@ -2,7 +2,7 @@ package io.github.t3r1jj.fcms.external.upstream
 
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
-import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.data.exception.StorageException
 import io.github.t3r1jj.fcms.external.upstream.api.MegauploadApi
 import io.github.t3r1jj.fcms.external.upstream.api.MegauploadErrorResponse
 import org.apache.commons.io.FileUtils

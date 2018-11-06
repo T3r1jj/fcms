@@ -1,11 +1,11 @@
-package io.github.t3r1jj.fcms.external.authorized
+package io.github.t3r1jj.fcms.external.authenticated
 
 import io.github.t3r1jj.fcms.external.data.RecordMeta
 import io.github.t3r1jj.fcms.external.data.StorageInfo
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage
 import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage
 
-interface Storage : UpstreamStorage, CleanableStorage {
+interface AuthenticatedStorage : UpstreamStorage, CleanableStorage {
     /**
      * Logs in to storage service. May throw [io.github.t3r1jj.fcms.external.data.StorageException] if cannot authenticate due to wrong credentials or unexpected error.
      */

@@ -1,4 +1,4 @@
-package io.github.t3r1jj.fcms.external.authorized
+package io.github.t3r1jj.fcms.external.authenticated
 
 import com.dropbox.core.BadRequestException
 import com.dropbox.core.DbxRequestConfig
@@ -8,17 +8,16 @@ import com.dropbox.core.v2.files.GetMetadataErrorException
 import com.dropbox.core.v2.files.WriteMode
 import com.dropbox.core.v2.users.FullAccount
 import io.github.t3r1jj.fcms.external.Loggable
-import io.github.t3r1jj.fcms.external.NamedStorage
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
-import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.data.exception.StorageException
 import io.github.t3r1jj.fcms.external.data.StorageInfo
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.math.BigInteger
 
 
-open class Dropbox(private val accessToken: String) : NamedStorage(), Storage {
+open class Dropbox(private val accessToken: String) : AuthenticatedStorageTemplate() {
     companion object : Loggable {
         private val logger = logger()
     }
@@ -40,7 +39,7 @@ open class Dropbox(private val accessToken: String) : NamedStorage(), Storage {
         return account?.name?.displayName?.isNotBlank() ?: false
     }
 
-    override fun upload(record: Record): RecordMeta {
+    override fun doAuthenticatedUpload(record: Record): RecordMeta {
         val result = client!!.files()
                 .uploadBuilder(record.path)
                 .withMode(WriteMode.OVERWRITE)
@@ -49,14 +48,14 @@ open class Dropbox(private val accessToken: String) : NamedStorage(), Storage {
                 .apply { result.id }
     }
 
-    override fun download(filePath: String): Record {
+    override fun doAuthenticatedDownload(filePath: String): Record {
         val os = ByteArrayOutputStream()
         val meta = client!!.files().downloadBuilder(filePath)
                 .download(os)
         return Record(meta.name, meta.pathLower, ByteArrayInputStream(os.toByteArray()))
     }
 
-    override fun findAll(filePath: String): List<RecordMeta> {
+    override fun doAuthenticatedFindAll(filePath: String): List<RecordMeta> {
         val meta = ArrayList<RecordMeta>()
         var result = client!!.files()
                 .listFolderBuilder(filePath)
@@ -73,7 +72,7 @@ open class Dropbox(private val accessToken: String) : NamedStorage(), Storage {
         return meta
     }
 
-    override fun delete(meta: RecordMeta) {
+    override fun doAuthenticatedDelete(meta: RecordMeta) {
         client!!.files().deleteV2(meta.path)
     }
 
@@ -93,7 +92,7 @@ open class Dropbox(private val accessToken: String) : NamedStorage(), Storage {
         }
     }
 
-    override fun getInfo(): StorageInfo {
+    override fun doAuthenticatedGetInfo(): StorageInfo {
         val spaceUsage = client!!.users().spaceUsage
         return StorageInfo(this.toString(),
                 BigInteger.valueOf(spaceUsage.allocation.individualValue.allocated),

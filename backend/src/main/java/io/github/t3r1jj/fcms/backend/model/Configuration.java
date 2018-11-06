@@ -1,10 +1,15 @@
 package io.github.t3r1jj.fcms.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.t3r1jj.fcms.backend.controller.RecordController;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @Document
 public class Configuration {
@@ -14,22 +19,22 @@ public class Configuration {
 
     @Id
     private final String id = getDefaultId();
-    private ExternalService[] apiKeys;
+    private ExternalService[] services;
 
-    public Configuration(@JsonProperty("apiKeys") ExternalService[] apiKeys) {
-        this.apiKeys = apiKeys;
+    public Configuration(@JsonProperty("services") ExternalService[] services) {
+        this.services = services;
     }
 
-    public ExternalService[] getApiKeys() {
-        return this.apiKeys;
+    public ExternalService[] getServices() {
+        return this.services;
     }
 
-    public void setApiKeys(ExternalService[] apiKeys) {
-        this.apiKeys = apiKeys;
+    public void setServices(ExternalService[] services) {
+        this.services = services;
     }
 
-    public Configuration apiKeys(ExternalService[] apiKeys) {
-        this.apiKeys = apiKeys;
+    public Configuration withServices(ExternalService[] apiKeys) {
+        this.services = apiKeys;
         return this;
     }
 
@@ -41,17 +46,27 @@ public class Configuration {
             return false;
         }
         Configuration configuration = (Configuration) o;
-        return Objects.equals(apiKeys, configuration.apiKeys);
+        return Arrays.equals(services, configuration.services);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(apiKeys);
+        return Objects.hashCode(services);
     }
 
     @Override
     public String toString() {
-        return "{" + " apiKeys='" + getApiKeys() + "'" + "}";
+        return "{" + " services='" + Arrays.toString(getServices()) + "'" + "}";
     }
 
+    @NotNull
+    @JsonIgnore
+    public ExternalService getEnabledPrimaryService() {
+        ExternalService[] services = getServices();
+        return Stream.of(services)
+                .filter(ExternalService::isEnabled)
+                .filter(ExternalService::isPrimary)
+                .findAny()
+                .orElseThrow(() -> new RecordController.ResourceNotFoundException("No enabled primary service found for replication. Update your config."));
+    }
 }

@@ -1,11 +1,11 @@
 package io.github.t3r1jj.fcms.backend.service;
 
-import io.github.t3r1jj.fcms.backend.controller.RecordController;
 import io.github.t3r1jj.fcms.backend.model.*;
-import io.github.t3r1jj.fcms.external.authorized.Storage;
+import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorage;
 import io.github.t3r1jj.fcms.external.data.Record;
 import io.github.t3r1jj.fcms.external.data.RecordMeta;
-import io.github.t3r1jj.fcms.external.data.StorageException;
+import io.github.t3r1jj.fcms.external.data.exception.StorageException;
+import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedException;
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +13,6 @@ import java.io.ByteArrayInputStream;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Service
 public class ReplicationService {
@@ -29,13 +28,9 @@ public class ReplicationService {
 
     public void replicateToPrimary(StoredRecord recordToStore) {
         Configuration configuration = configurationService.getConfiguration();
-        ExternalService[] services = configuration.getApiKeys();
-        ExternalService primaryService = Stream.of(services)
-                .filter(ExternalService::isEnabled)
-                .filter(ExternalService::isPrimary)
-                .findAny()
-                .orElseThrow(() -> new RecordController.ResourceNotFoundException("No enabled primary service found for replication. Update your config."));
-        Storage storage = configurationService.createStorageFactory(configuration).create(primaryService.getName());
+        ExternalService primaryService = configuration.getEnabledPrimaryService();
+        AuthenticatedStorage storage = configurationService.createStorageFactory(configuration)
+                .createAuthenticatedStorage(primaryService.getName());
         storage.login();
         Record recordToUpload = new Record(
                 recordToStore.getName(),
@@ -83,8 +78,8 @@ public class ReplicationService {
         boolean deleted = deleteBackup(externalService, meta, force);
         if (!deleted) {
             historyService.addAndNotify(new EventBuilder()
-                    .formatTitle("UNSUPPORTED DELETE [$s]", externalService)
-                    .formatDescription("[$s] Backup of file $s with $s path and id of $s has been removed from " +
+                    .formatTitle("UNSUPPORTED DELETE [%s]", externalService)
+                    .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage. Though, the storage might be ephemeral.", externalService,
                             meta.getName(), meta.getPath(), meta.getId())
                     .setType(Event.EventType.DEBUG)
@@ -95,15 +90,16 @@ public class ReplicationService {
     /**
      * @param externalService name of external service where record has been backed up
      * @param backup          meta
+     * @param force           if should not fail on any exception
      * @return true if deleted (some services don't support removal)
      */
     private boolean deleteBackup(String externalService, RecordMeta backup, boolean force) {
-        Optional<CleanableStorage> cleanableStorage = configurationService.createStorageFactory().createCleanable(externalService);
+        Optional<CleanableStorage> cleanableStorage = configurationService.createStorageFactory().createCleanableStorage(externalService);
         return cleanableStorage.map(it -> {
             if (force) {
                 forceDeleteBackup(it, backup);
             } else {
-                it.delete(backup);
+                deleteWithLogin(backup, it);
             }
             return true;
         }).orElse(false);
@@ -111,23 +107,34 @@ public class ReplicationService {
 
     private void forceDeleteBackup(CleanableStorage storage, RecordMeta meta) {
         try {
-            storage.delete(meta);
+            deleteWithLogin(meta, storage);
         } catch (StorageException se) {
             historyService.addAndNotify(new EventBuilder()
-                    .formatTitle("DELETE [$s]", storage.toString())
-                    .formatDescription("[$s] Backup of file $s with $s path and id of $s has been removed from " +
+                    .formatTitle("DELETE [%s]", storage.toString())
+                    .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage due to an exception:\n", storage.toString(),
                             meta.getName(), meta.getPath(), meta.getId(), se.getMessage())
                     .setType(Event.EventType.WARNING)
                     .createEvent());
         } catch (RuntimeException e) {
             historyService.addAndNotify(new EventBuilder()
-                    .formatTitle("DELETE [$s] UNKNOWN ERROR", storage.toString())
-                    .formatDescription("[$s] Backup of file $s with $s path and id of $s has been removed from " +
+                    .formatTitle("DELETE [%s] UNKNOWN ERROR", storage.toString())
+                    .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage due to an unknown exception:\n", storage.toString(),
                             meta.getName(), meta.getPath(), meta.getId(), e.getMessage())
                     .setType(Event.EventType.WARNING)
                     .createEvent());
+        }
+    }
+
+    private void deleteWithLogin(RecordMeta backup, CleanableStorage cleanableStorage) {
+        try {
+            cleanableStorage.delete(backup);
+        } catch (StorageUnauthenticatedException sue) {
+            AuthenticatedStorage storage = sue.getStorage();
+            storage.login();
+            storage.delete(backup);
+            storage.logout();
         }
     }
 }

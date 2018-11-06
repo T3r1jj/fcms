@@ -3,26 +3,23 @@ package io.github.t3r1jj.fcms.backend.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.PersistenceConstructor;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 public class ExternalService {
     private String name;
     private boolean primary;
-    private String apiKey;
     private boolean enabled;
-
-    public ExternalService(String name, boolean primary) {
-        this(name, primary, "", false);
-    }
+    private ApiKey[] apiKeys;
 
     @PersistenceConstructor
     public ExternalService(@JsonProperty("name") String name,
                            @JsonProperty("primary") boolean primary,
-                           @JsonProperty("apiKey") String apiKey,
-                           @JsonProperty("enabled") boolean enabled) {
+                           @JsonProperty("enabled") boolean enabled,
+                           @JsonProperty("apiKeys") ApiKey... apiKeys) {
         this.primary = primary;
         this.name = name;
-        this.apiKey = apiKey;
+        this.apiKeys = apiKeys;
         this.enabled = enabled;
     }
 
@@ -43,8 +40,8 @@ public class ExternalService {
     /**
      * @return the apiKey
      */
-    public String getApiKey() {
-        return apiKey;
+    public ApiKey[] getApiKeys() {
+        return apiKeys;
     }
 
     /**
@@ -63,14 +60,63 @@ public class ExternalService {
         }
         ExternalService service = (ExternalService) o;
         return Objects.equals(name, service.name) &&
-                Objects.equals(apiKey, service.apiKey) &&
+                Arrays.equals(apiKeys, service.apiKeys) &&
                 Objects.equals(primary, service.primary) &&
                 Objects.equals(enabled, service.enabled);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(name) + Objects.hashCode(primary);
+    public String toString() {
+        return "ExternalService{" +
+                "name='" + name + '\'' +
+                ", primary=" + primary +
+                ", enabled=" + enabled +
+                ", apiKeys=" + Arrays.toString(apiKeys) +
+                '}';
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(name) + Arrays.hashCode(apiKeys);
+    }
+
+    public static class ApiKey {
+        private final String label;
+        private final String key;
+
+        @PersistenceConstructor
+        public ApiKey(@JsonProperty("label") String label, @JsonProperty("key") String key) {
+            this.label = label;
+            this.key = key;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        @Override
+        public String toString() {
+            return "ApiKey{" +
+                    "label='" + label + '\'' +
+                    ", key='" + (key != null && !key.isEmpty()) + '\'' +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ApiKey apiKey = (ApiKey) o;
+            return Objects.equals(label, apiKey.label) && Objects.equals(key, apiKey.key);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(label);
+        }
+    }
 }

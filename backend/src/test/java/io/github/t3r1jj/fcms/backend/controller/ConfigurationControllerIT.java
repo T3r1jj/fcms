@@ -15,6 +15,9 @@ import static org.hamcrest.Matchers.hasKey;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests {
+    private final String userName = "un123";
+    private final String password = "pwd123";
+
     @LocalServerPort
     private int port;
 
@@ -22,7 +25,10 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
 
     @BeforeMethod
     public void setUp() {
-        defaultConfig = new Configuration(new ExternalService[]{new ExternalService("Mocked service name", true)});
+        defaultConfig = new Configuration(new ExternalService[]{
+                new ExternalService("Mega", true, true,
+                        new ExternalService.ApiKey("userName", userName),
+                        new ExternalService.ApiKey("password", password))});
         RestAssured.port = port;
     }
 
@@ -35,8 +41,8 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
                 .assertThat()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("apiKeys[0]", hasKey("name"))
-                .body("apiKeys[0]", hasKey("primary"));
+                .body("services[0]", hasKey("name"))
+                .body("services[0]", hasKey("primary"));
     }
 
     @Test
@@ -69,8 +75,8 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
                 .assertThat()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("apiKeys[0].name", equalTo(defaultConfig.getApiKeys()[0].getName()))
-                .body("apiKeys[0].primary", equalTo(defaultConfig.getApiKeys()[0].isPrimary()));
+                .body("services.findAll{it.apiKeys.findAll{it.key=='" + userName + "'}.size()}.size()", equalTo(1))
+                .body("services.findAll{it.apiKeys.findAll{it.key=='" + userName + "'}.size()}.size()", equalTo(1));
     }
 
 }

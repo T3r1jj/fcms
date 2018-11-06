@@ -5,10 +5,11 @@ import io.github.t3r1jj.fcms.backend.model.Configuration;
 import io.github.t3r1jj.fcms.backend.model.Event;
 import io.github.t3r1jj.fcms.backend.model.ExternalService;
 import io.github.t3r1jj.fcms.backend.model.StoredRecord;
-import io.github.t3r1jj.fcms.external.authorized.Storage;
+import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorage;
 import io.github.t3r1jj.fcms.external.data.Record;
 import io.github.t3r1jj.fcms.external.data.RecordMeta;
-import io.github.t3r1jj.fcms.external.data.StorageException;
+import io.github.t3r1jj.fcms.external.data.exception.StorageException;
+import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedException;
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -33,10 +34,12 @@ public class ReplicationServiceTest {
     @Mock
     private CleanableStorage cleanableStorage;
     @Mock
-    private Storage storage;
+    private AuthenticatedStorage storage;
     @Mock
     private StorageFactory storageFactory;
     private ReplicationService replicationService;
+
+    private Configuration configuration;
 
     @BeforeMethod
     public void setUp() {
@@ -44,15 +47,20 @@ public class ReplicationServiceTest {
         replicationService = new ReplicationService(configurationService, recordService, historyService);
     }
 
+    private void setUpDefaultConfig(String serviceName, boolean enabled) {
+        configuration = new Configuration(new ExternalService[]{new ExternalService(serviceName, true, enabled,
+                new ExternalService.ApiKey("label123", "key123"))});
+    }
+
     @Test
     public void testReplicateToPrimary() {
         String serviceName = "service name";
-        Configuration configuration = new Configuration(new ExternalService[]{new ExternalService(serviceName, true, "", true)});
-        doReturn(storage).when(storageFactory).create(serviceName);
+        setUpDefaultConfig(serviceName, true);
+        doReturn(storage).when(storageFactory).createAuthenticatedStorage(serviceName);
         doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
         doReturn(configuration).when(configurationService).getConfiguration();
 
-        byte[] data = "sine text".getBytes();
+        byte[] data = "some text".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
         replicationService.replicateToPrimary(recordToStore);
 
@@ -65,7 +73,7 @@ public class ReplicationServiceTest {
     public void testReplicateToPrimaryConfigNotFound() {
         String serviceName = "service name";
         Configuration configuration = new Configuration(new ExternalService[]{});
-        doReturn(storage).when(storageFactory).create(serviceName);
+        doReturn(storage).when(storageFactory).createAuthenticatedStorage(serviceName);
         doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
         doReturn(configuration).when(configurationService).getConfiguration();
 
@@ -77,8 +85,8 @@ public class ReplicationServiceTest {
     @Test(expectedExceptions = {RecordController.ResourceNotFoundException.class})
     public void testReplicateToPrimaryConfigNotFoundEnabled() {
         String serviceName = "service name";
-        Configuration configuration = new Configuration(new ExternalService[]{new ExternalService(serviceName, true, "", false)});
-        doReturn(storage).when(storageFactory).create(serviceName);
+        setUpDefaultConfig(serviceName, false);
+        doReturn(storage).when(storageFactory).createAuthenticatedStorage(serviceName);
         doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
         doReturn(configuration).when(configurationService).getConfiguration();
 
@@ -117,7 +125,7 @@ public class ReplicationServiceTest {
     @Test(expectedExceptions = {StorageException.class})
     public void testDeleteCascadingWithBackupsWithStorageException() {
         doThrow(new StorageException("Mocked storage exception")).when(cleanableStorage).delete(any());
-        doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanable(any());
+        doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanableStorage(any());
         doReturn(storageFactory).when(configurationService).createStorageFactory();
 
         StoredRecord parentRecord = new StoredRecord("1", "1");
@@ -133,7 +141,7 @@ public class ReplicationServiceTest {
     @Test(expectedExceptions = {RuntimeException.class})
     public void testDeleteCascadingWithBackupsWithRuntimeException() {
         doThrow(new RuntimeException("Mocked runtime exception")).when(cleanableStorage).delete(any());
-        doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanable(any());
+        doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanableStorage(any());
         doReturn(storageFactory).when(configurationService).createStorageFactory();
 
         StoredRecord parentRecord = new StoredRecord("1", "1");
@@ -149,7 +157,7 @@ public class ReplicationServiceTest {
     @Test
     public void testForceDeleteCascadingWithBackupsWithStorageException() {
         doThrow(new StorageException("Mocked storage exception")).when(cleanableStorage).delete(any());
-        doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanable(any());
+        doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanableStorage(any());
         doReturn(storageFactory).when(configurationService).createStorageFactory();
 
         StoredRecord parentRecord = new StoredRecord("1", "1");
@@ -165,7 +173,7 @@ public class ReplicationServiceTest {
     @Test
     public void testForceDeleteCascadingWithBackupsWithRuntimeException() {
         doThrow(new RuntimeException("Mocked runtime exception")).when(cleanableStorage).delete(any());
-        doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanable(any());
+        doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanableStorage(any());
         doReturn(storageFactory).when(configurationService).createStorageFactory();
 
         StoredRecord parentRecord = new StoredRecord("1", "1");
@@ -176,6 +184,26 @@ public class ReplicationServiceTest {
         replicationService.deleteCascading(childRecord, true, parentRecord);
         assertTrue(childRecord.getBackups().isEmpty(), "Backups removed");
         verify(historyService, times(1)).addAndNotify(any());
+    }
+
+    @Test
+    public void testDeleteRequiresLogin() {
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", storage)).when(cleanableStorage).delete(any());
+        doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanableStorage(any());
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+
+        StoredRecord parentRecord = new StoredRecord("1", "1");
+        StoredRecord childRecord = new StoredRecord("22", "22", null, parentRecord.getId().toString());
+        parentRecord.getVersions().add(childRecord);
+        RecordMeta metaToDelete = new RecordMeta("a", "b", 4);
+        childRecord.getBackups().put("service", metaToDelete);
+
+        replicationService.deleteCascading(childRecord, false, parentRecord);
+        assertTrue(childRecord.getBackups().isEmpty(), "Backups removed");
+        verifyNoMoreInteractions(historyService);
+        verify(storage).login();
+        verify(storage).delete(metaToDelete);
+        verify(storage).logout();
     }
 
 }

@@ -19,3 +19,5 @@ task check(type: YarnTask) {
 task build(type: YarnTask) {
   args = ['install']
 }
+
+build.dependsOn check

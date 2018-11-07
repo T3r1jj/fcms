@@ -28,7 +28,7 @@ public class ConfigurationControllerTest {
 
     @Test
     public void testGetConfigurationShouldReturnMockedConfiguration() {
-        when(configurationService.getConfiguration()).thenReturn(defaultConfig);
+        when(configurationService.getFixedConfiguration()).thenReturn(defaultConfig);
 
         RestAssuredMockMvc.given()
                 .standaloneSetup(new ConfigurationController(configurationService))

@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.io.InputStream;
 import java.util.*;
 
 @Document
@@ -79,6 +80,10 @@ public class StoredRecord {
 
     public void setRootId(ObjectId rootId) {
         this.rootId = rootId;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
     }
 
     public StoredRecord findParent(ObjectId id) {

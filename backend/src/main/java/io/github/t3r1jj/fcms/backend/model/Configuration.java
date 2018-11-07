@@ -2,14 +2,15 @@ package io.github.t3r1jj.fcms.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.github.t3r1jj.fcms.backend.controller.RecordController;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static io.github.t3r1jj.fcms.backend.Utils.not;
 
 @Document
 public class Configuration {
@@ -20,8 +21,8 @@ public class Configuration {
     @Id
     private final String id = getDefaultId();
     private ExternalService[] services;
-    private int primaryBackupCount = 1;
-    private int secondaryBackupCount = 0;
+    private int primaryBackupLimit = 1;
+    private int secondaryBackupLimit = 0;
 
     public Configuration(@JsonProperty("services") ExternalService[] services) {
         this.services = services;
@@ -40,20 +41,20 @@ public class Configuration {
         return this;
     }
 
-    public int getPrimaryBackupCount() {
-        return primaryBackupCount;
+    public int getPrimaryBackupLimit() {
+        return primaryBackupLimit;
     }
 
-    public void setPrimaryBackupCount(int primaryBackupCount) {
-        this.primaryBackupCount = primaryBackupCount;
+    public void setPrimaryBackupLimit(int primaryBackupLimit) {
+        this.primaryBackupLimit = primaryBackupLimit;
     }
 
-    public int getSecondaryBackupCount() {
-        return secondaryBackupCount;
+    public int getSecondaryBackupLimit() {
+        return secondaryBackupLimit;
     }
 
-    public void setSecondaryBackupCount(int secondaryBackupCount) {
-        this.secondaryBackupCount = secondaryBackupCount;
+    public void setSecondaryBackupLimit(int secondaryBackupLimit) {
+        this.secondaryBackupLimit = secondaryBackupLimit;
     }
 
     @Override
@@ -77,4 +78,33 @@ public class Configuration {
         return "{" + " services='" + Arrays.toString(getServices()) + "'" + "}";
     }
 
+    public void merge(Configuration configuration) {
+        ExternalService[] validServices = this.getServices();
+        ExternalService[] services = configuration.getServices();
+        for (int i = 0; i < validServices.length; i++) {
+            for (ExternalService service : services) {
+                if (validServices[i].hashCode() == service.hashCode()) {
+                    validServices[i] = service;
+                }
+            }
+        }
+        this.setPrimaryBackupLimit(configuration.getPrimaryBackupLimit());
+        this.setSecondaryBackupLimit(configuration.getSecondaryBackupLimit());
+    }
+
+    @JsonIgnore
+    public Stream<ExternalService> getEnabledPrimaryStream(Predicate<? super ExternalService> predicate) {
+        return Stream.of(services)
+                .filter(ExternalService::isEnabled)
+                .filter(ExternalService::isPrimary)
+                .filter(predicate);
+    }
+
+    @JsonIgnore
+    public Stream<ExternalService> getEnabledSecondaryStream(Predicate<? super ExternalService> predicate) {
+        return Stream.of(services)
+                .filter(ExternalService::isEnabled)
+                .filter(not(ExternalService::isPrimary))
+                .filter(predicate);
+    }
 }

@@ -85,4 +85,16 @@ public class StorageFactoryTest {
         assertThat(storage.isPresent(), is(false));
     }
 
+    @Test(expectedExceptions = {RuntimeException.class})
+    public void createUpstreamStorageIgnoreAuthenticatedStorageMega() {
+        StorageFactory factory = new StorageFactory();
+        factory.createUpstreamService("Mega");
+    }
+
+    @Test(expectedExceptions = {RuntimeException.class})
+    public void createUpstreamStorageIgnoreAuthenticatedStorageGoogleDrive() {
+        StorageFactory factory = new StorageFactory();
+        factory.createUpstreamService("GoogleDrive");
+    }
+
 }

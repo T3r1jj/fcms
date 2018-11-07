@@ -26,9 +26,17 @@ class StorageFactory {
         this.configuration = createEmptyExternalConfiguration();
     }
 
+    StorageFactory(Configuration configuration) {
+        this.configuration = configuration;
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
     private Configuration createEmptyExternalConfiguration() {
         ParameterNameDiscoverer nameDiscoverer = new DefaultParameterNameDiscoverer();
-        Collection<Class<UpstreamStorage>> foundClasses = findStorageClasses(UpstreamStorage.class);
+        Collection<Class<UpstreamStorage>> foundClasses = findStorageClasses(new StorageClassFilter<UpstreamStorage>(UpstreamStorage.class));
         ExternalService[] externalServices = foundClasses.stream().map(aClass -> {
             Constructor constructor = getDefaultOrMaxConstructor(aClass);
             String[] parameterNames = Objects.requireNonNull(nameDiscoverer.getParameterNames(constructor));
@@ -40,62 +48,40 @@ class StorageFactory {
         return new Configuration(externalServices);
     }
 
-    @NotNull
-    private <T> Class<T> storageClassForName(String name) {
-        try {
-            //noinspection unchecked
-            return (Class<T>) Class.forName(name);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @NotNull
-    private <T extends Storage> Collection<Class<T>> findStorageClasses(Class<T> storageBaseInterface) {
-        ClassFinder finder = new ClassFinder();
-        finder.addClassPath();
-        ClassFilter filter =
-                new AndClassFilter(
-                        new NotClassFilter(new InterfaceOnlyClassFilter()),
-                        new SubclassClassFilter(storageBaseInterface),
-                        new NotClassFilter(new AbstractClassFilter()));
-        Collection<ClassInfo> foundClasses = new ArrayList<>();
-        finder.findClasses(foundClasses, filter);
-        return foundClasses.stream()
-                .map(c -> this.<T>storageClassForName(c.getClassName()))
-                .collect(Collectors.toList());
-    }
-
-    @NotNull
-    private Constructor getDefaultOrMaxConstructor(Class aClass) {
-        Constructor[] constructors = aClass.getConstructors();
-        return Stream.of(constructors)
-                .min(Comparator.comparingInt(Constructor::getParameterCount))
-                .orElseThrow(() -> new RuntimeException(
-                        String.format("Cannot find a default constructor for %s or another one with minimal param count to instantiate it.",
-                                aClass.getName())));
-    }
-
-    StorageFactory(Configuration configuration) {
-        this.configuration = configuration;
-    }
-
     /**
      * @param primaryService name of primary service
      * @return AuthenticatedStorage which requires login
      */
     @NotNull
     AuthenticatedStorage createAuthenticatedStorage(String primaryService) {
-        return instantiate(primaryService, AuthenticatedStorage.class);
+        return instantiate(primaryService, new StorageClassFilter<>(AuthenticatedStorage.class));
+    }
+
+    /**
+     * @param externalService any service
+     * @return optional service which may require authentication by throwing StorageException on delete with AuthenticatedStorage getter
+     */
+    @NotNull
+    Optional<CleanableStorage> createCleanableStorage(String externalService) {
+        try {
+            return Optional.of(instantiate(externalService, new StorageClassFilter<>(CleanableStorage.class)));
+        } catch (RuntimeException re) {
+            logger.debug(String.format("CleanableStorage not found for %s", externalService), re);
+            return Optional.empty();
+        }
+    }
+
+    UpstreamStorage createUpstreamService(String service) {
+        return instantiate(service, new StorageClassFilter<>(UpstreamStorage.class, Storage.class));
     }
 
     @NotNull
-    private <T extends Storage> T instantiate(String externalService, Class<T> storageBaseInterface) {
+    private <T extends Storage> T instantiate(String externalService, StorageClassFilter<T> storageClassFilter) {
         ExternalService service = Stream.of(configuration.getServices())
                 .filter(s -> s.getName().equals(externalService))
                 .findAny()
                 .orElseThrow(() -> new RuntimeException(String.format("%s service not found", externalService)));
-        Class<T> storageClass = findStorageClasses(storageBaseInterface).stream()
+        Class<T> storageClass = findStorageClasses(storageClassFilter).stream()
                 .filter(s -> s.getSimpleName().equals(externalService))
                 .findAny()
                 .orElseThrow(() -> new RuntimeException(String.format("%s service class not found", externalService)));
@@ -112,21 +98,40 @@ class StorageFactory {
         }
     }
 
-    /**
-     * @param externalService any service
-     * @return optional service which may require authentication by throwing StorageException on delete with AuthenticatedStorage getter
-     */
     @NotNull
-    Optional<CleanableStorage> createCleanableStorage(String externalService) {
-        try {
-            return Optional.of(instantiate(externalService, CleanableStorage.class));
-        } catch (RuntimeException re) {
-            logger.debug(String.format("CleanableStorage not found for %s", externalService), re);
-            return Optional.empty();
-        }
+    private Constructor getDefaultOrMaxConstructor(Class aClass) {
+        Constructor[] constructors = aClass.getConstructors();
+        return Stream.of(constructors)
+                .min(Comparator.comparingInt(Constructor::getParameterCount))
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("Cannot find a default constructor for %s or another one with minimal param count to instantiate it.",
+                                aClass.getName())));
     }
 
-    public Configuration getConfiguration() {
-        return configuration;
+    @NotNull
+    private <T extends Storage> Collection<Class<T>> findStorageClasses(StorageClassFilter<T> storageClassFilter) {
+        ClassFinder finder = new ClassFinder();
+        finder.addClassPath();
+        ClassFilter filter =
+                new AndClassFilter(
+                        new NotClassFilter(new InterfaceOnlyClassFilter()),
+                        new SubclassClassFilter(storageClassFilter.getIncludeClass()),
+                        new NotClassFilter(new SubclassClassFilter(storageClassFilter.getExcludeClass())),
+                        new NotClassFilter(new AbstractClassFilter()));
+        Collection<ClassInfo> foundClasses = new ArrayList<>();
+        finder.findClasses(foundClasses, filter);
+        return foundClasses.stream()
+                .map(c -> this.<T>storageClassForName(c.getClassName()))
+                .collect(Collectors.toList());
+    }
+
+    @NotNull
+    private <T> Class<T> storageClassForName(String name) {
+        try {
+            //noinspection unchecked
+            return (Class<T>) Class.forName(name);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -20,6 +20,8 @@ public class Configuration {
     @Id
     private final String id = getDefaultId();
     private ExternalService[] services;
+    private int primaryBackupCount = 1;
+    private int secondaryBackupCount = 0;
 
     public Configuration(@JsonProperty("services") ExternalService[] services) {
         this.services = services;
@@ -36,6 +38,22 @@ public class Configuration {
     public Configuration withServices(ExternalService[] apiKeys) {
         this.services = apiKeys;
         return this;
+    }
+
+    public int getPrimaryBackupCount() {
+        return primaryBackupCount;
+    }
+
+    public void setPrimaryBackupCount(int primaryBackupCount) {
+        this.primaryBackupCount = primaryBackupCount;
+    }
+
+    public int getSecondaryBackupCount() {
+        return secondaryBackupCount;
+    }
+
+    public void setSecondaryBackupCount(int secondaryBackupCount) {
+        this.secondaryBackupCount = secondaryBackupCount;
     }
 
     @Override
@@ -59,14 +77,4 @@ public class Configuration {
         return "{" + " services='" + Arrays.toString(getServices()) + "'" + "}";
     }
 
-    @NotNull
-    @JsonIgnore
-    public ExternalService getEnabledPrimaryService() {
-        ExternalService[] services = getServices();
-        return Stream.of(services)
-                .filter(ExternalService::isEnabled)
-                .filter(ExternalService::isPrimary)
-                .findAny()
-                .orElseThrow(() -> new RecordController.ResourceNotFoundException("No enabled primary service found for replication. Update your config."));
-    }
 }

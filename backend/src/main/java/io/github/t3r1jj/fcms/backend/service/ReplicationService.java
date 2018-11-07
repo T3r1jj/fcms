@@ -1,5 +1,6 @@
 package io.github.t3r1jj.fcms.backend.service;
 
+import io.github.t3r1jj.fcms.backend.controller.RecordController;
 import io.github.t3r1jj.fcms.backend.model.*;
 import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorage;
 import io.github.t3r1jj.fcms.external.data.Record;
@@ -7,12 +8,16 @@ import io.github.t3r1jj.fcms.external.data.RecordMeta;
 import io.github.t3r1jj.fcms.external.data.exception.StorageException;
 import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedException;
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
+import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 @Service
 public class ReplicationService {
@@ -26,22 +31,88 @@ public class ReplicationService {
         this.historyService = historyService;
     }
 
-    public void replicateToPrimary(StoredRecord recordToStore) {
+    /**
+     * @param recordToStore record with data to do the first primary replication. Ignores config limits.
+     * @throws io.github.t3r1jj.fcms.backend.controller.RecordController.ResourceNotFoundException if no external service found for replication
+     */
+    void uploadToPrimary(StoredRecord recordToStore) {
         Configuration configuration = configurationService.getConfiguration();
-        ExternalService primaryService = configuration.getEnabledPrimaryService();
+        ExternalService[] services = configuration.getServices();
+        ExternalService primaryService = Stream.of(services)
+                .filter(ExternalService::isEnabled)
+                .filter(ExternalService::isPrimary)
+                .findAny()
+                .orElseThrow(() -> new RecordController.ResourceNotFoundException("No enabled primary service found for replication. Update your config."));
+        loginAndUpload(recordToStore, configuration, primaryService);
+    }
+
+    /**
+     * @param recordToReplicate with data to any left primary service. Ignores config limits.
+     * @return true if replicated
+     */
+    boolean replicateToPrimary(StoredRecord recordToReplicate) {
+        Configuration configuration = configurationService.getConfiguration();
+        ExternalService[] services = configuration.getServices();
+        Optional<ExternalService> anyLeftService = Stream.of(services)
+                .filter(ExternalService::isEnabled)
+                .filter(ExternalService::isPrimary)
+                .filter(s -> !recordToReplicate.getBackups().containsKey(s.getName()))
+                .findAny();
+        if (anyLeftService.isPresent()) {
+            ExternalService primaryService = anyLeftService.get();
+            loginAndUpload(recordToReplicate, configuration, primaryService);
+            return true;
+        }
+        return false;
+    }
+
+    private void loginAndUpload(StoredRecord recordToStore, Configuration configuration, ExternalService primaryService) {
         AuthenticatedStorage storage = configurationService.createStorageFactory(configuration)
                 .createAuthenticatedStorage(primaryService.getName());
         storage.login();
-        Record recordToUpload = new Record(
-                recordToStore.getName(),
-                recordToStore.getId().toString(),
-                new ByteArrayInputStream(recordToStore.getData()));
+        Record recordToUpload = prepareRecord(recordToStore);
         RecordMeta meta = storage.upload(recordToUpload);
         recordToStore.getBackups().put(storage.toString(), meta);
         storage.logout();
     }
 
-    public void deleteCascading(StoredRecord storedRecord, boolean force, StoredRecord root) {
+    /**
+     * @param recordToReplicate with data to any left secondary service. Ignores config limits.
+     * @return true if replicated
+     */
+    boolean replicateToSecondary(StoredRecord recordToReplicate) {
+        Configuration configuration = configurationService.getConfiguration();
+        Optional<ExternalService> anyLeftService = Stream.of(configuration.getServices())
+                .filter(ExternalService::isEnabled)
+                .filter(not(ExternalService::isPrimary))
+                .filter(s -> !recordToReplicate.getBackups().containsKey(s.getName()))
+                .findAny();
+        if (anyLeftService.isPresent()) {
+            ExternalService service = anyLeftService.get();
+            UpstreamStorage upstreamService = configurationService.createStorageFactory(configuration)
+                    .createUpstreamService(service.getName());
+            Record replica = prepareRecord(recordToReplicate);
+            RecordMeta meta = upstreamService.upload(replica);
+            recordToReplicate.getBackups().put(service.getName(), meta);
+            recordService.update(recordToReplicate);
+            return true;
+        }
+        return false;
+    }
+
+    @NotNull
+    private Record prepareRecord(StoredRecord recordToStore) {
+        if (recordToStore.getData() == null || recordToStore.getData().length == 0) {
+            throw new RuntimeException("Dude... there is no data to store!");
+        }
+        return new Record(
+                recordToStore.getName(),
+                recordToStore.getId().toString(),
+                new ByteArrayInputStream(recordToStore.getData())
+        );
+    }
+
+    void deleteCascading(StoredRecord storedRecord, boolean force, StoredRecord root) {
         deleteVersionsBackups(storedRecord, force, root);
         root.findParent(storedRecord.getId()).getVersions().remove(storedRecord);
     }
@@ -136,5 +207,9 @@ public class ReplicationService {
             storage.delete(backup);
             storage.logout();
         }
+    }
+
+    private static <T> Predicate<T> not(Predicate<T> p) {
+        return p.negate();
     }
 }

@@ -101,6 +101,6 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
         StoredRecord storedRecord = new StoredRecord("a", "a");
         assertNull(storedRecord.getDescription());
         recordService.store(storedRecord);
-        verify(replicationService, times(1)).replicateToPrimary(storedRecord);
+        verify(replicationService, times(1)).uploadToPrimary(storedRecord);
     }
 }

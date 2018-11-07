@@ -32,7 +32,7 @@ public class RecordService {
             parent.getRootId().ifPresent(recordToStore::setRootId);
             return parent;
         }).orElse(recordToStore);
-        replicationService.replicateToPrimary(recordToStore);
+        replicationService.uploadToPrimary(recordToStore);
         recordRepository.save(rootRecord);
     }
 
@@ -43,6 +43,12 @@ public class RecordService {
     public void delete(String id) {
         StoredRecord storedRecord = getOne(id);
         replicationService.deleteCascading(storedRecord, false, getRoot(storedRecord));
+        recordRepository.deleteById(storedRecord.getId());
+    }
+
+    public void forceDelete(String id) {
+        StoredRecord storedRecord = getOne(id);
+        replicationService.deleteCascading(storedRecord, true, getRoot(storedRecord));
         recordRepository.deleteById(storedRecord.getId());
     }
 
@@ -58,7 +64,7 @@ public class RecordService {
     }
 
     /**
-     * @param storedRecord to update. If root - updates immediately, if not - searches through root tree and swaps on correct id.
+     * @param storedRecord to update. If root - updates immediately, if not - searches through root tree and swaps on correct id before update.
      */
     void update(StoredRecord storedRecord) {
         if (storedRecord.getRootId().isPresent()) {
@@ -83,13 +89,7 @@ public class RecordService {
         }
     }
 
-    public void forceDelete(String id) {
-        StoredRecord storedRecord = getOne(id);
-        replicationService.deleteCascading(storedRecord, true, getRoot(storedRecord));
-        recordRepository.deleteById(storedRecord.getId());
-    }
-
-    StoredRecord getRoot(StoredRecord storedRecord) {
+    private StoredRecord getRoot(StoredRecord storedRecord) {
         return storedRecord.getRootId().map(this::getOne).orElse(storedRecord);
     }
 

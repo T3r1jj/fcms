@@ -1,13 +1,15 @@
 package io.github.t3r1jj.fcms.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.github.t3r1jj.fcms.external.data.Record;
 import io.github.t3r1jj.fcms.external.data.RecordMeta;
 import org.bson.types.ObjectId;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 import java.util.*;
 
 @Document
@@ -95,6 +97,22 @@ public class StoredRecord {
                     .findAny()
                     .orElse(null);
         }
+    }
+
+    /**
+     * @return Record with data to upload
+     * @throws RuntimeException if there is no data
+     */
+    @NotNull
+    public Record prepareRecord() {
+        if (this.getData() == null || this.getData().length == 0) {
+            throw new RuntimeException("Dude... there is no data to store!");
+        }
+        return new Record(
+                this.getName(),
+                this.getId().toString(),
+                new ByteArrayInputStream(this.getData())
+        );
     }
 
     @Override

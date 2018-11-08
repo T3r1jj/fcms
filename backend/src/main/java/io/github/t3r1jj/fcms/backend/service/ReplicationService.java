@@ -10,19 +10,14 @@ import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedExcep
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
 import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage;
 import org.apache.commons.io.IOUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
-
-import static io.github.t3r1jj.fcms.backend.Utils.not;
 
 @Service
 public class ReplicationService {
@@ -41,14 +36,13 @@ public class ReplicationService {
      * @throws io.github.t3r1jj.fcms.backend.controller.RecordController.ResourceNotFoundException if no external service found for replication
      */
     void uploadToPrimary(StoredRecord recordToStore) {
-        Configuration configuration = configurationService.getFixedConfiguration();
-        ExternalService[] services = configuration.getServices();
-        ExternalService primaryService = Stream.of(services)
-                .filter(ExternalService::isEnabled)
-                .filter(ExternalService::isPrimary)
+        StorageFactory storageFactory = configurationService.createStorageFactory();
+        Configuration configuration = storageFactory.getConfiguration();
+        ExternalService primaryService = configuration.getEnabledServicesStream(true)
                 .findAny()
                 .orElseThrow(() -> new RecordController.ResourceNotFoundException("No enabled primary service found for replication. Update your config."));
-        loginAndUpload(recordToStore, configuration, primaryService);
+        AuthenticatedStorage authenticatedStorage = storageFactory.createAuthenticatedStorage(primaryService.getName());
+        upload(recordToStore, authenticatedStorage);
     }
 
     public void safelyReplicateAll() {
@@ -70,56 +64,66 @@ public class ReplicationService {
         }
     }
 
-    private void replicate(StoredRecord storedRecord) {
+    public void replicate(StoredRecord storedRecord) {
         StorageFactory storageFactory = configurationService.createStorageFactory();
         if (storedRecord.getData() == null) {
-            downloadRecord(storedRecord, storageFactory);
+            populateRecord(storedRecord, storageFactory);
         }
-        replicateToPrimary(storedRecord, storageFactory);
-        replicateToSecondary(storedRecord, storageFactory);
+        Configuration configuration = storageFactory.getConfiguration();
+        ReplicationCalculator replicationCalculator = new ReplicationCalculator(storedRecord, configuration);
+        replicateRecordsTo(storedRecord, replicationCalculator, true);
+        replicateRecordsTo(storedRecord, replicationCalculator, false);
     }
 
-    private void replicateToSecondary(StoredRecord storedRecord, StorageFactory storageFactory) {
-        Configuration configuration = storageFactory.getConfiguration();
-        long backupLimit = configuration.getPrimaryBackupLimit();
-        long backupCount = storedRecord.getBackups().keySet().size() -
-                Stream.of(configuration.getServices())
-                        .filter(ExternalService::isPrimary)
-                        .filter(s -> storedRecord.getBackups().containsKey(s.getName()))
-                        .count();
+    private void replicateRecordsTo(StoredRecord storedRecord, ReplicationCalculator replicationCalculator, boolean primary) {
+        replicationCalculator.calculateForPrimary(primary);
+        long backupLimit = replicationCalculator.getBackupLimit();
+        long backupCount = replicationCalculator.getBackupCount();
         while (backupCount < backupLimit) {
-            if (replicateDataToSecondary(storedRecord)) {
+            if (replicateRecordTo(storedRecord, primary)) {
                 recordService.update(storedRecord);
             }
             backupCount++;
         }
     }
 
-    private void replicateToPrimary(StoredRecord storedRecord, StorageFactory storageFactory) {
+    /**
+     * @param recordToReplicate with data to any left service. Ignores config limits.
+     * @param primary           true if replicate to primary service
+     * @return true if replicated and db update is required
+     */
+    boolean replicateRecordTo(StoredRecord recordToReplicate, boolean primary) {
+        StorageFactory storageFactory = configurationService.createStorageFactory();
         Configuration configuration = storageFactory.getConfiguration();
-        long backupLimit = configuration.getPrimaryBackupLimit();
-        long backupCount = storedRecord.getBackups().keySet().size() -
-                Stream.of(configuration.getServices())
-                        .filter(not(ExternalService::isPrimary))
-                        .filter(s -> storedRecord.getBackups().containsKey(s.getName()))
-                        .count();
-        while (backupCount < backupLimit) {
-            if (replicateDataToPrimary(storedRecord)) {
-                recordService.update(storedRecord);
-            }
-            backupCount++;
+        Optional<ExternalService> anyLeftService = configuration.getEnabledServicesStream(primary)
+                .filter(s -> !recordToReplicate.getBackups().containsKey(s.getName()))
+                .findAny();
+        if (anyLeftService.isPresent()) {
+            ExternalService primaryService = anyLeftService.get();
+            UpstreamStorage storage = storageFactory.createUpstreamStorage(primaryService);
+            upload(recordToReplicate, storage);
+            return true;
         }
+        return false;
     }
 
-    private void downloadRecord(StoredRecord storedRecord, StorageFactory storageFactory) {
+    private void populateRecord(StoredRecord storedRecord, StorageFactory storageFactory) {
         Configuration configuration = storageFactory.getConfiguration();
         Optional<ExternalService> downloadService = configuration
-                .getEnabledPrimaryStream(s -> storedRecord.getBackups().containsKey(s.getName()))
+                .getEnabledServicesStream(true)
+                .filter(s -> storedRecord.getBackups().containsKey(s.getName()))
                 .findAny();
         downloadService
-                .map(s -> downloadRecord(storedRecord.getBackups().get(s.getName()), storageFactory.createAuthenticatedStorage(s.getName())))
+                .map(s -> download(storedRecord.getBackups().get(s.getName()), storageFactory.createAuthenticatedStorage(s.getName())))
                 .map(r -> toByteArrayOrNull(r.getData()))
                 .ifPresent(storedRecord::setData);
+    }
+
+    private Record download(RecordMeta meta, AuthenticatedStorage storage) {
+        storage.login();
+        Record record = storage.download(meta.getPath());
+        storage.logout();
+        return record;
     }
 
     private byte[] toByteArrayOrNull(InputStream inputStream) {
@@ -132,76 +136,18 @@ public class ReplicationService {
         }
     }
 
-    private Record downloadRecord(RecordMeta meta, AuthenticatedStorage storage) {
-        storage.login();
-        Record record = storage.download(meta.getPath());
-        storage.logout();
-        return record;
-    }
-
-    /**
-     * @param recordToReplicate with data to any left primary service. Ignores config limits.
-     * @return true if replicated and needs db update
-     */
-    boolean replicateDataToPrimary(StoredRecord recordToReplicate) {
-        Configuration configuration = configurationService.getFixedConfiguration();
-        ExternalService[] services = configuration.getServices();
-        Optional<ExternalService> anyLeftService = Stream.of(services)
-                .filter(ExternalService::isEnabled)
-                .filter(ExternalService::isPrimary)
-                .filter(s -> !recordToReplicate.getBackups().containsKey(s.getName()))
-                .findAny();
-        if (anyLeftService.isPresent()) {
-            ExternalService primaryService = anyLeftService.get();
-            loginAndUpload(recordToReplicate, configuration, primaryService);
-            return true;
+    private void upload(StoredRecord recordToStore, UpstreamStorage storage) {
+        Record recordToUpload = recordToStore.prepareRecord();
+        RecordMeta meta;
+        try {
+            meta = storage.upload(recordToUpload);
+        } catch (StorageUnauthenticatedException sue) {
+            AuthenticatedStorage authenticatedStorage = sue.getStorage();
+            authenticatedStorage.login();
+            meta = authenticatedStorage.upload(recordToUpload);
+            authenticatedStorage.logout();
         }
-        return false;
-    }
-
-    private void loginAndUpload(StoredRecord recordToStore, Configuration configuration, ExternalService primaryService) {
-        AuthenticatedStorage storage = configurationService.createStorageFactory(configuration)
-                .createAuthenticatedStorage(primaryService.getName());
-        storage.login();
-        Record recordToUpload = prepareRecord(recordToStore);
-        RecordMeta meta = storage.upload(recordToUpload);
         recordToStore.getBackups().put(storage.toString(), meta);
-        storage.logout();
-    }
-
-    /**
-     * @param recordToReplicate with data to any left secondary service. Ignores config limits.
-     * @return true if replicated and needs db update
-     */
-    boolean replicateDataToSecondary(StoredRecord recordToReplicate) {
-        Configuration configuration = configurationService.getFixedConfiguration();
-        Optional<ExternalService> anyLeftService = Stream.of(configuration.getServices())
-                .filter(ExternalService::isEnabled)
-                .filter(not(ExternalService::isPrimary))
-                .filter(s -> !recordToReplicate.getBackups().containsKey(s.getName()))
-                .findAny();
-        if (anyLeftService.isPresent()) {
-            ExternalService service = anyLeftService.get();
-            UpstreamStorage upstreamService = configurationService.createStorageFactory(configuration)
-                    .createUpstreamService(service.getName());
-            Record replica = prepareRecord(recordToReplicate);
-            RecordMeta meta = upstreamService.upload(replica);
-            recordToReplicate.getBackups().put(service.getName(), meta);
-            return true;
-        }
-        return false;
-    }
-
-    @NotNull
-    private Record prepareRecord(StoredRecord recordToStore) {
-        if (recordToStore.getData() == null || recordToStore.getData().length == 0) {
-            throw new RuntimeException("Dude... there is no data to store!");
-        }
-        return new Record(
-                recordToStore.getName(),
-                recordToStore.getId().toString(),
-                new ByteArrayInputStream(recordToStore.getData())
-        );
     }
 
     void deleteCascading(StoredRecord storedRecord, boolean force, StoredRecord root) {
@@ -262,7 +208,7 @@ public class ReplicationService {
             if (force) {
                 forceDeleteBackup(it, backup);
             } else {
-                deleteWithLogin(backup, it);
+                delete(backup, it);
             }
             return true;
         }).orElse(false);
@@ -270,7 +216,7 @@ public class ReplicationService {
 
     private void forceDeleteBackup(CleanableStorage storage, RecordMeta meta) {
         try {
-            deleteWithLogin(meta, storage);
+            delete(meta, storage);
         } catch (StorageException se) {
             historyService.addAndNotify(new EventBuilder()
                     .formatTitle("DELETE [%s]", storage.toString())
@@ -290,7 +236,7 @@ public class ReplicationService {
         }
     }
 
-    private void deleteWithLogin(RecordMeta backup, CleanableStorage cleanableStorage) {
+    private void delete(RecordMeta backup, CleanableStorage cleanableStorage) {
         try {
             cleanableStorage.delete(backup);
         } catch (StorageUnauthenticatedException sue) {

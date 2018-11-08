@@ -7,10 +7,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static io.github.t3r1jj.fcms.backend.Utils.not;
+import static io.github.t3r1jj.fcms.backend.Utils.notIf;
 
 @Document
 public class Configuration {
@@ -93,18 +92,14 @@ public class Configuration {
     }
 
     @JsonIgnore
-    public Stream<ExternalService> getEnabledPrimaryStream(Predicate<? super ExternalService> predicate) {
+    public Stream<ExternalService> getEnabledServicesStream(boolean primary) {
         return Stream.of(services)
                 .filter(ExternalService::isEnabled)
-                .filter(ExternalService::isPrimary)
-                .filter(predicate);
+                .filter(notIf(ExternalService::isPrimary, !primary));
     }
 
-    @JsonIgnore
-    public Stream<ExternalService> getEnabledSecondaryStream(Predicate<? super ExternalService> predicate) {
-        return Stream.of(services)
-                .filter(ExternalService::isEnabled)
-                .filter(not(ExternalService::isPrimary))
-                .filter(predicate);
+    public Stream<ExternalService> stream() {
+        return Stream.of(services);
     }
+
 }

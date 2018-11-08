@@ -11,6 +11,7 @@ import io.github.t3r1jj.fcms.external.data.RecordMeta;
 import io.github.t3r1jj.fcms.external.data.exception.StorageException;
 import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedException;
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
+import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -35,12 +36,17 @@ public class ReplicationServiceTest {
     @Mock
     private CleanableStorage cleanableStorage;
     @Mock
-    private AuthenticatedStorage storage;
+    private AuthenticatedStorage authenticatedStorage;
+    @Mock
+    private AuthenticatedStorage unauthenticatedStorage;
+    @Mock
+    private UpstreamStorage upstreamStorage;
     @Mock
     private StorageFactory storageFactory;
     private ReplicationService replicationService;
 
     private Configuration configuration;
+    private ExternalService service;
 
     @BeforeMethod
     public void setUp() {
@@ -53,69 +59,67 @@ public class ReplicationServiceTest {
     }
 
     private void setUpDefaultConfig(String serviceName, boolean enabled, boolean primary) {
-        configuration = new Configuration(new ExternalService[]{
-                new ExternalService(serviceName, primary, enabled, new ExternalService.ApiKey("label123", "key123"))});
+        service = new ExternalService(serviceName, primary, enabled, new ExternalService.ApiKey("label123", "key123"));
+        configuration = new Configuration(new ExternalService[]{service});
     }
 
     @Test
     public void testUploadToPrimary() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, true);
-        doReturn(storage).when(storageFactory).createAuthenticatedStorage(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(unauthenticatedStorage).when(storageFactory).createAuthenticatedStorage(serviceName);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any());
 
         byte[] data = "some text".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
         replicationService.uploadToPrimary(recordToStore);
 
-        verify(storage).login();
-        verify(storage).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
-        verify(storage).logout();
+        verify(authenticatedStorage).login();
+        verify(authenticatedStorage).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+        verify(authenticatedStorage).logout();
     }
 
     @Test
     public void testReplicateDataToPrimary() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, true, true);
-        configuration.setSecondaryBackupLimit(1);
-        doReturn(storage).when(storageFactory).createAuthenticatedStorage(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(authenticatedStorage).when(storageFactory).createUpstreamStorage(service);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
 
         byte[] data = "some text".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
-        boolean replicated = replicationService.replicateDataToPrimary(recordToStore);
+        boolean replicated = replicationService.replicateRecordTo(recordToStore, true);
         assertTrue(replicated);
-        verify(storage).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+        verify(authenticatedStorage).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
     }
 
     @Test(expectedExceptions = {RuntimeException.class})
     public void testReplicateDataToPrimaryFailsOnEmptyData() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, true, true);
-        configuration.setSecondaryBackupLimit(1);
-        doReturn(storage).when(storageFactory).createAuthenticatedStorage(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(serviceName);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
 
         byte[] data = "".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
-        replicationService.replicateDataToPrimary(recordToStore);
+        replicationService.replicateRecordTo(recordToStore, true);
     }
 
     @Test(expectedExceptions = {RuntimeException.class})
     public void testReplicateDataToPrimaryFailsOnNullData() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, true, true);
-        configuration.setSecondaryBackupLimit(1);
-        doReturn(storage).when(storageFactory).createAuthenticatedStorage(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(serviceName);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
 
         byte[] data = null;
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
-        replicationService.replicateDataToPrimary(recordToStore);
+        replicationService.replicateRecordTo(recordToStore, true);
     }
 
 
@@ -123,82 +127,82 @@ public class ReplicationServiceTest {
     public void testReplicateDataToPrimaryLimitedByServiceNumber() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, true, false);
-        doReturn(storage).when(storageFactory).createAuthenticatedStorage(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(serviceName);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
 
         byte[] data = "some text".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
         recordToStore.getBackups().put(serviceName, null);
-        boolean replicated = replicationService.replicateDataToPrimary(recordToStore);
+        boolean replicated = replicationService.replicateRecordTo(recordToStore, true);
         assertFalse(replicated);
-        verifyNoMoreInteractions(storage);
+        verifyNoMoreInteractions(authenticatedStorage);
     }
 
     @Test
     public void testReplicateDataToSecondary() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, true, false);
-        doReturn(storage).when(storageFactory).createUpstreamService(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(authenticatedStorage).when(storageFactory).createUpstreamStorage(service);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
 
         byte[] data = "some text".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
-        boolean replicated = replicationService.replicateDataToSecondary(recordToStore);
+        boolean replicated = replicationService.replicateRecordTo(recordToStore, false);
         assertTrue(replicated);
-        verify(storage).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+        verify(authenticatedStorage).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
     }
 
     @Test(expectedExceptions = {RuntimeException.class})
     public void testReplicateDataToSecondaryFailsOnEmptyData() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, true, false);
-        doReturn(storage).when(storageFactory).createUpstreamService(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(authenticatedStorage).when(storageFactory).createUpstreamOnlyStorage(serviceName);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
 
         byte[] data = "".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
-        replicationService.replicateDataToSecondary(recordToStore);
+        replicationService.replicateRecordTo(recordToStore, false);
     }
 
     @Test(expectedExceptions = {RuntimeException.class})
     public void testReplicateDataToSecondaryFailsOnNullData() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, true, false);
-        doReturn(storage).when(storageFactory).createUpstreamService(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(authenticatedStorage).when(storageFactory).createUpstreamOnlyStorage(serviceName);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
 
         byte[] data = null;
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
-        replicationService.replicateDataToSecondary(recordToStore);
+        replicationService.replicateRecordTo(recordToStore, false);
     }
 
     @Test
     public void testReplicateDataToSecondaryLimitedByServiceNumber() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, true, false);
-        doReturn(storage).when(storageFactory).createUpstreamService(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(authenticatedStorage).when(storageFactory).createUpstreamOnlyStorage(serviceName);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
 
         byte[] data = "some text".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
         recordToStore.getBackups().put(serviceName, null);
-        boolean replicated = replicationService.replicateDataToSecondary(recordToStore);
+        boolean replicated = replicationService.replicateRecordTo(recordToStore, false);
         assertFalse(replicated);
-        verifyNoMoreInteractions(storage);
+        verifyNoMoreInteractions(authenticatedStorage);
     }
 
     @Test(expectedExceptions = {RecordController.ResourceNotFoundException.class})
     public void testUploadToPrimaryConfigNotFound() {
         String serviceName = "service name";
         Configuration configuration = new Configuration(new ExternalService[]{});
-        doReturn(storage).when(storageFactory).createAuthenticatedStorage(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(serviceName);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
 
         byte[] data = "sine text".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
@@ -209,9 +213,9 @@ public class ReplicationServiceTest {
     public void testUploadToPrimaryConfigNotFoundEnabled() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, false);
-        doReturn(storage).when(storageFactory).createAuthenticatedStorage(serviceName);
-        doReturn(storageFactory).when(configurationService).createStorageFactory(configuration);
-        doReturn(configuration).when(configurationService).getFixedConfiguration();
+        doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(serviceName);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
 
         byte[] data = "sine text".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
@@ -247,7 +251,7 @@ public class ReplicationServiceTest {
 
     @Test(expectedExceptions = {StorageException.class})
     public void testDeleteCascadingWithBackupsWithStorageException() {
-        doThrow(new StorageException("Mocked storage exception")).when(cleanableStorage).delete(any());
+        doThrow(new StorageException("Mocked authenticatedStorage exception")).when(cleanableStorage).delete(any());
         doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanableStorage(any());
         doReturn(storageFactory).when(configurationService).createStorageFactory();
 
@@ -279,7 +283,7 @@ public class ReplicationServiceTest {
 
     @Test
     public void testForceDeleteCascadingWithBackupsWithStorageException() {
-        doThrow(new StorageException("Mocked storage exception")).when(cleanableStorage).delete(any());
+        doThrow(new StorageException("Mocked authenticatedStorage exception")).when(cleanableStorage).delete(any());
         doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanableStorage(any());
         doReturn(storageFactory).when(configurationService).createStorageFactory();
 
@@ -311,7 +315,7 @@ public class ReplicationServiceTest {
 
     @Test
     public void testDeleteRequiresLogin() {
-        doThrow(new StorageUnauthenticatedException("Mocked sue exception", storage)).when(cleanableStorage).delete(any());
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(cleanableStorage).delete(any());
         doReturn(Optional.of(cleanableStorage)).when(storageFactory).createCleanableStorage(any());
         doReturn(storageFactory).when(configurationService).createStorageFactory();
 
@@ -324,9 +328,77 @@ public class ReplicationServiceTest {
         replicationService.deleteCascading(childRecord, false, parentRecord);
         assertTrue(childRecord.getBackups().isEmpty(), "Backups removed");
         verifyNoMoreInteractions(historyService);
-        verify(storage).login();
-        verify(storage).delete(metaToDelete);
-        verify(storage).logout();
+        verify(authenticatedStorage).login();
+        verify(authenticatedStorage).delete(metaToDelete);
+        verify(authenticatedStorage).logout();
+    }
+
+
+    @Test(expectedExceptions = {RuntimeException.class})
+    public void testReplicateNoPrimaryBackup() {
+        String serviceName = "service name";
+        String secondaryServiceName = "service name 2";
+        service = new ExternalService(serviceName, true, true, new ExternalService.ApiKey("label123", "key123"));
+        ExternalService secondaryService = new ExternalService(secondaryServiceName, false, true, new ExternalService.ApiKey("label123", "key123"));
+        configuration = new Configuration(new ExternalService[]{service, secondaryService});
+        configuration.setSecondaryBackupLimit(1);
+        configuration.setPrimaryBackupLimit(1);
+
+        doReturn(unauthenticatedStorage).when(storageFactory).createUpstreamStorage(service);
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any());
+        StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
+
+        replicationService.replicate(recordToStore);
+    }
+
+    @Test
+    public void testReplicateSuccessfullyToOneSecondary() {
+        String serviceName = "service name";
+        String secondaryServiceName = "service name 2";
+        service = new ExternalService(serviceName, true, true, new ExternalService.ApiKey("label123", "key123"));
+        ExternalService secondaryService = new ExternalService(secondaryServiceName, false, true, new ExternalService.ApiKey("label123", "key123"));
+        configuration = new Configuration(new ExternalService[]{service, secondaryService});
+        configuration.setSecondaryBackupLimit(1);
+
+        doReturn(upstreamStorage).when(storageFactory).createUpstreamStorage(secondaryService);
+        doReturn(unauthenticatedStorage).when(storageFactory).createUpstreamStorage(service);
+        doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(service.getName());
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any());
+        StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
+        byte[] data = "some text".getBytes();
+        recordToStore.getBackups().put(serviceName, new RecordMeta(recordToStore.getName(), "", data.length));
+        when(authenticatedStorage.download(any())).thenReturn(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+
+        replicationService.replicate(recordToStore);
+        verify(upstreamStorage, times(1)).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+    }
+
+    @Test
+    public void testReplicateSuccessfullyToOnePrimary() {
+        String serviceName = "service name";
+        String secondaryServiceName = "service name 2";
+        service = new ExternalService(serviceName, true, true, new ExternalService.ApiKey("label123", "key123"));
+        ExternalService anotherPrimaryService = new ExternalService(secondaryServiceName, true, true, new ExternalService.ApiKey("label123", "key123"));
+        configuration = new Configuration(new ExternalService[]{service, anotherPrimaryService});
+        configuration.setPrimaryBackupLimit(2);
+
+        doReturn(unauthenticatedStorage).when(storageFactory).createUpstreamStorage(anotherPrimaryService);
+        doReturn(unauthenticatedStorage).when(storageFactory).createUpstreamStorage(service);
+        doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(service.getName());
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any());
+        StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
+        byte[] data = "some text".getBytes();
+        recordToStore.getBackups().put(serviceName, new RecordMeta(recordToStore.getName(), "", data.length));
+        when(authenticatedStorage.download(any())).thenReturn(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+
+        replicationService.replicate(recordToStore);
+        verify(authenticatedStorage, times(1)).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
     }
 
 }

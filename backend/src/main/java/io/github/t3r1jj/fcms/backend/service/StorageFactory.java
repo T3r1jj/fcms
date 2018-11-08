@@ -71,8 +71,14 @@ class StorageFactory {
         }
     }
 
-    UpstreamStorage createUpstreamService(String service) {
+    UpstreamStorage createUpstreamOnlyStorage(String service) {
         return instantiate(service, new StorageClassFilter<>(UpstreamStorage.class, Storage.class));
+    }
+
+    UpstreamStorage createUpstreamStorage(ExternalService service) {
+        return service.isPrimary()
+                ? createAuthenticatedStorage(service.getName())
+                : createUpstreamOnlyStorage(service.getName());
     }
 
     @NotNull

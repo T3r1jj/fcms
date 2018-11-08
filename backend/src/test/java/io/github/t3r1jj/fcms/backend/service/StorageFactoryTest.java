@@ -88,13 +88,13 @@ public class StorageFactoryTest {
     @Test(expectedExceptions = {RuntimeException.class})
     public void createUpstreamStorageIgnoreAuthenticatedStorageMega() {
         StorageFactory factory = new StorageFactory();
-        factory.createUpstreamService("Mega");
+        factory.createUpstreamOnlyStorage("Mega");
     }
 
     @Test(expectedExceptions = {RuntimeException.class})
     public void createUpstreamStorageIgnoreAuthenticatedStorageGoogleDrive() {
         StorageFactory factory = new StorageFactory();
-        factory.createUpstreamService("GoogleDrive");
+        factory.createUpstreamOnlyStorage("GoogleDrive");
     }
 
 }

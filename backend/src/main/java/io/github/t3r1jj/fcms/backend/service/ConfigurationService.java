@@ -15,14 +15,14 @@ public class ConfigurationService {
         this.configurationRepository = configurationRepository;
     }
 
-    public Configuration getFixedConfiguration() {
-        Configuration configuration = getConfiguration();
+    public Configuration getConfiguration() {
+        Configuration configuration = getRecentConfiguration();
         Configuration validConfiguration = new StorageFactory().getConfiguration();
         validConfiguration.merge(configuration);
         return validConfiguration;
     }
 
-    private Configuration getConfiguration() {
+    private Configuration getRecentConfiguration() {
         return configurationRepository.findById(Configuration.getDefaultId())
                 .orElse(new StorageFactory().getConfiguration());
     }
@@ -32,7 +32,7 @@ public class ConfigurationService {
     }
 
     StorageFactory createStorageFactory() {
-        return new StorageFactory(getFixedConfiguration());
+        return new StorageFactory(getConfiguration());
     }
 
     StorageFactory createStorageFactory(Configuration configuration) {

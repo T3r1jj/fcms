@@ -1,16 +1,29 @@
 package io.github.t3r1jj.fcms.backend.service;
 
 import io.github.t3r1jj.fcms.backend.controller.RecordController;
+import io.github.t3r1jj.fcms.backend.model.Configuration;
+import io.github.t3r1jj.fcms.backend.model.ExternalService;
 import io.github.t3r1jj.fcms.backend.model.StoredRecord;
 import io.github.t3r1jj.fcms.backend.repository.StoredRecordRepository;
+import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorage;
+import io.github.t3r1jj.fcms.external.data.Record;
+import io.github.t3r1jj.fcms.external.data.RecordMeta;
+import io.github.t3r1jj.fcms.external.data.exception.StorageException;
+import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedException;
+import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
+import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage;
+import org.apache.commons.io.IOUtils;
 import org.bson.types.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.ListIterator;
+import java.util.Optional;
 
 import static io.github.t3r1jj.fcms.backend.model.StoredRecord.stringToObjectId;
 

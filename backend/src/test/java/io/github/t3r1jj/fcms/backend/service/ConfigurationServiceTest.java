@@ -35,7 +35,7 @@ public class ConfigurationServiceTest {
         doReturn(Optional.empty()).when(configurationRepository).findById(anyString());
 
         Configuration defaultConfiguration = new StorageFactory().getConfiguration();
-        assertEquals(configurationService.getFixedConfiguration(), defaultConfiguration);
+        assertEquals(configurationService.getConfiguration(), defaultConfiguration);
     }
 
 
@@ -47,7 +47,7 @@ public class ConfigurationServiceTest {
         doReturn(Optional.of(invalidConfiguration)).when(configurationRepository).findById(anyString());
 
         Configuration defaultConfiguration = new StorageFactory().getConfiguration();
-        Configuration testedConfiguration = configurationService.getFixedConfiguration();
+        Configuration testedConfiguration = configurationService.getConfiguration();
         assertNotEquals(testedConfiguration, invalidConfiguration);
         assertEquals(testedConfiguration, defaultConfiguration);
     }
@@ -64,7 +64,7 @@ public class ConfigurationServiceTest {
         doReturn(Optional.of(invalidConfiguration)).when(configurationRepository).findById(anyString());
 
         Configuration defaultConfiguration = new StorageFactory().getConfiguration();
-        Configuration testedConfiguration = configurationService.getFixedConfiguration();
+        Configuration testedConfiguration = configurationService.getConfiguration();
         assertNotEquals(testedConfiguration, invalidConfiguration);
         assertNotEquals(testedConfiguration, defaultConfiguration);
 
@@ -84,7 +84,7 @@ public class ConfigurationServiceTest {
         doReturn(Optional.of(invalidConfiguration)).when(configurationRepository).findById(anyString());
 
         Configuration defaultConfiguration = new StorageFactory().getConfiguration();
-        Configuration testedConfiguration = configurationService.getFixedConfiguration();
+        Configuration testedConfiguration = configurationService.getConfiguration();
         assertNotEquals(testedConfiguration, invalidConfiguration);
         assertEquals(testedConfiguration, defaultConfiguration);
     }
@@ -98,7 +98,7 @@ public class ConfigurationServiceTest {
         doReturn(Optional.of(invalidConfiguration)).when(configurationRepository).findById(anyString());
 
         Configuration defaultConfiguration = new StorageFactory().getConfiguration();
-        Configuration testedConfiguration = configurationService.getFixedConfiguration();
+        Configuration testedConfiguration = configurationService.getConfiguration();
         assertNotEquals(testedConfiguration, invalidConfiguration);
         assertEquals(testedConfiguration, defaultConfiguration);
     }

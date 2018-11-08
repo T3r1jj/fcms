@@ -17,7 +17,7 @@ class ConfigurationController {
 
     @GetMapping
     Configuration getConfiguration() {
-        return configurationService.getFixedConfiguration();
+        return configurationService.getConfiguration();
     }
 
     @PostMapping

@@ -21,5 +21,4 @@ public class ReplicationScheduler {
     void startReplication() {
         replicationService.safelyReplicateAll();
     }
-
 }

@@ -45,7 +45,7 @@ open class Dropbox(private val accessToken: String) : AuthenticatedStorageTempla
                 .withMode(WriteMode.OVERWRITE)
                 .uploadAndFinish(record.data)
         return RecordMeta(record.name, record.path, result.size)
-                .apply { result.id }
+                .apply { id = result.id }
     }
 
     override fun doAuthenticatedDownload(filePath: String): Record {

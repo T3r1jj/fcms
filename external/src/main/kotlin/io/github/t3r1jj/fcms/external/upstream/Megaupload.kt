@@ -18,6 +18,7 @@ open class Megaupload(baseUrl: String) : StorageInfoClient<MegauploadApi>(baseUr
         val response = client.upload(body).execute()
         if (response.isSuccessful) {
             return RecordMeta(record.name, response.body()!!.data.file.url.full, size)
+                    .apply { publicPath = path }
         } else {
             val error = gson.fromJson(response.errorBody()!!.charStream(), MegauploadErrorResponse::class.java)
             throw StorageException(error.error.message)
@@ -40,6 +41,7 @@ open class Megaupload(baseUrl: String) : StorageInfoClient<MegauploadApi>(baseUr
         if (response.isSuccessful) {
             val info = response.body()!!
             return RecordMeta(info.data.file.metadata.name, filePath, info.data.file.metadata.size.bytes)
+                    .apply { publicPath = path }
         } else {
             val error = gson.fromJson(response.errorBody()!!.charStream(), MegauploadErrorResponse::class.java)
             throw StorageException(error.error.message)

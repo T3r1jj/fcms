@@ -63,6 +63,7 @@ class UpstreamStorageIT(private val factory: UpstreamStorageFactory<UpstreamStor
         uploadedRecord = storage.upload(record)
         assertEquals(record.name, uploadedRecord.name)
         assertTrue(uploadedRecord.name.isNotBlank())
+        assertTrue(uploadedRecord.publicPath != null);
     }
 
     @org.junit.Test

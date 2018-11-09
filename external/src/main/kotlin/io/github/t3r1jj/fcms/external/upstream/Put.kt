@@ -18,6 +18,7 @@ open class Put(baseUrl: String) : StorageClient<PutApi>(baseUrl, PutApi::class.j
         if (response.isSuccessful) {
             return RecordMeta(record.name, response.body()!!.data.link, size)
                     .apply { id = response.body()!!.data.deleteToken }
+                    .apply { publicPath = path }
         } else {
             val error = gson.fromJson(response.errorBody()!!.charStream(), MegauploadErrorResponse::class.java)
             throw StorageException(error.error.message)

@@ -41,6 +41,8 @@ dependencies {
     compile group: 'org.atmosphere', name: 'atmosphere-spring', version: '2.4.20'
     compile group: 'org.clapper', name: 'javautil', version: '3.2.0'
     compile("org.aspectj:aspectjweaver:1.8.8")
+    compile 'net.openhft:compiler:2.3.1'
+    compile group: 'org.codehaus.janino', name: 'janino', version: '3.0.10'
 
     runtimeOnly('org.springframework.boot:spring-boot-devtools')
     testImplementation('org.springframework.boot:spring-boot-starter-test')

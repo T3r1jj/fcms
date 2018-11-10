@@ -73,6 +73,7 @@ class UpstreamStorageIT(private val factory: UpstreamStorageFactory<UpstreamStor
         val record = Record("$name.tmp", "", data.byteInputStream())
         val unreadRecord = record.copy(data = data.byteInputStream())
         uploadedRecord = storage.upload(record)
+        Thread.sleep(100)
         val downloadedRecord = storage.download(uploadedRecord.path)
         assertTrue(downloadedRecord.path.isNotBlank())
         assertEquals(unreadRecord.name, downloadedRecord.name)

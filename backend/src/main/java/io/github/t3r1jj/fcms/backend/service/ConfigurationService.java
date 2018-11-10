@@ -35,7 +35,4 @@ public class ConfigurationService {
         return new StorageFactory(getConfiguration());
     }
 
-    StorageFactory createStorageFactory(Configuration configuration) {
-        return new StorageFactory(configuration);
-    }
 }

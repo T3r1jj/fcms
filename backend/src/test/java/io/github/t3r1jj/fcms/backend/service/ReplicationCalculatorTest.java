@@ -5,7 +5,7 @@ import io.github.t3r1jj.fcms.backend.model.ExternalService;
 import io.github.t3r1jj.fcms.backend.model.StoredRecord;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.*;
 
 public class ReplicationCalculatorTest {
 
@@ -147,5 +147,69 @@ public class ReplicationCalculatorTest {
                 .calculateForPrimary(true);
         assertEquals(replicationCalculator.getBackupCount(), 0);
         assertEquals(replicationCalculator.getBackupLimit(), 1);
+    }
+
+    @Test
+    public void testIsBackupPossiblePrimaryAndSecondary() {
+        StoredRecord record = new StoredRecord("", "");
+        configuration.setPrimaryBackupLimit(1);
+        configuration.setSecondaryBackupLimit(1);
+        ReplicationCalculator replicationCalculator = new ReplicationCalculator(record, configuration)
+                .calculateForPrimary(true);
+        assertTrue(replicationCalculator.isAnyBackupPossible());
+    }
+
+    @Test
+    public void testIsBackupPossiblePrimary() {
+        StoredRecord record = new StoredRecord("", "");
+        configuration.setPrimaryBackupLimit(1);
+        configuration.setSecondaryBackupLimit(0);
+        ReplicationCalculator replicationCalculator = new ReplicationCalculator(record, configuration)
+                .calculateForPrimary(true);
+        assertTrue(replicationCalculator.isAnyBackupPossible());
+    }
+
+    @Test
+    public void testIsBackupPossibleSecondary() {
+        StoredRecord record = new StoredRecord("", "");
+        configuration.setPrimaryBackupLimit(0);
+        configuration.setSecondaryBackupLimit(1);
+        ReplicationCalculator replicationCalculator = new ReplicationCalculator(record, configuration)
+                .calculateForPrimary(true);
+        assertTrue(replicationCalculator.isAnyBackupPossible());
+    }
+
+    @Test
+    public void testIsBackupPossibleNoneWithPresentBackups() {
+        StoredRecord record = new StoredRecord("", "");
+        record.getBackups().put("1 secondary", null);
+        record.getBackups().put("1 primary", null);
+        configuration.setPrimaryBackupLimit(2);
+        configuration.setSecondaryBackupLimit(2);
+        ReplicationCalculator replicationCalculator = new ReplicationCalculator(record, configuration)
+                .calculateForPrimary(true);
+        assertTrue(replicationCalculator.isAnyBackupPossible());
+    }
+
+    @Test
+    public void testIsBackupImpossible() {
+        StoredRecord record = new StoredRecord("", "");
+        configuration.setPrimaryBackupLimit(0);
+        configuration.setSecondaryBackupLimit(0);
+        ReplicationCalculator replicationCalculator = new ReplicationCalculator(record, configuration)
+                .calculateForPrimary(true);
+        assertFalse(replicationCalculator.isAnyBackupPossible());
+    }
+
+    @Test
+    public void testIsBackupImpossibleWithBackups() {
+        StoredRecord record = new StoredRecord("", "");
+        record.getBackups().put("1 primary", null);
+        record.getBackups().put("2 primary", null);
+        configuration.setPrimaryBackupLimit(1);
+        configuration.setSecondaryBackupLimit(0);
+        ReplicationCalculator replicationCalculator = new ReplicationCalculator(record, configuration)
+                .calculateForPrimary(true);
+        assertFalse(replicationCalculator.isAnyBackupPossible());
     }
 }

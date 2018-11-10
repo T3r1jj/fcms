@@ -12,8 +12,8 @@ import static one.util.streamex.EntryStream.zip;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = OnReplicationCallback.class, name = "OnReplicationCallback"),
-        @JsonSubTypes.Type(value = AfterReplicationCallback.class, name = "AfterReplicationCallback")
+        @JsonSubTypes.Type(value = OnReplicationCode.class, name = "OnReplicationCode"),
+        @JsonSubTypes.Type(value = AfterReplicationCode.class, name = "AfterReplicationCode")
 })
 abstract public class Code {
     private String name;
@@ -148,17 +148,17 @@ abstract public class Code {
     }
 
     public enum Type {
-        OnReplicationCallback, AfterReplicationCallback;
+        OnReplicationCode, AfterReplicationCode;
 
         public String getId() {
             return createBuilder().build().getId();
         }
 
         public Builder createBuilder() {
-            if (this == Type.OnReplicationCallback) {
-                return new OnReplicationCallback.Builder();
+            if (this == Type.OnReplicationCode) {
+                return new OnReplicationCode.Builder();
             }
-            return new AfterReplicationCallback.Builder();
+            return new AfterReplicationCode.Builder();
         }
     }
 }

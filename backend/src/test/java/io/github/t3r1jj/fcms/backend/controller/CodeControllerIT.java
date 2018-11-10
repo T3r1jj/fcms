@@ -1,7 +1,7 @@
 package io.github.t3r1jj.fcms.backend.controller;
 
 import io.github.t3r1jj.fcms.backend.model.code.Code;
-import io.github.t3r1jj.fcms.backend.model.code.OnReplicationCallback;
+import io.github.t3r1jj.fcms.backend.model.code.OnReplicationCode;
 import io.github.t3r1jj.fcms.backend.repository.CodeRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -33,7 +33,7 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
     @Test
     public void testCheck404() {
         RestAssured.given()
-                .param("type", Code.Type.AfterReplicationCallback)
+                .param("type", Code.Type.AfterReplicationCode)
                 .get("/api/code")
                 .then()
                 .assertThat()
@@ -42,10 +42,10 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
 
     @Test
     public void testCheck422() {
-        codeRepository.save(new OnReplicationCallback.Builder().setCode("SIODJAS").build());
+        codeRepository.save(new OnReplicationCode.Builder().setCode("SIODJAS").build());
 
         RestAssured.given()
-                .param("type", Code.Type.OnReplicationCallback)
+                .param("type", Code.Type.OnReplicationCode)
                 .get("/api/code")
                 .then()
                 .assertThat()
@@ -54,10 +54,10 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
 
     @Test
     public void testCheck200() {
-        codeRepository.save(new OnReplicationCallback.Builder().build());
+        codeRepository.save(new OnReplicationCode.Builder().build());
 
         RestAssured.given()
-                .param("type", Code.Type.OnReplicationCallback)
+                .param("type", Code.Type.OnReplicationCode)
                 .get("/api/code")
                 .then()
                 .assertThat()
@@ -66,7 +66,7 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
 
     @Test
     public void testUpdate() {
-        OnReplicationCallback code = new OnReplicationCallback.Builder().build();
+        OnReplicationCode code = new OnReplicationCode.Builder().build();
 
         RestAssured.given()
                 .contentType(ContentType.JSON)
@@ -76,21 +76,21 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
                 .assertThat()
                 .statusCode(200);
 
-        assertTrue(codeRepository.findById(Code.Type.OnReplicationCallback.getId()).isPresent());
+        assertTrue(codeRepository.findById(Code.Type.OnReplicationCode.getId()).isPresent());
     }
 
     @Test
     public void testDelete() {
-        codeRepository.save(new OnReplicationCallback.Builder().build());
+        codeRepository.save(new OnReplicationCode.Builder().build());
 
         RestAssured.given()
-                .param("type", Code.Type.OnReplicationCallback)
+                .param("type", Code.Type.OnReplicationCode)
                 .delete("/api/code")
                 .then()
                 .assertThat()
                 .statusCode(200);
 
-        assertFalse(codeRepository.findById(Code.Type.OnReplicationCallback.getId()).isPresent());
+        assertFalse(codeRepository.findById(Code.Type.OnReplicationCode.getId()).isPresent());
     }
 
 }

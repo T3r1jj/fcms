@@ -3,9 +3,14 @@ package io.github.t3r1jj.fcms.backend.model.code;
 import io.github.t3r1jj.fcms.backend.model.StoredRecord;
 import org.jetbrains.annotations.NotNull;
 
-public class OnReplicationCallback extends Code {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    public OnReplicationCallback(String name, String code, String exceptionHandler, String finallyHandler) {
+public class OnReplicationCode extends Code {
+
+    public OnReplicationCode(String name, String code, String exceptionHandler, String finallyHandler) {
         super(name, code, exceptionHandler, finallyHandler);
     }
 
@@ -31,8 +36,13 @@ public class OnReplicationCallback extends Code {
 
     public static class Builder extends Code.Builder<Builder> {
         @Override
-        public OnReplicationCallback build() {
-            return new OnReplicationCallback(name, code, exceptionHandler, finallyHandler);
+        public OnReplicationCode build() {
+            return new OnReplicationCode(name, code, exceptionHandler, finallyHandler);
         }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD})
+    public @interface Callback {
     }
 }

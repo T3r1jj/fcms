@@ -34,4 +34,12 @@ class ReplicationCalculator {
                 .count();
         return this;
     }
+
+    boolean isAnyBackupPossible() {
+        calculateForPrimary(true);
+        boolean primaryBAckupPossible = getBackupCount() < getBackupLimit();
+        calculateForPrimary(false);
+        boolean secondaryBackupPossible = getBackupCount() < getBackupLimit();
+        return primaryBAckupPossible || secondaryBackupPossible;
+    }
 }

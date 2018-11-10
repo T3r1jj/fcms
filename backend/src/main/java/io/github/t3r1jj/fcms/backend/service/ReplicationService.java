@@ -1,7 +1,12 @@
 package io.github.t3r1jj.fcms.backend.service;
 
 import io.github.t3r1jj.fcms.backend.controller.exception.ResourceNotFoundException;
-import io.github.t3r1jj.fcms.backend.model.*;
+import io.github.t3r1jj.fcms.backend.model.Configuration;
+import io.github.t3r1jj.fcms.backend.model.Event;
+import io.github.t3r1jj.fcms.backend.model.ExternalService;
+import io.github.t3r1jj.fcms.backend.model.StoredRecord;
+import io.github.t3r1jj.fcms.backend.model.code.AfterReplicationCode;
+import io.github.t3r1jj.fcms.backend.model.code.OnReplicationCode;
 import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorage;
 import io.github.t3r1jj.fcms.external.data.Record;
 import io.github.t3r1jj.fcms.external.data.RecordMeta;
@@ -45,6 +50,7 @@ public class ReplicationService {
         upload(recordToStore, authenticatedStorage);
     }
 
+    @AfterReplicationCode.Callback
     public void safelyReplicateAll() {
         recordService.findAll()
                 .parallelStream()
@@ -64,15 +70,56 @@ public class ReplicationService {
         }
     }
 
+    /**
+     * @param storedRecord to update status (remove nonexistent backups) and replicate if possible
+     *                     (download from primary and upload to secondary if configuration and service limits are met)
+     */
     public void replicate(StoredRecord storedRecord) {
         StorageFactory storageFactory = configurationService.createStorageFactory();
+        updateStatus(storedRecord, storageFactory);
+        Configuration configuration = storageFactory.getConfiguration();
+        ReplicationCalculator replicationCalculator = new ReplicationCalculator(storedRecord, configuration);
+        if (!replicationCalculator.isAnyBackupPossible()) {
+            return;
+        }
         if (storedRecord.getData() == null) {
             populateRecord(storedRecord, storageFactory);
         }
-        Configuration configuration = storageFactory.getConfiguration();
-        ReplicationCalculator replicationCalculator = new ReplicationCalculator(storedRecord, configuration);
         replicateRecordsTo(storedRecord, replicationCalculator, true);
         replicateRecordsTo(storedRecord, replicationCalculator, false);
+    }
+
+    private void updateStatus(StoredRecord storedRecord, StorageFactory storageFactory) {
+        Iterator<Map.Entry<String, RecordMeta>> iterator = storedRecord.getBackups().entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, RecordMeta> entry = iterator.next();
+            String serviceName = entry.getKey();
+            RecordMeta backup = entry.getValue();
+            Configuration configuration = storageFactory.getConfiguration();
+            boolean backupReachable = configuration
+                    .stream()
+                    .filter(s -> s.getName().equals(serviceName))
+                    .findAny()
+                    .map(storageFactory::createUpstreamStorage)
+                    .map(storage -> isPresent(backup, storage))
+                    .orElse(false);
+            if (!backupReachable) {
+                iterator.remove();
+                recordService.update(storedRecord);
+            }
+        }
+    }
+
+    private boolean isPresent(RecordMeta backup, UpstreamStorage upstreamStorage) {
+        try {
+            return upstreamStorage.isPresent(backup.getPath());
+        } catch (StorageUnauthenticatedException sue) {
+            AuthenticatedStorage storage = sue.getStorage();
+            storage.login();
+            boolean present = storage.isPresent(backup.getPath());
+            storage.logout();
+            return present;
+        }
     }
 
     private void replicateRecordsTo(StoredRecord storedRecord, ReplicationCalculator replicationCalculator, boolean primary) {
@@ -92,6 +139,7 @@ public class ReplicationService {
      * @param primary           true if replicate to primary service
      * @return true if replicated and db update is required
      */
+    @OnReplicationCode.Callback
     boolean replicateRecordTo(StoredRecord recordToReplicate, boolean primary) {
         StorageFactory storageFactory = configurationService.createStorageFactory();
         Configuration configuration = storageFactory.getConfiguration();

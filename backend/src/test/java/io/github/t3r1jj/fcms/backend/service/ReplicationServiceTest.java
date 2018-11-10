@@ -370,8 +370,12 @@ public class ReplicationServiceTest {
         doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any());
         StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
         byte[] data = "some text".getBytes();
-        recordToStore.getBackups().put(serviceName, new RecordMeta(recordToStore.getName(), "", data.length));
+        RecordMeta meta = new RecordMeta(recordToStore.getName(), "", data.length);
+        recordToStore.getBackups().put(serviceName, meta);
         when(authenticatedStorage.download(any())).thenReturn(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).isPresent(any());
+        doReturn(true).when(authenticatedStorage).isPresent(meta.getPath());
 
         replicationService.replicate(recordToStore);
         verify(upstreamStorage, times(1)).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
@@ -380,9 +384,9 @@ public class ReplicationServiceTest {
     @Test
     public void testReplicateSuccessfullyToOnePrimary() {
         String serviceName = "service name";
-        String secondaryServiceName = "service name 2";
+        String secondServiceName = "service name 2";
         service = new ExternalService(serviceName, true, true, new ExternalService.ApiKey("label123", "key123"));
-        ExternalService anotherPrimaryService = new ExternalService(secondaryServiceName, true, true, new ExternalService.ApiKey("label123", "key123"));
+        ExternalService anotherPrimaryService = new ExternalService(secondServiceName, true, true, new ExternalService.ApiKey("label123", "key123"));
         configuration = new Configuration(new ExternalService[]{service, anotherPrimaryService});
         configuration.setPrimaryBackupLimit(2);
 
@@ -394,8 +398,12 @@ public class ReplicationServiceTest {
         doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any());
         StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
         byte[] data = "some text".getBytes();
-        recordToStore.getBackups().put(serviceName, new RecordMeta(recordToStore.getName(), "", data.length));
+        RecordMeta meta = new RecordMeta(recordToStore.getName(), "", data.length);
+        recordToStore.getBackups().put(serviceName, meta);
         when(authenticatedStorage.download(any())).thenReturn(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).isPresent(any());
+        doReturn(true).when(authenticatedStorage).isPresent(meta.getPath());
 
         replicationService.replicate(recordToStore);
         verify(authenticatedStorage, times(1)).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));

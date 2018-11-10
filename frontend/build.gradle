@@ -16,8 +16,12 @@ task check(type: YarnTask) {
   args = ['test:ci']
 }
 
-task build(type: YarnTask) {
+task install(type: YarnTask) {
   args = ['install']
 }
 
+task build() {
+}
+
 build.dependsOn check
+check.dependsOn install

@@ -21,13 +21,14 @@ public class ConfigurationControllerTest {
 
     @BeforeMethod
     public void setUp() {
-        defaultConfig = new Configuration(new ExternalService[]{new ExternalService("Mocked service name", true)});
+        defaultConfig = new Configuration(new ExternalService[]{new ExternalService("Mocked service name", true, true,
+                new ExternalService.ApiKey("label123", "key123"))});
         MockitoAnnotations.initMocks(this);
     }
 
     @Test
     public void testGetConfigurationShouldReturnMockedConfiguration() {
-        when(configurationService.get()).thenReturn(defaultConfig);
+        when(configurationService.getConfiguration()).thenReturn(defaultConfig);
 
         RestAssuredMockMvc.given()
                 .standaloneSetup(new ConfigurationController(configurationService))
@@ -37,8 +38,8 @@ public class ConfigurationControllerTest {
                 .assertThat()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("apiKeys[0]", hasKey("name"))
-                .body("apiKeys[0]", hasKey("primary"));
+                .body("services[0]", hasKey("name"))
+                .body("services[0]", hasKey("primary"));
     }
 
     @Test

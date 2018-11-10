@@ -8,12 +8,14 @@ import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import java.util.HashSet;
 
 @SpringBootApplication
+@EnableScheduling
 public class FcmsApplication {
 
     public static void main(String[] args) {

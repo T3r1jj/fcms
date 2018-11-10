@@ -1,28 +1,24 @@
-package io.github.t3r1jj.fcms.external.authorized.mega
+package io.github.t3r1jj.fcms.external.authenticated.mega
 
 import com.github.eliux.mega.MegaSession
 import com.github.eliux.mega.MegaUtils
 import com.github.eliux.mega.auth.MegaAuthCredentials
 import com.github.eliux.mega.cmd.AbstractMegaCmdPathHandler
 import com.github.eliux.mega.error.*
-import io.github.t3r1jj.fcms.external.*
-import io.github.t3r1jj.fcms.external.authorized.Storage
+import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorageTemplate
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
-import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.data.exception.StorageException
 import io.github.t3r1jj.fcms.external.data.StorageInfo
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.agent.ByteBuddyAgent
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy
 import net.bytebuddy.implementation.MethodDelegation
 import net.bytebuddy.matcher.ElementMatchers
-import org.apache.commons.io.IOUtils
 import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.InputStream
 import java.nio.file.Paths
 
-open class Mega(private val userName: String, private val password: String) : NamedStorage(), Storage {
+open class Mega(private val userName: String, private val password: String) : AuthenticatedStorageTemplate() {
     companion object {
         init {
             ByteBuddyAgent.install()
@@ -79,7 +75,7 @@ open class Mega(private val userName: String, private val password: String) : Na
         }
     }
 
-    override fun upload(record: Record): RecordMeta {
+    override fun doAuthenticatedUpload(record: Record): RecordMeta {
         val file = stream2file(record.data)
         session!!.uploadFile(file.absolutePath, record.path)
                 .createRemoteIfNotPresent<AbstractMegaCmdPathHandler>()
@@ -87,7 +83,7 @@ open class Mega(private val userName: String, private val password: String) : Na
         return RecordMeta(record.name, record.path, file.length())
     }
 
-    override fun download(filePath: String): Record {
+    override fun doAuthenticatedDownload(filePath: String): Record {
         val tempFile = java.io.File.createTempFile(System.currentTimeMillis().toString(), null)
         tempFile.delete()
         session!!.get(filePath)
@@ -97,7 +93,7 @@ open class Mega(private val userName: String, private val password: String) : Na
         return Record(path.fileName.toString(), filePath, FileInputStream(tempFile.absolutePath))
     }
 
-    override fun findAll(filePath: String): List<RecordMeta> {
+    override fun doAuthenticatedFindAll(filePath: String): List<RecordMeta> {
         session!!
         return try {
             MegaCmdRecursiveList(filePath).recursiveCall()
@@ -106,7 +102,7 @@ open class Mega(private val userName: String, private val password: String) : Na
         }
     }
 
-    override fun delete(meta: RecordMeta) {
+    override fun doAuthenticatedDelete(meta: RecordMeta) {
         session!!.remove(meta.path).run()
     }
 
@@ -114,7 +110,7 @@ open class Mega(private val userName: String, private val password: String) : Na
         return session!!.exists(filePath)
     }
 
-    override fun getInfo(): StorageInfo {
+    override fun doAuthenticatedGetInfo(): StorageInfo {
         session!!
         return MegaCmdDu().call()
     }

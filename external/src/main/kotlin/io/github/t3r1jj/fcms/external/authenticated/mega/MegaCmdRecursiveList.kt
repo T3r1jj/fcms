@@ -1,4 +1,4 @@
-package io.github.t3r1jj.fcms.external.authorized.mega
+package io.github.t3r1jj.fcms.external.authenticated.mega
 
 import com.github.eliux.mega.MegaUtils
 import com.github.eliux.mega.cmd.FileInfo

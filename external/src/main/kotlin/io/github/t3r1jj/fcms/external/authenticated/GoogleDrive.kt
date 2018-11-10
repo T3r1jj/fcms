@@ -1,4 +1,4 @@
-package io.github.t3r1jj.fcms.external.authorized
+package io.github.t3r1jj.fcms.external.authenticated
 
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.auth.oauth2.TokenResponseException
@@ -8,16 +8,15 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
-import io.github.t3r1jj.fcms.external.NamedStorage
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
-import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.data.exception.StorageException
 import io.github.t3r1jj.fcms.external.data.StorageInfo
 import java.math.BigInteger
 
 open class GoogleDrive(private val clientId: String,
                        private val clientSecret: String,
-                       private val refreshToken: String) : NamedStorage(), Storage {
+                       private val refreshToken: String) : AuthenticatedStorageTemplate() {
     companion object {
         private const val FILE_FIELDS_DEFAULT_DESCRIPTION = "kind,incompleteSearch,files(kind,id,name,mimeType,description)"
         private const val FILE_FIELDS_DEFAULT_DESCRIPTION_SIZE = "kind,incompleteSearch,files(kind,id,name,mimeType,description,size)"
@@ -54,7 +53,7 @@ open class GoogleDrive(private val clientId: String,
         return credential != null && drive != null && credential!!.accessToken != null
     }
 
-    override fun upload(record: Record): RecordMeta {
+    override fun doAuthenticatedUpload(record: Record): RecordMeta {
         deleteBasedOnDescription(record.path)
         val fileMeta = File()
         fileMeta.name = record.name
@@ -67,7 +66,7 @@ open class GoogleDrive(private val clientId: String,
         return RecordMeta(record.name, record.path, result.getSize())
     }
 
-    override fun download(filePath: String): Record {
+    override fun doAuthenticatedDownload(filePath: String): Record {
         val fileMeta = drive!!.files()
                 .list()
                 .setFields(FILE_FIELDS_DEFAULT_DESCRIPTION)
@@ -76,7 +75,7 @@ open class GoogleDrive(private val clientId: String,
         return Record(fileMeta.name, filePath, data)
     }
 
-    override fun findAll(filePath: String): List<RecordMeta> {
+    override fun doAuthenticatedFindAll(filePath: String): List<RecordMeta> {
         return drive!!.files()
                 .list()
                 .setFields(FILE_FIELDS_DEFAULT_DESCRIPTION_SIZE)
@@ -89,7 +88,7 @@ open class GoogleDrive(private val clientId: String,
                 }
     }
 
-    override fun delete(meta: RecordMeta) {
+    override fun doAuthenticatedDelete(meta: RecordMeta) {
         if (meta.id != null) {
             drive!!.files().delete(meta.id)
         } else {
@@ -115,7 +114,7 @@ open class GoogleDrive(private val clientId: String,
                 .any { it.description == filePath }
     }
 
-    override fun getInfo(): StorageInfo {
+    override fun doAuthenticatedGetInfo(): StorageInfo {
         val about = drive!!.about()
                 .get()
                 .setFields(ABOUT_FIELDS_QUOTA)

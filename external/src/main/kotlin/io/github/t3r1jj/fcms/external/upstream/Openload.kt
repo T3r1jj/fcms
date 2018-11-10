@@ -2,7 +2,7 @@ package io.github.t3r1jj.fcms.external.upstream
 
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
-import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.data.exception.StorageException
 import io.github.t3r1jj.fcms.external.upstream.api.OpenloadApi
 import io.github.t3r1jj.fcms.external.upstream.api.OpenloadErrorResponse
 import io.github.t3r1jj.fcms.external.upstream.api.OpenloadFileError
@@ -22,6 +22,7 @@ open class Openload(baseUrl: String) : StorageInfoClient<OpenloadApi>(baseUrl, O
             response = client.upload(uploadUrl, body).execute()
             if (response.isSuccessful) {
                 return RecordMeta(record.name, response.body()!!.result.url, size)
+                        .apply { publicPath = path }
             }
         }
         val error = gson.fromJson(response.errorBody()!!.charStream(), OpenloadErrorResponse::class.java)
@@ -51,6 +52,7 @@ open class Openload(baseUrl: String) : StorageInfoClient<OpenloadApi>(baseUrl, O
             try {
                 val info = gson.fromJson(jsonInfo, OpenloadFileInfo::class.java)
                 return RecordMeta(info.name, filePath, info.size)
+                        .apply { publicPath = path }
             } catch (e: RuntimeException) {
                 val error = gson.fromJson(jsonInfo, OpenloadFileError::class.java)
                 throw StorageException("Error while getting info: " + error.status)

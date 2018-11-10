@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This service is only for notifications. Use {@link HistoryService} for logging events together with notification.
+ */
 @Service
 public class NotificationService {
     public final List<AtmosphereResource> resources = new ArrayList<>();

@@ -24,7 +24,7 @@ apply plugin: "idea"
 apply plugin: "kotlin"
 
 group = 'io.github.t3r1jj'
-version = '1.0.0'
+version = '1.1.0'
 sourceCompatibility = 1.8
 
 repositories {
@@ -50,10 +50,12 @@ dependencies {
     compile 'com.squareup.okhttp3:logging-interceptor:3.9.1'
     compile group: 'org.jsoup', name: 'jsoup', version: '1.7.2'
 
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.23.0'
+    testCompile group: 'org.mockito', name: 'mockito-junit-jupiter', version: '2.23.0'
     testImplementation "org.jetbrains.kotlin:kotlin-test"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit"
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
-    testCompile group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.3.1'
+    testCompile group: 'org.junit.platform', name: 'junit-platform-runner', version: '1.3.1'
     testImplementation 'org.hamcrest:hamcrest-library:1.3'
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junitVersion")
@@ -75,6 +77,8 @@ jacocoTestReport {
 
 test {
     useJUnitPlatform()
+    jvmArgs "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap"
+    maxHeapSize = "512m"
 }
 
 check.dependsOn jacocoTestReport

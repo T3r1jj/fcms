@@ -1,9 +1,12 @@
 package io.github.t3r1jj.fcms.backend.model;
 
+import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.Instant;
 
+@Document
 public class Event {
     private final String title;
     private final String description;
@@ -15,6 +18,7 @@ public class Event {
         this(title, description, type, Instant.now());
     }
 
+    @PersistenceConstructor
     public Event(String title, String description, EventType type, Instant time) {
         this.title = title;
         this.description = description;
@@ -49,6 +53,32 @@ public class Event {
     }
 
     public enum EventType {
-        INFO, WARNING, ERROR
+        INFO, WARNING, ERROR, DEBUG
+    }
+
+    public static class Builder {
+        private String title;
+        private String description;
+        private Event.EventType type;
+        private Instant time = Instant.now();
+
+        public Builder formatTitle(String title, Object... args) {
+            this.title = String.format(title, args);
+            return this;
+        }
+
+        public Builder formatDescription(String description, Object... args) {
+            this.description = String.format(title, args);
+            return this;
+        }
+
+        public Builder setType(Event.EventType type) {
+            this.type = type;
+            return this;
+        }
+
+        public Event build() {
+            return new Event(title, description, type);
+        }
     }
 }

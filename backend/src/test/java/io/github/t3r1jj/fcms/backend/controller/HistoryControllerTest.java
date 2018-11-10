@@ -37,7 +37,7 @@ public class HistoryControllerTest {
 
     @Test
     public void getAllNoParamsShouldReturn200AndCorrectData() throws JsonProcessingException {
-        when(historyService.getAll()).thenReturn(wholeHistory);
+        when(historyService.findAll()).thenReturn(wholeHistory);
         RestAssuredMockMvc
                 .given()
                 .standaloneSetup(new HistoryController(historyService))
@@ -59,7 +59,7 @@ public class HistoryControllerTest {
         int size = 2;
         int page = 0;
         PageImpl<Event> eventsPage = new PageImpl<>(wholeHistory, PageRequest.of(page, size), 5);
-        when(historyService.getAll(notNull())).thenReturn(eventsPage);
+        when(historyService.findAll(notNull())).thenReturn(eventsPage);
         RestAssuredMockMvc
                 .given()
                 .standaloneSetup(new HistoryController(historyService))

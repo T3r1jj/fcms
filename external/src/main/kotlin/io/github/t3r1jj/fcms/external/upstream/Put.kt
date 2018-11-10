@@ -2,7 +2,7 @@ package io.github.t3r1jj.fcms.external.upstream
 
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
-import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.data.exception.StorageException
 import io.github.t3r1jj.fcms.external.upstream.api.MegauploadErrorResponse
 import io.github.t3r1jj.fcms.external.upstream.api.PutApi
 import org.apache.commons.io.FileUtils
@@ -18,6 +18,7 @@ open class Put(baseUrl: String) : StorageClient<PutApi>(baseUrl, PutApi::class.j
         if (response.isSuccessful) {
             return RecordMeta(record.name, response.body()!!.data.link, size)
                     .apply { id = response.body()!!.data.deleteToken }
+                    .apply { publicPath = path }
         } else {
             val error = gson.fromJson(response.errorBody()!!.charStream(), MegauploadErrorResponse::class.java)
             throw StorageException(error.error.message)

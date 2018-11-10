@@ -1,8 +1,8 @@
-package io.github.t3r1jj.fcms.external.authorized
+package io.github.t3r1jj.fcms.external.authenticated
 
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
-import io.github.t3r1jj.fcms.external.data.StorageException
+import io.github.t3r1jj.fcms.external.data.exception.StorageException
 import io.github.t3r1jj.fcms.external.factory.DropboxFactory
 import io.github.t3r1jj.fcms.external.factory.GoogleDriveFactory
 import io.github.t3r1jj.fcms.external.factory.MegaFactory
@@ -20,9 +20,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @RunWith(Parameterized::class)
-class StorageIT(private val factory: StorageFactory<Storage>) {
-    private lateinit var storageWithoutAccess: Storage
-    private lateinit var storage: Storage
+class AuthenticatedStorageIT(private val factory: StorageFactory<AuthenticatedStorage>) {
+    private lateinit var storageWithoutAccess: AuthenticatedStorage
+    private lateinit var storage: AuthenticatedStorage
 
     companion object {
         private val testRootPath = "/" + this::class.java.`package`.name

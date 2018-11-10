@@ -1,5 +1,7 @@
 package io.github.t3r1jj.fcms.backend.model;
 
+import io.github.t3r1jj.fcms.backend.model.code.OnReplicationCallback;
+import io.github.t3r1jj.fcms.backend.model.code.AfterReplicationCallback;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.testng.annotations.BeforeMethod;
@@ -21,9 +23,9 @@ public class CodeTest {
 
     @Test
     public void testExecute() {
-        Code code = new CodeBuilder()
+        OnReplicationCallback code = new OnReplicationCallback.Builder()
                 .setCode("System.out.println(storedRecord.getName());")
-                .createCode();
+                .build();
         code.execute(storedRecord);
         verify(storedRecord, times(1)).getName();
     }
@@ -31,9 +33,9 @@ public class CodeTest {
     @Test
     public void testExecuteShouldPersistDataChange() {
         String newDescription = "new description";
-        Code code = new CodeBuilder()
+        OnReplicationCallback code = new OnReplicationCallback.Builder()
                 .setCode("storedRecord.setDescription(\"" + newDescription + "\");")
-                .createCode();
+                .build();
         code.execute(storedRecord);
         assertEquals(storedRecord.getDescription(), newDescription);
     }
@@ -42,21 +44,55 @@ public class CodeTest {
     public void testExecuteWithCatch() {
         RuntimeException testException = spy(new RuntimeException("test exception"));
         doThrow(testException).when(storedRecord).getName();
-        Code code = new CodeBuilder()
+        OnReplicationCallback code = new OnReplicationCallback.Builder()
                 .setCode("storedRecord.getName();")
                 .setExceptionHandler("e.getMessage();")
-                .createCode();
+                .build();
         code.execute(storedRecord);
         verify(testException, times(1)).getMessage();
     }
 
     @Test
     public void testExecuteWithFinally() {
-        Code code = new CodeBuilder()
+        OnReplicationCallback code = new OnReplicationCallback.Builder()
                 .setCode("storedRecord.getName();")
                 .setFinallyHandler("storedRecord.getId();")
-                .createCode();
+                .build();
         code.execute(storedRecord);
         verify(storedRecord, times(1)).getId();
+    }
+
+    @Test
+    public void testExecuteWithCollectionParam_LambdaNotSupported() {
+        StoredRecord[] storedRecords = new StoredRecord[]{storedRecord, storedRecord};
+        AfterReplicationCallback code = new AfterReplicationCallback.Builder()
+                .setCode("storedRecords.stream().forEach(storedRecord -> System.out.println(storedRecord.getName()));")
+                .build();
+        code.execute(storedRecords);
+        verify(storedRecord, times(0)).getName();
+    }
+
+    @Test
+    public void testExecuteWithCollectionParam_CannotDetermineSimpleTypeNamedStoredRecord() {
+        StoredRecord[] storedRecords = new StoredRecord[]{storedRecord, storedRecord};
+        AfterReplicationCallback code = new AfterReplicationCallback.Builder()
+                .setCode("        for (StoredRecord storedRecord1 : storedRecords) {\n" +
+                        "            System.out.println(storedRecord1);\n" +
+                        "        }")
+                .build();
+        code.execute(storedRecords);
+        verify(storedRecord, times(0)).getName();
+    }
+
+    @Test
+    public void testExecuteWithCollectionParam() {
+        StoredRecord[] storedRecords = new StoredRecord[]{storedRecord, storedRecord};
+        AfterReplicationCallback code = new AfterReplicationCallback.Builder()
+                .setCode("        for (int i = 0; i < storedRecords.length; i++) {\n" +
+                        "            System.out.println(storedRecords[i].getName());\n" +
+                        "        }")
+                .build();
+        code.execute(storedRecords);
+        verify(storedRecord, times(2)).getName();
     }
 }

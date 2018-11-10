@@ -1,9 +1,9 @@
 package io.github.t3r1jj.fcms.backend.controller;
 
+import io.github.t3r1jj.fcms.backend.controller.exception.UnprocessableException;
 import io.github.t3r1jj.fcms.backend.model.StoredRecord;
 import io.github.t3r1jj.fcms.backend.service.RecordService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,20 +17,6 @@ public class RecordController {
     @Autowired
     public RecordController(RecordService recordService) {
         this.recordService = recordService;
-    }
-
-    @ResponseStatus(value = HttpStatus.UNPROCESSABLE_ENTITY)
-    public static class UnprocessableException extends RuntimeException {
-        public UnprocessableException(String message) {
-            super(message);
-        }
-    }
-
-    @ResponseStatus(value = HttpStatus.UNPROCESSABLE_ENTITY)
-    public static class ResourceNotFoundException extends RuntimeException {
-        public ResourceNotFoundException(String message) {
-            super(message);
-        }
     }
 
     @PostMapping

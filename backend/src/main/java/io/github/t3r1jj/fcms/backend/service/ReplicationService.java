@@ -1,6 +1,6 @@
 package io.github.t3r1jj.fcms.backend.service;
 
-import io.github.t3r1jj.fcms.backend.controller.RecordController;
+import io.github.t3r1jj.fcms.backend.controller.exception.ResourceNotFoundException;
 import io.github.t3r1jj.fcms.backend.model.*;
 import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorage;
 import io.github.t3r1jj.fcms.external.data.Record;
@@ -33,14 +33,14 @@ public class ReplicationService {
 
     /**
      * @param recordToStore record with data to do the first primary replication. Ignores config limits.
-     * @throws io.github.t3r1jj.fcms.backend.controller.RecordController.ResourceNotFoundException if no external service found for replication
+     * @throws ResourceNotFoundException if no external service found for replication
      */
     void uploadToPrimary(StoredRecord recordToStore) {
         StorageFactory storageFactory = configurationService.createStorageFactory();
         Configuration configuration = storageFactory.getConfiguration();
         ExternalService primaryService = configuration.getEnabledServicesStream(true)
                 .findAny()
-                .orElseThrow(() -> new RecordController.ResourceNotFoundException("No enabled primary service found for replication. Update your config."));
+                .orElseThrow(() -> new ResourceNotFoundException("No enabled primary service found for replication. Update your config."));
         AuthenticatedStorage authenticatedStorage = storageFactory.createAuthenticatedStorage(primaryService.getName());
         upload(recordToStore, authenticatedStorage);
     }
@@ -56,10 +56,10 @@ public class ReplicationService {
         try {
             replicate(storedRecord);
         } catch (Exception e) {
-            historyService.addAndNotify(new EventBuilder()
+            historyService.addAndNotify(new Event.Builder()
                     .formatTitle("REPLICATE [%s]", storedRecord.getName())
                     .formatTitle("Error during replication of record with %s id:\n %s", storedRecord.getId().toString(), e.getMessage())
-                    .createEvent()
+                    .build()
             );
         }
     }
@@ -186,13 +186,13 @@ public class ReplicationService {
     private void deleteBackupWithNotification(String externalService, RecordMeta meta, boolean force) {
         boolean deleted = deleteBackup(externalService, meta, force);
         if (!deleted) {
-            historyService.addAndNotify(new EventBuilder()
+            historyService.addAndNotify(new Event.Builder()
                     .formatTitle("UNSUPPORTED DELETE [%s]", externalService)
                     .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage. Though, the storage might be ephemeral.", externalService,
                             meta.getName(), meta.getPath(), meta.getId())
                     .setType(Event.EventType.DEBUG)
-                    .createEvent());
+                    .build());
         }
     }
 
@@ -218,21 +218,21 @@ public class ReplicationService {
         try {
             delete(meta, storage);
         } catch (StorageException se) {
-            historyService.addAndNotify(new EventBuilder()
+            historyService.addAndNotify(new Event.Builder()
                     .formatTitle("DELETE [%s]", storage.toString())
                     .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage due to an exception:\n", storage.toString(),
                             meta.getName(), meta.getPath(), meta.getId(), se.getMessage())
                     .setType(Event.EventType.WARNING)
-                    .createEvent());
+                    .build());
         } catch (RuntimeException e) {
-            historyService.addAndNotify(new EventBuilder()
+            historyService.addAndNotify(new Event.Builder()
                     .formatTitle("DELETE [%s] UNKNOWN ERROR", storage.toString())
                     .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage due to an unknown exception:\n", storage.toString(),
                             meta.getName(), meta.getPath(), meta.getId(), e.getMessage())
                     .setType(Event.EventType.WARNING)
-                    .createEvent());
+                    .build());
         }
     }
 

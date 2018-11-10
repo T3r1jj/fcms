@@ -13,12 +13,9 @@ import static io.github.t3r1jj.fcms.backend.Utils.notIf;
 
 @Document
 public class Configuration {
-    public static String getDefaultId() {
-        return "DEFAULT";
-    }
 
     @Id
-    private final String id = getDefaultId();
+    private final String id = Configuration.class.getSimpleName();
     private ExternalService[] services;
     private int primaryBackupLimit = 1;
     private int secondaryBackupLimit = 0;
@@ -102,4 +99,7 @@ public class Configuration {
         return Stream.of(services);
     }
 
+    public String getId() {
+        return id;
+    }
 }

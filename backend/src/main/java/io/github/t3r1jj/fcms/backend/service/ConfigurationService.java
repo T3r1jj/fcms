@@ -23,7 +23,7 @@ public class ConfigurationService {
     }
 
     private Configuration getRecentConfiguration() {
-        return configurationRepository.findById(Configuration.getDefaultId())
+        return configurationRepository.findById(new Configuration(null).getId())
                 .orElse(new StorageFactory().getConfiguration());
     }
 

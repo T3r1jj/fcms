@@ -1,6 +1,6 @@
 package io.github.t3r1jj.fcms.backend.service;
 
-import io.github.t3r1jj.fcms.backend.controller.RecordController;
+import io.github.t3r1jj.fcms.backend.controller.exception.ResourceNotFoundException;
 import io.github.t3r1jj.fcms.backend.model.Configuration;
 import io.github.t3r1jj.fcms.backend.model.Event;
 import io.github.t3r1jj.fcms.backend.model.ExternalService;
@@ -196,7 +196,7 @@ public class ReplicationServiceTest {
         verifyNoMoreInteractions(authenticatedStorage);
     }
 
-    @Test(expectedExceptions = {RecordController.ResourceNotFoundException.class})
+    @Test(expectedExceptions = {ResourceNotFoundException.class})
     public void testUploadToPrimaryConfigNotFound() {
         String serviceName = "service name";
         Configuration configuration = new Configuration(new ExternalService[]{});
@@ -209,7 +209,7 @@ public class ReplicationServiceTest {
         replicationService.uploadToPrimary(recordToStore);
     }
 
-    @Test(expectedExceptions = {RecordController.ResourceNotFoundException.class})
+    @Test(expectedExceptions = {ResourceNotFoundException.class})
     public void testUploadToPrimaryConfigNotFoundEnabled() {
         String serviceName = "service name";
         setUpDefaultConfig(serviceName, false);

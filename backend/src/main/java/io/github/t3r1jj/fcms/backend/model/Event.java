@@ -55,4 +55,30 @@ public class Event {
     public enum EventType {
         INFO, WARNING, ERROR, DEBUG
     }
+
+    public static class Builder {
+        private String title;
+        private String description;
+        private Event.EventType type;
+        private Instant time = Instant.now();
+
+        public Builder formatTitle(String title, Object... args) {
+            this.title = String.format(title, args);
+            return this;
+        }
+
+        public Builder formatDescription(String description, Object... args) {
+            this.description = String.format(title, args);
+            return this;
+        }
+
+        public Builder setType(Event.EventType type) {
+            this.type = type;
+            return this;
+        }
+
+        public Event build() {
+            return new Event(title, description, type);
+        }
+    }
 }

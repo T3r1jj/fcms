@@ -31,7 +31,9 @@ class App extends React.Component<{}, IAppProps> {
     };
     private records = [this.recordData, {...this.recordData, id: "2", name: "Another"}]
     private configData: IConfiguration = {
-        apiKeys: [{name: "Api 1", apiKey: "key 1", primary: true, enabled: true} as IService] as IService[]
+        primaryBackupLimit: 1,
+        secondaryBackupLimit: 0,
+        services: [{name: "Api 1", apiKeys: [{label: "value 1", value: "value 1"}], primary: true, enabled: true} as IService] as IService[]
     };
 
     constructor(props: any) {

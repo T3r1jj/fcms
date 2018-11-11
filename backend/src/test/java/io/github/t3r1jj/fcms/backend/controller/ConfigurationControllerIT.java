@@ -75,8 +75,8 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
                 .assertThat()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("services.findAll{it.apiKeys.findAll{it.key=='" + userName + "'}.size()}.size()", equalTo(1))
-                .body("services.findAll{it.apiKeys.findAll{it.key=='" + userName + "'}.size()}.size()", equalTo(1));
+                .body("services.findAll{it.apiKeys.findAll{it.value=='" + userName + "'}.size()}.size()", equalTo(1))
+                .body("services.findAll{it.apiKeys.findAll{it.value=='" + userName + "'}.size()}.size()", equalTo(1));
     }
 
 }

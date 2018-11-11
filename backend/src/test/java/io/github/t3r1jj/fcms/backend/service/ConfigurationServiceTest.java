@@ -70,9 +70,9 @@ public class ConfigurationServiceTest {
 
         ExternalService service = Stream.of(testedConfiguration.getServices()).filter(s -> s.getName().equals("Mega")).findAny().orElseThrow(() -> new RuntimeException("Service not found"));
         assertThat(service.getApiKeys(), hasItemInArray(hasProperty("label", is("password"))));
-        assertThat(service.getApiKeys(), hasItemInArray(hasProperty("key", is(password))));
+        assertThat(service.getApiKeys(), hasItemInArray(hasProperty("value", is(password))));
         assertThat(service.getApiKeys(), hasItemInArray(hasProperty("label", is("userName"))));
-        assertThat(service.getApiKeys(), hasItemInArray(hasProperty("key", is(userName))));
+        assertThat(service.getApiKeys(), hasItemInArray(hasProperty("value", is(userName))));
     }
 
     @Test

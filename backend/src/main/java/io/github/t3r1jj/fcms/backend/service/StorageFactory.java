@@ -96,7 +96,7 @@ class StorageFactory {
                 .filter(c -> c.getParameterCount() == service.getApiKeys().length)
                 .findAny()
                 .orElseThrow(() -> new RuntimeException(String.format("%s constructor with %d args not found", externalService, service.getApiKeys().length)));
-        Object[] params = Stream.of(service.getApiKeys()).map(ExternalService.ApiKey::getKey).toArray();
+        Object[] params = Stream.of(service.getApiKeys()).map(ExternalService.ApiKey::getValue).toArray();
         try {
             return constructor.newInstance(params);
         } catch (Exception e) {

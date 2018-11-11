@@ -34,7 +34,7 @@ describe('component', () => {
     describe('updating', () => {
         it('updates child Service', () => {
             const wrapper = shallow(<Configuration {...props} />);
-            const event = {target: {value: 'new api value', attributes: {"data-index": 0}}};
+            const event = {target: {value: 'new api value', dataset: {index: 0}}};
             wrapper.find('TextField').at(0).simulate('change', event);
             expect(wrapper.text()).toContain(props.services[0].name);
             expect(wrapper.find('TextField').at(0).props().value).toEqual('new api value');

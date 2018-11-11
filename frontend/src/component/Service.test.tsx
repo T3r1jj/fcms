@@ -48,7 +48,7 @@ describe('component', () => {
         it('TextField should call onServiceChange on api value change', () => {
             const spyOnChange = sinon.spy(props, 'onServiceChange');
             const wrapper = shallow(<Service {...props} />);
-            const event = {target: {value: 'new api value', attributes: {"data-index": 0}}};
+            const event = {target: {value: 'new api value', dataset: {index: 0}}};
             wrapper.find('TextField').simulate('change', event);
             expect(spyOnChange.callCount).toEqual(1);
             expect(spyOnChange.args[0][0].apiKeys[0].value).toEqual('new api value');

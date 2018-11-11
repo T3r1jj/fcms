@@ -6,7 +6,7 @@ import {ApiKey} from "./ApiKey";
 
 export const Service: React.StatelessComponent<IServiceProps> = props => {
     const handleApiKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const index = event.target.attributes['data-index'] as number;
+        const index = (event.target as any).dataset.index as number;
         const newApiKeys = props.apiKeys.slice();
         newApiKeys[index].value = event.target.value;
         props.onServiceChange({...props, apiKeys: newApiKeys});

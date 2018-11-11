@@ -22,7 +22,7 @@ describe("component", () => {
 
         it('renders value in a textfield', () => {
             const wrapper = shallow(<ApiKey {...props}/>);
-            window.console.log(wrapper.debug())
+            window.console.log(wrapper.debug());
             expect(wrapper.find('TextField').props().value).toEqual(props.value);
         });
     });
@@ -36,11 +36,11 @@ describe("component", () => {
         it('calls api value change handler on textfield value change', () => {
             const spyOnChange = sinon.spy(props, 'handleApiKeyChange');
             const wrapper = shallow(<ApiKey {...props}/>);
-            const event = {target: {value: 'new api value', attributes: {"data-index": 0}}};
+            const event = {target: {value: 'new api value', dataset: {index: 0}}};
             wrapper.find('TextField').simulate('change', event);
             expect(spyOnChange.callCount).toEqual(1);
             expect(spyOnChange.args[0][0].target.value).toEqual(event.target.value);
-            expect(spyOnChange.args[0][0].target.attributes['data-index']).toEqual(event.target.attributes['data-index']);
+            expect(spyOnChange.args[0][0].target.dataset.index).toEqual(event.target.dataset.index);
         });
     });
 });

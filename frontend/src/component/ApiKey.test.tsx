@@ -22,7 +22,6 @@ describe("component", () => {
 
         it('renders value in a textfield', () => {
             const wrapper = shallow(<ApiKey {...props}/>);
-            window.console.log(wrapper.debug());
             expect(wrapper.find('TextField').props().value).toEqual(props.value);
         });
     });

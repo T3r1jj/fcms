@@ -1,13 +1,25 @@
 import Button from "@material-ui/core/Button/Button";
-import * as React from 'react';
+import LinearProgress from "@material-ui/core/LinearProgress/LinearProgress";
+import TextField from "@material-ui/core/TextField/TextField";
+import * as React from "react";
+import {ComponentState} from "react";
 import IConfiguration from 'src/model/IConfiguration';
 import IService from 'src/model/IService';
+import {Config} from "../model/Config";
 import {Service} from './Service';
 
-export default class Configuration extends React.Component<IConfiguration, IConfiguration> {
-    constructor(props: IConfiguration) {
+export default class Configuration extends React.Component<Config, IConfigurationState> {
+
+    constructor(props: Config) {
         super(props);
-        this.state = {...props};
+        this.state = {
+            error: false,
+            errorText: undefined,
+            loading: true,
+            primaryBackupLimit: 0,
+            secondaryBackupLimit: 0,
+            services: []
+        };
         this.fetchData = this.fetchData.bind(this);
         this.onApiKeyChange = this.onApiKeyChange.bind(this);
         this.sendSaveRequest = this.sendSaveRequest.bind(this);
@@ -20,12 +32,33 @@ export default class Configuration extends React.Component<IConfiguration, IConf
     public render() {
         return (
             <div>
+                {this.state.loading && <LinearProgress/>}
                 {this.state.services.map(s => Service({onServiceChange: this.onApiKeyChange, ...s}))}
                 <br/>
-                <Button onClick={this.sendSaveRequest}>Save</Button>
+                <TextField
+                    label="Primary backups limit"
+                    value={this.state.primaryBackupLimit}
+                    onChange={this.handleLimitChange('primaryBackupLimit')}
+                    margin="normal"
+                />
+                <TextField
+                    label="Secondary backups limit"
+                    value={this.state.secondaryBackupLimit}
+                    type="number"
+                    onChange={this.handleLimitChange('secondaryBackupLimit')}
+                    margin="normal"
+                />
+                {this.state.error && <br/> && this.state.errorText}
+                <br/>
+                <Button onClick={this.sendSaveRequest}
+                        disabled={this.state.loading || this.state.services.length === 0}>Save</Button>
             </div>
         );
     }
+
+    private handleLimitChange = (field: string) => (event: any) => {
+        this.setState({[field]: Math.min(event.target.value, 0)} as ComponentState);
+    };
 
     private onApiKeyChange(service: IService) {
         const currentApiKeys = this.state.services;
@@ -36,21 +69,22 @@ export default class Configuration extends React.Component<IConfiguration, IConf
     }
 
     private fetchData() {
-        fetch('http://localhost:8080/api/configuration')
-            .then(result => result.json())
-            .then(config => this.setState({...config}))
-            .catch(error => window.console.error('Error:', error));
+        this.setState({loading: true, error: false, errorText: undefined});
+        this.props.getConfiguration()
+            .then(config => this.setState({...config, loading: false, error: false}))
+            .catch(error => this.setState({loading: false, error: true, errorText: error.toString()}));
     }
 
     private sendSaveRequest() {
-        fetch('http://localhost:8080/api/configuration', {
-            body: JSON.stringify(this.state),
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            method: 'POST'
-        })
-            .catch(error => window.console.error('Error:', error));
+        this.setState({loading: true, error: false, errorText: undefined});
+        this.props.updateConfiguration(this.state)
+            .then(() => this.setState({loading: false, error: false}))
+            .catch(error => this.setState({loading: false, error: true, errorText: error.toString()}));
     }
+}
+
+export interface IConfigurationState extends IConfiguration {
+    loading: boolean;
+    error: boolean;
+    errorText: string | undefined;
 }

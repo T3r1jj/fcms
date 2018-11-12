@@ -1,19 +1,17 @@
-import './App.css';
-
 import {List, ListItem} from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import {createMuiTheme, MuiThemeProvider} from '@material-ui/core/styles';
 import * as React from 'react';
+import './App.css';
 
 import Configuration from './component/Configuration';
 import Record, {IRecordProps} from './component/Record';
 import Upload from './component/Upload';
 import logo from './logo.svg';
-import IConfiguration from './model/IConfiguration';
+import {Config} from "./model/Config";
 import IRecord from './model/IRecord';
-import IService from './model/IService';
 
 class App extends React.Component<{}, IAppProps> {
     private readonly theme = createMuiTheme({
@@ -29,12 +27,8 @@ class App extends React.Component<{}, IAppProps> {
         name: "test",
         versions: [{name: "test", id: "2", description: "test", tag: "v2", versions: [], meta: [], backups: []}]
     };
-    private records = [this.recordData, {...this.recordData, id: "2", name: "Another"}]
-    private configData: IConfiguration = {
-        primaryBackupLimit: 1,
-        secondaryBackupLimit: 0,
-        services: [{name: "Api 1", apiKeys: [{label: "value 1", value: "value 1"}], primary: true, enabled: true} as IService] as IService[]
-    };
+    private records = [this.recordData, {...this.recordData, id: "2", name: "Another"}];
+    private config = new Config();
 
     constructor(props: any) {
         super(props);
@@ -61,7 +55,7 @@ class App extends React.Component<{}, IAppProps> {
                     <Dialog onClose={this.handleConfigClose} aria-labelledby="simple-dialog-title"
                             open={this.state.configOpen}>
                         <DialogTitle id="simple-dialog-title">Configuration</DialogTitle>
-                        <Configuration {...this.configData} />
+                        <Configuration {...this.config}/>
                     </Dialog>
                     <List className="list">
                         {this.prepareRecordsProps(this.records).map(r =>

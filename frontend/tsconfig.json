@@ -29,5 +29,7 @@
     "jest",
     "src/setupTests.ts",
     "coverage"
-  ]
+  ],
+  "emitDecoratorMetadata": true,
+  "experimentalDecorators": true
 }

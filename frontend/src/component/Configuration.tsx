@@ -5,12 +5,12 @@ import * as React from "react";
 import {ComponentState} from "react";
 import IConfiguration from 'src/model/IConfiguration';
 import IService from 'src/model/IService';
-import {Config} from "../model/Config";
+import {Client} from "../model/Client";
 import {Service} from './Service';
 
-export default class Configuration extends React.Component<Config, IConfigurationState> {
+export default class Configuration extends React.Component<IConfigurationProps, IConfigurationState> {
 
-    constructor(props: Config) {
+    constructor(props: Client) {
         super(props);
         this.state = {
             error: false,
@@ -83,7 +83,12 @@ export default class Configuration extends React.Component<Config, IConfiguratio
     }
 }
 
-export interface IConfigurationState extends IConfiguration {
+export interface IConfigurationProps {
+    getConfiguration: () => Promise<IConfiguration>
+    updateConfiguration: (configuration: IConfiguration) => Promise<Response>
+}
+
+interface IConfigurationState extends IConfiguration {
     loading: boolean;
     error: boolean;
     errorText: string | undefined;

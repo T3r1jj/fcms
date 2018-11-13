@@ -3,15 +3,18 @@ import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import {createMuiTheme, MuiThemeProvider} from '@material-ui/core/styles';
+import {SnackbarProvider} from "notistack";
 import * as React from 'react';
 import './App.css';
 
 import Configuration from './component/Configuration';
+import PrimarySearchAppBar from "./component/PrimarySearchAppBar";
 import Record, {IRecordProps} from './component/Record';
 import Upload from './component/Upload';
 import logo from './logo.svg';
-import {Config} from "./model/Config";
+import {Client} from "./model/Client";
 import IRecord from './model/IRecord';
+import Notifications from './notification/Notifications';
 
 class App extends React.Component<{}, IAppProps> {
     private readonly theme = createMuiTheme({
@@ -28,7 +31,8 @@ class App extends React.Component<{}, IAppProps> {
         versions: [{name: "test", id: "2", description: "test", tag: "v2", versions: [], meta: [], backups: []}]
     };
     private records = [this.recordData, {...this.recordData, id: "2", name: "Another"}];
-    private config = new Config();
+    private config = new Client();
+
 
     constructor(props: any) {
         super(props);
@@ -41,31 +45,36 @@ class App extends React.Component<{}, IAppProps> {
         this.recordData.id = "test";
 
         return (
-            <MuiThemeProvider theme={this.theme}>
-                <div className="App">
-                    <header className="App-header">
-                        <img src={logo} className="App-logo" alt="logo"/>
-                        <h1 className="App-title">FCMS</h1>
-                    </header>
-                    <p className="App-intro">
-                        Upload file or a new version for a backup management
-                    </p>
-                    <Upload isUploadValid={this.isUploadValid}/>
-                    <Button variant="contained" onClick={this.handleConfigClick}>Configuration</Button>
-                    <Dialog onClose={this.handleConfigClose} aria-labelledby="simple-dialog-title"
-                            open={this.state.configOpen}>
-                        <DialogTitle id="simple-dialog-title">Configuration</DialogTitle>
-                        <Configuration {...this.config}/>
-                    </Dialog>
-                    <List className="list">
-                        {this.prepareRecordsProps(this.records).map(r =>
-                            <ListItem key={r.id}>
-                                <Record {...r} />
-                            </ListItem>
-                        )}
-                    </List>
-                </div>
-            </MuiThemeProvider>
+            <SnackbarProvider maxSnack={100} anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+                              autoHideDuration={1000 * 60 * 15}>
+                <MuiThemeProvider theme={this.theme}>
+                    <Notifications subscribeToNotifications={this.config.subscribeToNotifications}/>
+                    <div className="App">
+                        <PrimarySearchAppBar/>
+                        <header className="App-header">
+                            <img src={logo} className="App-logo" alt="logo"/>
+                            <h1 className="App-title">FCMS</h1>
+                        </header>
+                        <p className="App-intro">
+                            Upload file or a new version for a backup management
+                        </p>
+                        <Upload isUploadValid={this.isUploadValid}/>
+                        <Button variant="contained" onClick={this.handleConfigClick}>Configuration</Button>
+                        <Dialog onClose={this.handleConfigClose} aria-labelledby="simple-dialog-title"
+                                open={this.state.configOpen}>
+                            <DialogTitle id="simple-dialog-title">Configuration</DialogTitle>
+                            <Configuration {...this.config}/>
+                        </Dialog>
+                        <List className="list">
+                            {this.prepareRecordsProps(this.records).map(r =>
+                                <ListItem key={r.id}>
+                                    <Record {...r} />
+                                </ListItem>
+                            )}
+                        </List>
+                    </div>
+                </MuiThemeProvider>
+            </SnackbarProvider>
         );
     }
 

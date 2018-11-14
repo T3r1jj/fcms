@@ -1,111 +1,66 @@
-import {List, ListItem} from '@material-ui/core';
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
 import {createMuiTheme, MuiThemeProvider} from '@material-ui/core/styles';
 import {SnackbarProvider} from "notistack";
 import * as React from 'react';
+import {Route} from "react-router";
+import {BrowserRouter} from "react-router-dom";
 import './App.css';
-
-import Configuration from './component/Configuration';
+import HistoryPage from "./component/pages/HistoryPage";
+import MainPage from "./component/pages/MainPage";
 import PrimarySearchAppBar from "./component/PrimarySearchAppBar";
-import Record, {IRecordProps} from './component/Record';
-import Upload from './component/Upload';
-import logo from './logo.svg';
 import {Client} from "./model/Client";
-import IRecord from './model/IRecord';
 import Notifications from './notification/Notifications';
 
-class App extends React.Component<{}, IAppProps> {
+class App extends React.Component<{}, {}> {
     private readonly theme = createMuiTheme({
+        palette: {
+            primary: {
+                contrastText: '#fff',
+                dark: '#002884',
+                light: '#757ce8',
+                main: '#3f50b5',
+            },
+            secondary: {
+                contrastText: '#000',
+                dark: '#ba000d',
+                light: '#ff7961',
+                main: '#f44336',
+            },
+        },
         typography: {
             useNextVariants: true,
         },
     });
-    private recordData: IRecord = {
-        backups: [],
-        description: "test",
-        id: "1",
-        meta: [],
-        name: "test",
-        versions: [{name: "test", id: "2", description: "test", tag: "v2", versions: [], meta: [], backups: []}]
-    };
-    private records = [this.recordData, {...this.recordData, id: "2", name: "Another"}];
-    private config = new Client();
 
+    private client = new Client();
 
     constructor(props: any) {
         super(props);
-        this.state = {configOpen: false};
-        this.handleConfigClick = this.handleConfigClick.bind(this);
-        this.handleConfigClose = this.handleConfigClose.bind(this);
+        this.renderMainPage = this.renderMainPage.bind(this);
     }
 
     public render() {
-        this.recordData.id = "test";
-
         return (
-            <SnackbarProvider maxSnack={100} anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
-                              autoHideDuration={1000 * 60 * 15}>
-                <MuiThemeProvider theme={this.theme}>
-                    <Notifications subscribeToNotifications={this.config.subscribeToNotifications}/>
-                    <div className="App">
-                        <PrimarySearchAppBar/>
-                        <header className="App-header">
-                            <img src={logo} className="App-logo" alt="logo"/>
-                            <h1 className="App-title">FCMS</h1>
-                        </header>
-                        <p className="App-intro">
-                            Upload file or a new version for a backup management
-                        </p>
-                        <Upload isUploadValid={this.isUploadValid}/>
-                        <Button variant="contained" onClick={this.handleConfigClick}>Configuration</Button>
-                        <Dialog onClose={this.handleConfigClose} aria-labelledby="simple-dialog-title"
-                                open={this.state.configOpen}>
-                            <DialogTitle id="simple-dialog-title">Configuration</DialogTitle>
-                            <Configuration {...this.config}/>
-                        </Dialog>
-                        <List className="list">
-                            {this.prepareRecordsProps(this.records).map(r =>
-                                <ListItem key={r.id}>
-                                    <Record {...r} />
-                                </ListItem>
-                            )}
-                        </List>
-                    </div>
-                </MuiThemeProvider>
-            </SnackbarProvider>
+            <BrowserRouter>
+                <SnackbarProvider maxSnack={100} anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+                                  autoHideDuration={1000 * 60 * 15}>
+                    <MuiThemeProvider theme={this.theme}>
+                        <Notifications subscribeToNotifications={this.client.subscribeToNotifications}/>
+                        <div className="App">
+                            <PrimarySearchAppBar/>
+
+                            <Route path="/" exact={true} render={this.renderMainPage}/>
+                            <Route path="/history" component={HistoryPage}/>
+                        </div>
+                    </MuiThemeProvider>
+                </SnackbarProvider>
+            </BrowserRouter>
         );
     }
 
-    private handleConfigClick() {
-        this.setState({configOpen: true})
-    }
-
-    private handleConfigClose() {
-        this.setState({configOpen: false})
-    }
-
-    private prepareRecordsProps(records: IRecord[]): IRecordProps[] {
-        return records.map(r => {
-            const props: IRecordProps = {
-                ...r,
-                hierarchyTooltipEnabled: records[0] === r,
-                onDescriptionChange: (id, description) => {
-                    window.console.log("Changed " + id + " description to " + description)
-                }
-            }
-            return props
-        })
-    }
-
-    private isUploadValid(file: File, name: string, parent: string, tag: string): boolean {
-        return false
+    private renderMainPage() {
+        return <MainPage client={this.client}/>
     }
 }
 
-interface IAppProps {
-    configOpen: boolean;
-}
 
 export default App;

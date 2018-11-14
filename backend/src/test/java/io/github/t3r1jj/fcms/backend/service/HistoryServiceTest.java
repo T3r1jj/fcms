@@ -1,5 +1,6 @@
 package io.github.t3r1jj.fcms.backend.service;
 
+import com.google.common.collect.Lists;
 import io.github.t3r1jj.fcms.backend.model.Event;
 import io.github.t3r1jj.fcms.backend.repository.EventRepository;
 import org.mockito.Mock;
@@ -32,8 +33,8 @@ public class HistoryServiceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         inMemoryEventRepository = new InMemoryEventRepository();
-        when(repository.findAll()).thenReturn(inMemoryEventRepository.findAll());
-        when(repository.findAll(any(Pageable.class))).thenAnswer((invocation -> inMemoryEventRepository.findAll(invocation.getArgument(0))));
+        when(repository.findAllByOrderByTimeDesc()).thenReturn(inMemoryEventRepository.findAllInverted());
+        when(repository.findAllByOrderByTimeDesc(any(Pageable.class))).thenAnswer((invocation -> inMemoryEventRepository.findAllInverted(invocation.getArgument(0))));
         when(repository.save(any(Event.class))).thenAnswer((invocation -> inMemoryEventRepository.save(invocation.getArgument(0))));
         doAnswer(invocation -> {
             inMemoryEventRepository.save(invocation.getArgument(0));
@@ -73,7 +74,7 @@ public class HistoryServiceTest {
         assertEquals(3, results.getTotalElements());
         assertEquals(0, results.getNumber());
         assertEquals(1, results.getNumberOfElements());
-        assertTrue(results.getContent().contains(event1));
+        assertTrue(results.getContent().contains(event3));
     }
 
     @Test
@@ -109,14 +110,14 @@ public class HistoryServiceTest {
         assertEquals(3, results.getTotalElements());
         assertEquals(1, results.getNumber());
         assertEquals(1, results.getNumberOfElements());
-        assertTrue(results.getContent().contains(event3));
+        assertTrue(results.getContent().contains(event1));
     }
 
     @Test
     public void addShouldAddEventToRepo() {
         Event event1 = new Event("a", "b", Event.EventType.INFO);
         service.addAndNotify(event1);
-        assertTrue(repository.findAll().contains(event1));
+        assertTrue(repository.findAllByOrderByTimeDesc().contains(event1));
     }
 
     @Test
@@ -133,28 +134,28 @@ public class HistoryServiceTest {
         repository.save(event1);
         repository.save(event2);
         service.deleteAll();
-        assertTrue(repository.findAll().isEmpty());
+        assertTrue(repository.findAllByOrderByTimeDesc().isEmpty());
     }
 
     public class InMemoryEventRepository {
         private List<Event> data = new ArrayList<>();
 
-        public List<Event> findAll() {
-            return Collections.unmodifiableList(data);
+        List<Event> findAllInverted() {
+            return Collections.unmodifiableList(Lists.reverse(data));
         }
 
-        public Page<Event> findAll(Pageable pageable) {
+        Page<Event> findAllInverted(Pageable pageable) {
             int start = (int) pageable.getOffset();
             int end = (start + pageable.getPageSize()) > data.size() ? data.size() : (start + pageable.getPageSize());
-            return new PageImpl<>(data.subList(start, end), pageable, data.size());
+            return new PageImpl<>(Lists.reverse(data).subList(start, end), pageable, data.size());
         }
 
-        public Event save(Event event) {
+        Event save(Event event) {
             data.add(event);
             return event;
         }
 
-        public void deleteAll() {
+        void deleteAll() {
             data.clear();
         }
     }

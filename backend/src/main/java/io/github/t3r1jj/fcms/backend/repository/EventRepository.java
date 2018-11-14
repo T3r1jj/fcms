@@ -11,4 +11,7 @@ import java.util.List;
 
 @Repository
 public interface EventRepository extends MongoRepository<Event, ObjectId> {
+    List<Event> findAllByOrderByTimeDesc();
+
+    Page<Event> findAllByOrderByTimeDesc(Pageable pageable);
 }

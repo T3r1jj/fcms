@@ -22,11 +22,11 @@ public class HistoryService {
     }
 
     public List<Event> findAll() {
-        return eventRepository.findAll();
+        return eventRepository.findAllByOrderByTimeDesc();
     }
 
     public Page<Event> findAll(Pageable pageable) {
-        return eventRepository.findAll(pageable);
+        return eventRepository.findAllByOrderByTimeDesc(pageable);
     }
 
     /**

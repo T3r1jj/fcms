@@ -3,7 +3,7 @@ import LinearProgress from "@material-ui/core/LinearProgress/LinearProgress";
 import TextField from "@material-ui/core/TextField/TextField";
 import {mount, shallow} from 'enzyme';
 import * as React from 'react';
-import IConfiguration from 'src/model/IConfiguration';
+import IConfiguration from '../model/IConfiguration';
 
 import Configuration from './Configuration';
 

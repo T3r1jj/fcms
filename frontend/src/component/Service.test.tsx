@@ -1,7 +1,7 @@
 import {mount, shallow} from 'enzyme';
 import * as React from 'react';
 import * as sinon from 'sinon';
-import IService from 'src/model/IService';
+import IService from "../model/IService";
 import {IServiceProps, Service} from './Service';
 
 describe('component', () => {

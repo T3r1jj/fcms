@@ -5,7 +5,7 @@ import {EventType} from "./EventType";
 // tslint:disable-next-line:no-var-requires
 const moment = require('moment')
 
-export class Event {
+export default class Event {
     @IsString()
     // @ts-ignore
     public title: string;
@@ -20,4 +20,9 @@ export class Event {
     @IsDate()
     // @ts-ignore
     public time: Date;
+
+    public getKeys() {
+        return ["title", "description", "type", "time"];
+    }
 }
+

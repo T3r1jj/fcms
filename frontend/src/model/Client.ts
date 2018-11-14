@@ -1,8 +1,11 @@
 import * as Atmosphere from "atmosphere.js";
+import {plainToClass} from "class-transformer";
+import Event from "./event/Event";
+import EventPage from "./event/EventPage";
 import IConfiguration from "./IConfiguration";
 import {INotifications} from "./INotifiations";
 
-export class Client {
+export default class Client {
 
     public getConfiguration = () => {
         return fetch(this.getBackendPath + "/api/configuration")
@@ -25,10 +28,39 @@ export class Client {
         });
     };
 
-    public subscribeToNotifications(notifications: INotifications) {
+    public getHistoryPage = (size: number, page: number) => {
+        const queryString = "?" + [
+            `size=${size}`,
+            `page=${page}`,
+        ].join('&');
+
+        return fetch(this.getBackendPath() + "/api/history" + queryString)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText)
+                }
+                return response.json()
+            })
+            .then(json => plainToClass(EventPage, json as EventPage));
+    };
+
+    public getHistory = () => {
+        return fetch(this.getBackendPath() + "/api/history")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText)
+                }
+                return response.json()
+            })
+            .then(json => {
+                return plainToClass(Event, json as Event[]);
+            })
+    };
+
+    public subscribeToNotifications = (notifications: INotifications) => {
         const socket: any = Atmosphere;
         const request: Atmosphere.Request = new (Atmosphere as any).AtmosphereRequest();
-        request.url = 'http://localhost:8080/api/notification';
+        request.url = this.getBackendPath() + '/api/notification';
         request.contentType = "application/json";
         request.transport = 'websocket';
         request.fallbackTransport = 'long-polling';

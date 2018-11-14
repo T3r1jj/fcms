@@ -3,8 +3,8 @@ import {deserialize} from "class-transformer";
 import {validateSync} from "class-validator";
 import {InjectedNotistackProps, withSnackbar} from "notistack";
 import * as React from "react";
-import {Event} from "../model/Event";
-import {EventType} from "../model/EventType";
+import Event from "../model/event/Event";
+import {EventType} from "../model/event/EventType";
 import {INotifications} from "../model/INotifiations";
 
 export class Notifications extends React.Component<INotificationsProps, {}> implements INotifications {
@@ -50,7 +50,8 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
                     this.props.enqueueSnackbar(event.title, {
                         action: Notifications.DISMISS_BUTTON,
                         variant: EventType.toNotificationType(event.type) as any,
-                    })
+                    });
+                    this.props.onEventReceived(event);
                 } else {
                     this.props.enqueueSnackbar('Invalid json', {
                         action: Notifications.DISMISS_BUTTON,
@@ -105,6 +106,7 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
 
 export interface INotificationsProps extends InjectedNotistackProps {
     subscribeToNotifications(notifications: INotifications): void
+    onEventReceived(event: Event): void
 }
 
 export default withSnackbar(Notifications);

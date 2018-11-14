@@ -1,7 +1,7 @@
 import Checkbox from '@material-ui/core/Checkbox';
 
 import * as React from 'react';
-import IService from 'src/model/IService';
+import IService from '../model/IService';
 import {ApiKey} from "./ApiKey";
 
 export const Service: React.StatelessComponent<IServiceProps> = props => {

@@ -4,7 +4,7 @@ import DialogTitle from "@material-ui/core/DialogTitle/DialogTitle";
 import List from "@material-ui/core/List/List";
 import ListItem from "@material-ui/core/ListItem/ListItem";
 import * as React from "react";
-import {Client} from "../../model/Client";
+import Client from "../../model/Client";
 import IRecord from "../../model/IRecord";
 import Configuration from "../Configuration";
 import Record, {IRecordProps} from "../Record";

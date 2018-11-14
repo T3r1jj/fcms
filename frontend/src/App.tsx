@@ -4,13 +4,14 @@ import * as React from 'react';
 import {Route} from "react-router";
 import {BrowserRouter} from "react-router-dom";
 import './App.css';
-import HistoryPage from "./component/pages/HistoryPage";
-import MainPage from "./component/pages/MainPage";
+import HistoryPage from "./component/page/HistoryPage";
+import MainPage from "./component/page/MainPage";
 import PrimarySearchAppBar from "./component/PrimarySearchAppBar";
-import {Client} from "./model/Client";
+import Client from "./model/Client";
+import Event from "./model/event/Event";
 import Notifications from './notification/Notifications';
 
-class App extends React.Component<{}, {}> {
+class App extends React.Component<{}, IAppState> {
     private readonly theme = createMuiTheme({
         palette: {
             primary: {
@@ -35,7 +36,12 @@ class App extends React.Component<{}, {}> {
 
     constructor(props: any) {
         super(props);
+        this.state = {
+            newEvent: undefined
+        };
         this.renderMainPage = this.renderMainPage.bind(this);
+        this.renderHistoryPage = this.renderHistoryPage.bind(this);
+        this.onEventReceived = this.onEventReceived.bind(this);
     }
 
     public render() {
@@ -44,12 +50,12 @@ class App extends React.Component<{}, {}> {
                 <SnackbarProvider maxSnack={100} anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
                                   autoHideDuration={1000 * 60 * 15}>
                     <MuiThemeProvider theme={this.theme}>
-                        <Notifications subscribeToNotifications={this.client.subscribeToNotifications}/>
+                        <Notifications {...this.client} onEventReceived={this.onEventReceived}/>
                         <div className="App">
                             <PrimarySearchAppBar/>
 
                             <Route path="/" exact={true} render={this.renderMainPage}/>
-                            <Route path="/history" component={HistoryPage}/>
+                            <Route path="/history" render={this.renderHistoryPage}/>
                         </div>
                     </MuiThemeProvider>
                 </SnackbarProvider>
@@ -60,7 +66,20 @@ class App extends React.Component<{}, {}> {
     private renderMainPage() {
         return <MainPage client={this.client}/>
     }
+
+    private renderHistoryPage() {
+        return <HistoryPage getHistoryPage={this.client.getHistoryPage}
+                            getHistory={this.client.getHistory}
+                            newEvent={this.state.newEvent}/>;
+    }
+
+    private onEventReceived(event: Event) {
+        this.setState({newEvent: event});
+    }
 }
 
+interface IAppState {
+    newEvent?: Event;
+}
 
 export default App;

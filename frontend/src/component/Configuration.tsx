@@ -3,14 +3,13 @@ import LinearProgress from "@material-ui/core/LinearProgress/LinearProgress";
 import TextField from "@material-ui/core/TextField/TextField";
 import * as React from "react";
 import {ComponentState} from "react";
-import IConfiguration from 'src/model/IConfiguration';
-import IService from 'src/model/IService';
-import {Client} from "../model/Client";
+import IConfiguration from '../model/IConfiguration';
+import IService from '../model/IService';
 import {Service} from './Service';
 
 export default class Configuration extends React.Component<IConfigurationProps, IConfigurationState> {
 
-    constructor(props: Client) {
+    constructor(props: IConfigurationProps) {
         super(props);
         this.state = {
             error: false,

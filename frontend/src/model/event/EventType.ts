@@ -1,5 +1,5 @@
 export enum EventType {
-    INFO, WARNING, ERROR, DEBUG
+    INFO = 'INFO', WARNING = 'WARNING', ERROR = 'ERROR', DEBUG = 'DEBUG'
 }
 
 // tslint:disable-next-line:no-namespace

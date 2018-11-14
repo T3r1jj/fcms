@@ -1,9 +1,10 @@
 import {mount, shallow} from "enzyme";
 import {OptionsObject, SnackbarProvider} from "notistack";
 import * as React from "react";
+import "reflect-metadata";
 import * as sinon from "sinon";
 import {SinonSpy} from "sinon";
-import {Event} from "../model/Event";
+import Event from "../model/event/Event";
 import {INotifications} from "../model/INotifiations";
 import {INotificationsProps, Notifications} from "./Notifications";
 
@@ -13,6 +14,7 @@ describe('notifications', () => {
     beforeEach(() => {
         props = {
             enqueueSnackbar: (message, options?) => undefined,
+            onEventReceived: (event) => undefined,
             onPresentSnackbar: variant => undefined,
             subscribeToNotifications: (notifications: INotifications) => undefined,
         }
@@ -51,6 +53,7 @@ describe('notifications', () => {
                 maxSnack={1}
                 autoHideDuration={defaultAutoHideTime}>
                 <div><Notifications enqueueSnackbar={props.enqueueSnackbar}
+                                    onEventReceived={props.onEventReceived}
                                     subscribeToNotifications={props.subscribeToNotifications}
                                     onPresentSnackbar={props.onPresentSnackbar}/></div>
             </SnackbarProvider>)

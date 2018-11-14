@@ -18,7 +18,12 @@
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "*": [
+        "./types/*"
+      ]
+    }
   },
   "exclude": [
     "node_modules",

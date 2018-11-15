@@ -46,3 +46,9 @@
 .history-container h6 {
     text-align: left;
 }
+
+.code-container {
+    text-align: left;
+    margin: auto;
+    font-size: 1.5em;
+}

@@ -4,6 +4,7 @@ import * as React from 'react';
 import {Route} from "react-router";
 import {BrowserRouter} from "react-router-dom";
 import './App.css';
+import CodeCallbackPage from "./component/page/CodeCallbackPage";
 import HistoryPage from "./component/page/HistoryPage";
 import MainPage from "./component/page/MainPage";
 import PrimarySearchAppBar from "./component/PrimarySearchAppBar";
@@ -21,7 +22,7 @@ class App extends React.Component<{}, IAppState> {
                 main: '#3f50b5',
             },
             secondary: {
-                contrastText: '#000',
+                contrastText: '#fff',
                 dark: '#ba000d',
                 light: '#ff7961',
                 main: '#f44336',
@@ -41,6 +42,7 @@ class App extends React.Component<{}, IAppState> {
         };
         this.renderMainPage = this.renderMainPage.bind(this);
         this.renderHistoryPage = this.renderHistoryPage.bind(this);
+        this.renderCodeCallbackPage = this.renderCodeCallbackPage.bind(this);
         this.onEventReceived = this.onEventReceived.bind(this);
     }
 
@@ -56,6 +58,7 @@ class App extends React.Component<{}, IAppState> {
 
                             <Route path="/" exact={true} render={this.renderMainPage}/>
                             <Route path="/history" render={this.renderHistoryPage}/>
+                            <Route path="/code" render={this.renderCodeCallbackPage}/>
                         </div>
                     </MuiThemeProvider>
                 </SnackbarProvider>
@@ -71,6 +74,12 @@ class App extends React.Component<{}, IAppState> {
         return <HistoryPage getHistoryPage={this.client.getHistoryPage}
                             getHistory={this.client.getHistory}
                             newEvent={this.state.newEvent}/>;
+    }
+
+    private renderCodeCallbackPage() {
+        return <CodeCallbackPage getCodeCallback={this.client.getCodeCallback}
+                                 checkCodeCallback={this.client.checkCodeCallback}
+                                 updateCodeCallback={this.client.updateCodeCallback}/>;
     }
 
     private onEventReceived(event: Event) {

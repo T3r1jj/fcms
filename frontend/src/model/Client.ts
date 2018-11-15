@@ -1,5 +1,7 @@
 import * as Atmosphere from "atmosphere.js";
 import {plainToClass} from "class-transformer";
+import Code from "./code/Code";
+import {CodeCallbackType} from "./code/CodeCallbackType";
 import Event from "./event/Event";
 import EventPage from "./event/EventPage";
 import IConfiguration from "./IConfiguration";
@@ -55,6 +57,34 @@ export default class Client {
             .then(json => {
                 return plainToClass(Event, json as Event[]);
             })
+    };
+
+    public getCodeCallback = (type: CodeCallbackType) => {
+        return fetch(this.getBackendPath() + "/api/code?type=" + CodeCallbackType[type])
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText)
+                }
+                return response.json()
+            })
+            .then(json => {
+                return plainToClass(Code, json as Code);
+            })
+    };
+
+    public checkCodeCallback = (type: CodeCallbackType) => {
+        return fetch(this.getBackendPath() + "/api/code?type=" + CodeCallbackType[type], {method: 'POST'})
+    };
+
+    public updateCodeCallback = (code: Code) => {
+        return fetch(this.getBackendPath() + "/api/code", {
+            body: JSON.stringify(code),
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            method: 'PATCH'
+        });
     };
 
     public subscribeToNotifications = (notifications: INotifications) => {

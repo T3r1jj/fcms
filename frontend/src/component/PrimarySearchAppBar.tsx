@@ -8,6 +8,7 @@ import {StyleRulesCallback, withStyles} from '@material-ui/core/styles';
 import {fade} from '@material-ui/core/styles/colorManipulator';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
+import CallbackIcon from '@material-ui/icons/CallMissed';
 import HomeIcon from '@material-ui/icons/Home';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import NotificationsIcon from '@material-ui/icons/Notifications';
@@ -123,6 +124,14 @@ class PrimarySearchAppBar extends React.Component<AppBarProps, IAppBarState> {
             >
                 <MenuItem>
                     <IconButton color="inherit">
+                        <Link to={"/code"} className={getClasses().linkWrapper}>
+                            <CallbackIcon/>
+                        </Link>
+                    </IconButton>
+                    <p>Code callbacks</p>
+                </MenuItem>
+                <MenuItem>
+                    <IconButton color="inherit">
                         <Link to={"/history"} className={getClasses().linkWrapper}>
                             <Badge badgeContent={11} color="secondary">
                                 <NotificationsIcon/>
@@ -160,6 +169,11 @@ class PrimarySearchAppBar extends React.Component<AppBarProps, IAppBarState> {
                         </div>
                         <div className={getClasses().grow}/>
                         <div className={getClasses().sectionDesktop}>
+                            <IconButton color={"inherit"}>
+                                <Link to={"/code"} className={getClasses().linkWrapper}>
+                                    <CallbackIcon/>
+                                </Link>
+                            </IconButton>
                             <IconButton color={"inherit"}>
                                 <Link to={"/history"} className={getClasses().linkWrapper}>
                                     <Badge badgeContent={17} color="secondary">

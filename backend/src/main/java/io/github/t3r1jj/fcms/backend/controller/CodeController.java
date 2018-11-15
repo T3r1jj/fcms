@@ -19,18 +19,27 @@ public class CodeController {
     }
 
     @GetMapping
-    public void check(Code.Type type) {
-        findCodeAndTryCompiling(type.getId());
+    public Code get(Code.Type type) {
+        return codeRepository.findById(type.getId())
+                .orElse(type.createBuilder().build());
+    }
+
+    /**
+     *
+     * @param code to update or delete if all of the handlers and inner code are null or empty
+     */
+    @PatchMapping
+    public void update(@RequestBody Code code) {
+        if (code.isEmpty()) {
+            codeRepository.delete(code);
+        } else {
+            codeRepository.save(code);
+        }
     }
 
     @PostMapping
-    public void update(@RequestBody Code code) {
-        codeRepository.save(code);
-    }
-
-    @DeleteMapping
-    public void delete(Code.Type type) {
-        codeRepository.deleteById(type.getId());
+    public void check(Code.Type type) {
+        findCodeAndTryCompiling(type.getId());
     }
 
     private void findCodeAndTryCompiling(String id) {

@@ -10,7 +10,7 @@ import {INotifications} from "./INotifiations";
 export default class Client {
 
     public getConfiguration = () => {
-        return fetch(this.getBackendPath + "/api/configuration")
+        return fetch(this.getBackendPath() + "/api/configuration")
             .then(response => {
                 if (!response.ok) {
                     throw new Error(response.statusText)
@@ -87,6 +87,23 @@ export default class Client {
         });
     };
 
+    public isUploadValid = (file: File, name: string, parent: string, tag: string) => {
+        return name.length !== 0 && ((parent.length === 0 && tag.length === 0) || (parent.length !== 0 && tag.length !== 0))
+    };
+
+    public upload = (file: File, name: string, parent: string, tag: string, onProgress?: (event: ProgressEvent) => void) => {
+        const params = [];
+        params.push(`name=${name}`);
+        if (parent.length !== 0) {
+            params.push(`parent=${parent}`);
+        }
+        params.push(`tag=${tag}`);
+        const queryString = "?" + params.join('&');
+        const formData = new FormData();
+        formData.append("file", file, name);
+        return this.futch(this.getBackendPath() + "/api/records" + queryString, formData, onProgress);
+    };
+
     public subscribeToNotifications = (notifications: INotifications) => {
         const socket: any = Atmosphere;
         const request: Atmosphere.Request = new (Atmosphere as any).AtmosphereRequest();
@@ -105,6 +122,23 @@ export default class Client {
         request.onReopen = (_, response: Atmosphere.Response) => notifications.onReopen(response.transport!);
         request.onClientTimeout = notifications.onClientTimeout;
         socket.subscribe(request);
+    };
+
+    private futch(url: string, formData: FormData, onProgress?: (event: ProgressEvent) => void) {
+        return new Promise<Response>((resolve, reject) => {
+            const xhr: XMLHttpRequest = new XMLHttpRequest();
+
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === 4) {
+                    window.console.log(xhr.response);
+                    window.console.log(xhr.status);
+                    resolve(new Response(xhr.response));
+                }
+            };
+            xhr.upload.onprogress = (onProgress ? onProgress : null);
+            xhr.open('POST', url, true);
+            xhr.send(formData);
+        });
     }
 
     private getBackendPath = () => {

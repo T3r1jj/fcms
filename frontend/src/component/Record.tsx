@@ -1,26 +1,25 @@
+import {Tooltip} from '@material-ui/core';
 import Button from "@material-ui/core/Button/Button";
 import Dialog from "@material-ui/core/Dialog/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle/DialogTitle";
 import IconButton from '@material-ui/core/IconButton';
-import AttachmentIcon from '@material-ui/icons/Attachment';
+// import AttachmentIcon from "@material-ui/core/SvgIcon/SvgIcon";
 import BackupIcon from '@material-ui/icons/Backup';
 import VersionIcon from '@material-ui/icons/FiberNew';
 import TextIcon from '@material-ui/icons/TextFormat';
 import * as React from 'react';
-
-import {Tooltip} from '@material-ui/core';
 import IRecord from '../model/IRecord';
 import Description from "./Description";
 
 export default class Record extends React.Component<IRecordProps, IRecordState> {
     constructor(props: IRecordProps) {
         super(props);
-        this.state = {selectedRecord: undefined, descriptionOpen: false, description: this.props.description}
-        this.onRecordSelected = this.onRecordSelected.bind(this)
-        this.handleDescriptionClose = this.handleDescriptionClose.bind(this)
-        this.handleDescriptionOpen = this.handleDescriptionOpen.bind(this)
-        this.handleDescriptionChange = this.handleDescriptionChange.bind(this)
-        this.handleDescriptionSave = this.handleDescriptionSave.bind(this)
+        this.state = {selectedRecord: undefined, descriptionOpen: false, description: this.props.description};
+        this.onRecordSelected = this.onRecordSelected.bind(this);
+        this.handleDescriptionClose = this.handleDescriptionClose.bind(this);
+        this.handleDescriptionOpen = this.handleDescriptionOpen.bind(this);
+        this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
+        this.handleDescriptionSave = this.handleDescriptionSave.bind(this);
     }
 
     public render() {
@@ -28,20 +27,20 @@ export default class Record extends React.Component<IRecordProps, IRecordState> 
             <div>
                 {this.props.name} :: Records: {this.getRecordsCount(this.props)},
                 Depth: {this.getVersionsDepth(this.props)}, Backups: {this.getBackupsCount(this.props)}
-                {this.props.backups.map(b =>
-                    <Tooltip key={b.service} title={"Backup " + b.service}>
+                {Array.from(this.props.backups.entries()).map(([service, backup]) =>
+                    <Tooltip key={service} title={"Backup " + service}>
                         <IconButton aria-label="Backup"><BackupIcon/></IconButton>
                     </Tooltip>
                 )}
                 <Tooltip title="Description" onClick={this.handleDescriptionOpen}>
                     <IconButton aria-label="Description"><TextIcon/></IconButton>
                 </Tooltip>
-                {this.props.meta.map(m =>
-                    <Tooltip key={m.id} title={"Meta " + m.name}>
-                        <IconButton id={m.id} aria-label="Meta"
-                                    onClick={this.onRecordSelected}><AttachmentIcon/></IconButton>
-                    </Tooltip>
-                )}
+                {/*{this.props.meta.map(m =>*/}
+                    {/*<Tooltip key={m.id} title={"Meta " + m.name}>*/}
+                        {/*<IconButton id={m.id} aria-label="Meta"*/}
+                                    {/*onClick={this.onRecordSelected}><AttachmentIcon/></IconButton>*/}
+                    {/*</Tooltip>*/}
+                {/*)}*/}
                 {this.props.versions.map(v =>
                     <Tooltip key={v.id} title={"Version " + v.tag}>
                         <IconButton id={v.id} aria-label="Version"
@@ -64,21 +63,18 @@ export default class Record extends React.Component<IRecordProps, IRecordState> 
     }
 
     private onRecordSelected(event: React.SyntheticEvent<HTMLElement>) {
-        let eventTarget = event.target as any
-        let recordId = eventTarget.getAttribute('id')
+        let eventTarget = event.target as any;
+        let recordId = eventTarget.getAttribute('id');
         while (recordId == null) {
-            eventTarget = eventTarget.parentElement
-            recordId = eventTarget.getAttribute('id')
+            eventTarget = eventTarget.parentElement;
+            recordId = eventTarget.getAttribute('id');
         }
-        let record = this.props.meta.find(e => e.id === recordId)
-        if (record === undefined) {
-            record = this.props.versions.find(v => v.id === recordId)
-        }
+        const record = this.props.versions.find(v => v.id === recordId);
         const newlySelectedRecord: IRecordProps = {
             ...record!,
             hierarchyTooltipEnabled: false,
             onDescriptionChange: this.props.onDescriptionChange
-        }
+        };
         this.setState({
             selectedRecord: this.state.selectedRecord ?
                 (this.state.selectedRecord.id === newlySelectedRecord.id ? undefined : newlySelectedRecord)
@@ -87,9 +83,8 @@ export default class Record extends React.Component<IRecordProps, IRecordState> 
     }
 
     private getRecordsCount(props: IRecord): number {
-        let recordsCount = 1
-        props.versions.forEach(v => recordsCount += this.getRecordsCount(v))
-        props.meta.forEach(m => recordsCount += this.getRecordsCount(m))
+        let recordsCount = 1;
+        props.versions.forEach(v => recordsCount += this.getRecordsCount(v));
         return recordsCount
     }
 
@@ -98,11 +93,10 @@ export default class Record extends React.Component<IRecordProps, IRecordState> 
     }
 
     private getBackupsCount(props: IRecord): number {
-        let backupsCount = 0
-        props.backups.forEach(m => backupsCount += 1)
-        props.versions.forEach(v => backupsCount += this.getRecordsCount(v))
-        props.meta.forEach(m => backupsCount += this.getRecordsCount(m))
-        return backupsCount
+        let backupsCount = 0;
+        props.backups.forEach(m => backupsCount += 1);
+        props.versions.forEach(v => backupsCount += this.getRecordsCount(v));
+        return backupsCount;
     }
 
     private handleDescriptionClose() {

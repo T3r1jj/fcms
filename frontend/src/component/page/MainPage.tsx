@@ -12,12 +12,11 @@ import Upload from "../Upload";
 
 export default class MainPage extends React.Component<IMainPageProps, IMainPageState> {
     private recordData: IRecord = {
-        backups: [],
+        backups: new Map(),
         description: "test",
         id: "1",
-        meta: [],
         name: "test",
-        versions: [{name: "test", id: "2", description: "test", tag: "v2", versions: [], meta: [], backups: []}]
+        versions: [{name: "test", id: "2", description: "test", tag: "v2", versions: [], backups: new Map()}]
     };
     private records = [this.recordData, {...this.recordData, id: "2", name: "Another"}];
 
@@ -35,7 +34,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                 <p className="App-intro">
                     Upload file or a new version for a backup management
                 </p>
-                <Upload isUploadValid={this.isUploadValid}/>
+                <Upload isUploadValid={this.props.client.isUploadValid} upload={this.props.client.upload}/>
                 <Button variant="contained" onClick={this.handleConfigClick}>Configuration</Button>
                 <Dialog onClose={this.handleConfigClose} aria-labelledby="simple-dialog-title"
                         open={this.state.configOpen}>
@@ -72,10 +71,6 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                 }
             } as IRecordProps
         })
-    }
-
-    private isUploadValid(file: File, name: string, parent: string, tag: string): boolean {
-        return false
     }
 }
 

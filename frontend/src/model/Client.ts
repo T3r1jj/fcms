@@ -6,6 +6,7 @@ import Event from "./event/Event";
 import EventPage from "./event/EventPage";
 import IConfiguration from "./IConfiguration";
 import {INotifications} from "./INotifiations";
+import Record from "./Record";
 
 export default class Client {
 
@@ -91,17 +92,53 @@ export default class Client {
         return name.length !== 0 && ((parent.length === 0 && tag.length === 0) || (parent.length !== 0 && tag.length !== 0))
     };
 
-    public upload = (file: File, name: string, parent: string, tag: string, onProgress?: (event: ProgressEvent) => void) => {
+    public upload = (file: File, name: string, parentId: string, tag: string, onProgress?: (event: ProgressEvent) => void) => {
         const params = [];
         params.push(`name=${name}`);
-        if (parent.length !== 0) {
-            params.push(`parent=${parent}`);
+        if (parentId.length !== 0) {
+            params.push(`parentId=${parentId}`);
         }
         params.push(`tag=${tag}`);
         const queryString = "?" + params.join('&');
         const formData = new FormData();
         formData.append("file", file, name);
         return this.futch(this.getBackendPath() + "/api/records" + queryString, formData, onProgress);
+    };
+
+    public getRecords = () => {
+        return fetch(this.getBackendPath() + "/api/records")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText)
+                }
+                return response.json()
+            })
+            .then(json => {
+                return plainToClass(Record, json as Record[]);
+            });
+    };
+
+    public updateRecordDescription = (id: string, description: string) => {
+        return fetch(this.getBackendPath() + "/api/records?id=" + id, {
+            body: description,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            method: 'PUT'
+        });
+    };
+
+    public deleteRecords = (id: string) => {
+        return fetch(this.getBackendPath() + "/api/records?id=" + id, {
+            method: 'DELETE'
+        });
+    };
+
+    public forceDeleteRecords = (id: string) => {
+        return fetch(this.getBackendPath() + "/api/records?id=" + id, {
+            method: 'PATCH'
+        });
     };
 
     public subscribeToNotifications = (notifications: INotifications) => {
@@ -130,11 +167,25 @@ export default class Client {
 
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4) {
-                    window.console.log(xhr.response);
-                    window.console.log(xhr.status);
-                    resolve(new Response(xhr.response));
+                    const body = (xhr.response !== undefined && xhr.response !== null) ? xhr.response : xhr.responseText;
+                    resolve(new Response(body, {
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                    }))
                 }
             };
+            xhr.onerror = () => {
+                reject(new TypeError('Network request failed'))
+            };
+
+            xhr.ontimeout = () => {
+                reject(new TypeError('Network request failed'))
+            };
+
+            xhr.onabort = () => {
+                reject(new DOMException('Aborted', 'AbortError'))
+            };
+
             xhr.upload.onprogress = (onProgress ? onProgress : null);
             xhr.open('POST', url, true);
             xhr.send(formData);

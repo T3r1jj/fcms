@@ -4,6 +4,7 @@ import * as React from "react";
 import Event from "../../model/event/Event";
 import EventPage from "../../model/event/EventPage";
 import {EventType} from "../../model/event/EventType";
+import PrimarySearchAppBar from "../PrimarySearchAppBar";
 
 
 export default class HistoryPage extends React.Component<IHistoryPageProps, IHistoryPageState> {
@@ -32,13 +33,16 @@ export default class HistoryPage extends React.Component<IHistoryPageProps, IHis
 
     public render() {
         return (
-            <div className={"history-container"}>
-                <MUIDataTable
-                    title={"History"}
-                    data={this.eventsToData()}
-                    columns={this.columns}
-                    options={this.getOptions()}
-                />
+            <div>
+                <PrimarySearchAppBar/>
+                <div className={"history-container"}>
+                    <MUIDataTable
+                        title={"History"}
+                        data={this.eventsToData()}
+                        columns={this.columns}
+                        options={this.getOptions()}
+                    />
+                </div>
             </div>
         );
     }

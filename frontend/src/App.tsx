@@ -7,7 +7,6 @@ import './App.css';
 import CodeCallbackPage from "./component/page/CodeCallbackPage";
 import HistoryPage from "./component/page/HistoryPage";
 import MainPage from "./component/page/MainPage";
-import PrimarySearchAppBar from "./component/PrimarySearchAppBar";
 import Client from "./model/Client";
 import Event from "./model/event/Event";
 import Notifications from './notification/Notifications';
@@ -54,8 +53,6 @@ class App extends React.Component<{}, IAppState> {
                     <MuiThemeProvider theme={this.theme}>
                         <Notifications {...this.client} onEventReceived={this.onEventReceived}/>
                         <div className="App">
-                            <PrimarySearchAppBar/>
-
                             <Route path="/" exact={true} render={this.renderMainPage}/>
                             <Route path="/history" render={this.renderHistoryPage}/>
                             <Route path="/code" render={this.renderCodeCallbackPage}/>

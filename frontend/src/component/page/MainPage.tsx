@@ -6,35 +6,37 @@ import ListItem from "@material-ui/core/ListItem/ListItem";
 import * as React from "react";
 import Client from "../../model/Client";
 import IRecord from "../../model/IRecord";
+import SearchItem from "../../model/SearchItem";
 import Configuration from "../Configuration";
-import Record, {IRecordProps} from "../Record";
+import PrimarySearchAppBar from "../PrimarySearchAppBar";
+import RecordNode from "../RecordNode";
 import Upload from "../Upload";
 
 export default class MainPage extends React.Component<IMainPageProps, IMainPageState> {
-    private recordData: IRecord = {
-        backups: new Map(),
-        description: "test",
-        id: "1",
-        name: "test",
-        versions: [{name: "test", id: "2", description: "test", tag: "v2", versions: [], backups: new Map()}]
-    };
-    private records = [this.recordData, {...this.recordData, id: "2", name: "Another"}];
-
     constructor(props: IMainPageProps) {
         super(props);
-        this.state = {configOpen: false};
+        this.state = {configOpen: false, records: []};
         this.handleConfigClick = this.handleConfigClick.bind(this);
         this.handleConfigClose = this.handleConfigClose.bind(this);
-        this.recordData.id = "test";
+        this.updateParentId = this.updateParentId.bind(this);
+    }
+
+    public componentDidMount() {
+        this.props.client.getRecords()
+            .then(records => this.setState({records}))
     }
 
     public render() {
         return (
             <div>
+                <PrimarySearchAppBar
+                    searchItems={this.getAllRecords(this.state.records).map(r => new SearchItem(r.name, [r.id]))}/>
                 <p className="App-intro">
                     Upload file or a new version for a backup management
                 </p>
-                <Upload isUploadValid={this.props.client.isUploadValid} upload={this.props.client.upload}/>
+                <Upload parentId={this.state.currentParentRecordId}
+                        isUploadValid={this.props.client.isUploadValid}
+                        upload={this.props.client.upload}/>
                 <Button variant="contained" onClick={this.handleConfigClick}>Configuration</Button>
                 <Dialog onClose={this.handleConfigClose} aria-labelledby="simple-dialog-title"
                         open={this.state.configOpen}>
@@ -43,14 +45,30 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                                    getConfiguration={this.props.client.getConfiguration}/>
                 </Dialog>
                 <List className="list">
-                    {this.prepareRecordsProps(this.records).map(r =>
+                    {this.state.records.map(r =>
                         <ListItem key={r.id}>
-                            <Record {...r} />
+                            <RecordNode {...r}
+                                        deleteRecords={this.props.client.deleteRecords}
+                                        forceDeleteRecords={this.props.client.forceDeleteRecords}
+                                        updateParentId={this.updateParentId}
+                                        hierarchyTooltipEnabled={this.state.records[0] === r}
+                                        updateRecordDescription={this.props.client.updateRecordDescription}
+                                        root={true}
+                            />
                         </ListItem>
                     )}
                 </List>
             </div>
         );
+    }
+
+    private getAllRecords(records: IRecord[]): IRecord[] {
+        let flatMap: IRecord[] = [...records];
+        for (const record of records) {
+            record.versions.forEach(v => v.parentIds = [...record.parentIds, record.id]);
+            flatMap = [...flatMap, ...this.getAllRecords(record.versions)]
+        }
+        return flatMap;
     }
 
     private handleConfigClick() {
@@ -61,17 +79,10 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
         this.setState({configOpen: false})
     }
 
-    private prepareRecordsProps(records: IRecord[]): IRecordProps[] {
-        return records.map(r => {
-            return {
-                ...r,
-                hierarchyTooltipEnabled: records[0] === r,
-                onDescriptionChange: (id, description) => {
-                    window.console.log("Changed " + id + " description to " + description)
-                }
-            } as IRecordProps
-        })
+    private updateParentId(parentId: string) {
+        this.setState({currentParentRecordId: parentId})
     }
+
 }
 
 interface IMainPageProps {
@@ -80,4 +91,6 @@ interface IMainPageProps {
 
 interface IMainPageState {
     configOpen: boolean;
+    records: IRecord[];
+    currentParentRecordId?: string;
 }

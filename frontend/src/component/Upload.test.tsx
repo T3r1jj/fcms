@@ -34,7 +34,7 @@ describe("component", () => {
             const wrapper = shallow(<Upload {...validProps}/>);
             expect(wrapper.find("TextField").at(0).prop("label")).toEqual("Name");
         });
-        it("renders parent", () => {
+        it("renders parentId", () => {
             const wrapper = shallow(<Upload {...validProps}/>);
             expect(wrapper.find("TextField").at(1).prop("label")).toEqual("Parent");
         });
@@ -52,7 +52,7 @@ describe("component", () => {
         });
 
         it("renders error on server not ok response", (done) => {
-            const errorMessage = "Not found parent id";
+            const errorMessage = "Not found parentId id";
             validProps.upload = (file: File, name: string, parent: string, tag: string) => {
                 const response = new Response(null, {
                     status: 404
@@ -70,7 +70,7 @@ describe("component", () => {
         });
 
         it("does not render progress on server not ok response", (done) => {
-            const errorMessage = "Not found parent id";
+            const errorMessage = "Not found parentId id";
             validProps.upload = () => {
                 const response = new Response(null, {
                     status: 404
@@ -149,10 +149,10 @@ describe("component", () => {
             expect(nameTextField.prop('value')).toEqual(newValue);
         });
 
-        it("on parent change", () => {
+        it("on parentId change", () => {
             const wrapper = shallow(<Upload {...validProps}/>);
             let parentTextField = wrapper.find("TextField").at(1);
-            const newValue = 'new parent';
+            const newValue = 'new parentId';
             parentTextField.simulate('change', {target: {value: newValue}});
             parentTextField = wrapper.find("TextField").at(1);
             expect(parentTextField.prop('value')).toEqual(newValue);
@@ -208,7 +208,7 @@ describe("component", () => {
             const uploadStub = sinon.stub(validProps, "upload").callThrough();
             const wrapper = mount(<Upload {...validProps}/>);
             const newName = 'new name';
-            const newParent = 'new parent';
+            const newParent = 'new parentId';
             const newTag = 'new tag';
             const overriddenName = "filename";
             const fileToUpload = new File([""], overriddenName);

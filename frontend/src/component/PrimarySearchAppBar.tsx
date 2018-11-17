@@ -1,7 +1,6 @@
 import AppBar, {AppBarProps} from '@material-ui/core/AppBar';
 import Badge from '@material-ui/core/Badge';
 import IconButton from '@material-ui/core/IconButton';
-import InputBase from '@material-ui/core/InputBase';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import {StyleRulesCallback, withStyles} from '@material-ui/core/styles';
@@ -15,6 +14,8 @@ import NotificationsIcon from '@material-ui/icons/Notifications';
 import SearchIcon from '@material-ui/icons/Search';
 import React from 'react';
 import {Link} from "react-router-dom";
+import Select from "react-select/lib/Select";
+import SearchItem from "../model/SearchItem";
 
 const styles: StyleRulesCallback = theme => ({
     grow: {
@@ -67,7 +68,8 @@ const styles: StyleRulesCallback = theme => ({
         justifyContent: 'center',
         pointerEvents: 'none',
         position: 'absolute',
-        width: theme.spacing.unit * 9,
+        right: 0,
+        width: theme.spacing.unit * 4.5,
     },
     sectionDesktop: {
         display: 'none',
@@ -89,11 +91,13 @@ const styles: StyleRulesCallback = theme => ({
     },
 });
 
-class PrimarySearchAppBar extends React.Component<AppBarProps, IAppBarState> {
+class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
 
-    constructor(props: AppBarProps) {
+    constructor(props: IAppBarProps) {
         super(props);
         this.state = {
+            inputValue: "",
+            menuOpen: false,
             mobileMoreAnchorEl: null,
         };
     }
@@ -155,18 +159,26 @@ class PrimarySearchAppBar extends React.Component<AppBarProps, IAppBarState> {
                         <Typography className={getClasses().title} variant="h6" color="inherit" noWrap={true}>
                             FCMS
                         </Typography>
+                        {this.props.searchItems &&
                         <div className={getClasses().search}>
                             <div className={getClasses().searchIcon}>
                                 <SearchIcon/>
                             </div>
-                            <InputBase
-                                placeholder="Search…"
-                                classes={{
-                                    input: getClasses().inputInput,
-                                    root: getClasses().inputRoot,
-                                }}
+                            <Select
+                                className={"react-select"}
+                                classNamePrefix="react-select"
+                                placeholder={"Search record name..."}
+                                value={this.state.selectedOption}
+                                onChange={this.handleChange}
+                                options={this.props.searchItems}
+                                inputValue={this.state.inputValue}
+                                onInputChange={this.onInputChange}
+                                menuIsOpen={this.state.menuOpen}
+                                onMenuOpen={this.onMenuOpen}
+                                onMenuClose={this.onMenuClose}
                             />
                         </div>
+                        }
                         <div className={getClasses().grow}/>
                         <div className={getClasses().sectionDesktop}>
                             <IconButton color={"inherit"}>
@@ -193,10 +205,38 @@ class PrimarySearchAppBar extends React.Component<AppBarProps, IAppBarState> {
             </div>
         );
     }
+
+    private handleChange = (selectedOption: any) => {
+        this.setState({selectedOption});
+        window.console.log(selectedOption.value[0]);
+        const element = document.getElementById(selectedOption.value[0]);
+        if (element) {
+            setTimeout(() => {
+                element.scrollIntoView(true);
+                element.focus();
+            }, 0);
+        }
+    };
+    private onInputChange = (inputValue: string) => {
+        this.setState({inputValue});
+    };
+    private onMenuOpen = () => {
+        this.setState({menuOpen: true});
+    };
+    private onMenuClose = () => {
+        this.setState({menuOpen: false});
+    };
+}
+
+interface IAppBarProps extends AppBarProps {
+    searchItems?: SearchItem[]
 }
 
 interface IAppBarState {
     mobileMoreAnchorEl: any
+    selectedOption?: any
+    inputValue: string
+    menuOpen: boolean
 }
 
 export default withStyles(styles)(PrimarySearchAppBar);

@@ -52,3 +52,50 @@
     margin: auto;
     font-size: 1.5em;
 }
+
+@media screen and (min-width: 600px) {
+    .react-select {
+        width: 250px;
+    }
+}
+
+.react-select .react-select__control {
+    background-color: inherit;
+}
+
+.react-select .react-select__value-container {
+    cursor: text;
+}
+
+.react-select .react-select__value-container *:not(.react-select__placeholder) {
+    color: inherit;
+}
+
+.react-select .react-select__value-container .react-select__placeholder {
+    color: lightgray;
+}
+
+.react-select .react-select__menu-list * {
+    color: black;
+    text-align: left;
+}
+.react-select .react-select__menu-list .react-select__option--is-selected {
+    color: white;
+}
+
+.react-select .react-select__control,
+.react-select .react-select__control--is-focused,
+.react-select .react-select__control--is-focused:hover {
+    border-style: solid;
+    border-width: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.react-select .react-select__indicator.react-select__dropdown-indicator * {
+    color: white;
+}
+
+.react-select .react-select__indicator.react-select__dropdown-indicator svg {
+    visibility: hidden;
+}

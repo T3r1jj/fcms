@@ -1,4 +1,4 @@
-interface IBackup {
+export default interface IBackup {
     name: string;
     path: string;
     publicPath?: string;

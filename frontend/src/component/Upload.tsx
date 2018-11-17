@@ -5,6 +5,8 @@ import Dropzone from 'react-dropzone';
 import Formatter from '../utils/Formatter';
 
 export interface IUploadProps {
+    parentId?: string
+
     isUploadValid(file: File, name: string, parent: string, tag: string): boolean
 
     upload(file: File, name: string, parent: string, tag: string, onProgress?: (event: ProgressEvent) => void): Promise<Response>
@@ -13,7 +15,7 @@ export interface IUploadProps {
 interface IUploadState {
     files: File[]
     name: string
-    parent: string
+    parentId: string
     tag: string
     throughServer: boolean
     error?: string
@@ -25,7 +27,7 @@ interface IUploadState {
 export default class Upload extends React.Component<IUploadProps, IUploadState> {
     constructor(props: IUploadProps) {
         super(props);
-        this.state = {files: [], name: "", parent: "", tag: "", throughServer: false};
+        this.state = {files: [], name: "", parentId: "", tag: "", throughServer: false};
         this.onDrop = this.onDrop.bind(this);
         this.onNameChange = this.onNameChange.bind(this);
         this.onTagChange = this.onTagChange.bind(this);
@@ -33,6 +35,12 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
         this.onThroughServerChange = this.onThroughServerChange.bind(this);
         this.onUploadClick = this.onUploadClick.bind(this);
         this.onProgress = this.onProgress.bind(this);
+    }
+
+    public componentWillReceiveProps(nextProps: Readonly<IUploadProps>, nextContext: any): void {
+        if (nextProps.parentId) {
+            this.setState({parentId: nextProps.parentId!});
+        }
     }
 
     public onDrop(files: File[]) {
@@ -56,7 +64,7 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
                         }
                     </Dropzone>
                     <TextField label="Name" value={this.state.name} onChange={this.onNameChange}/>
-                    <TextField label="Parent" value={this.state.parent} onChange={this.onParentChange}/>
+                    <TextField label="Parent ID" value={this.state.parentId} onChange={this.onParentChange}/>
                     <TextField label="Tag" value={this.state.tag} onChange={this.onTagChange}/>
                     <br/>
                     {this.state.error &&
@@ -90,7 +98,7 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
     }
 
     private onParentChange(event: React.ChangeEvent<HTMLInputElement>) {
-        this.setState({parent: event.target.value})
+        this.setState({parentId: event.target.value})
     }
 
     private onThroughServerChange(event: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
@@ -100,7 +108,6 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
     private onProgress(event: ProgressEvent) {
         const clientProgress = 100 * event.loaded / event.total;
         const serverProgress = clientProgress / 2;
-        window.console.log(clientProgress);
         this.setState({
             clientProgress,
             serverProgress,
@@ -108,15 +115,15 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
     }
 
     private onUploadClick() {
-        const valid = this.props.isUploadValid(this.state.files[0], this.state.name, this.state.parent, this.state.tag);
+        const valid = this.props.isUploadValid(this.state.files[0], this.state.name, this.state.parentId, this.state.tag);
         this.setState({
             clientProgress: undefined,
-            error: valid ? undefined : "Invalid upload: name must not be empty and if you provide parent, do also provide tag",
+            error: valid ? undefined : "Invalid upload: name must not be empty and if you provide parentId, do also provide tag",
             ok: undefined,
             serverProgress: undefined
         });
         if (valid) {
-            this.props.upload(this.state.files[0], this.state.name, this.state.parent, this.state.tag, this.onProgress)
+            this.props.upload(this.state.files[0], this.state.name, this.state.parentId, this.state.tag, this.onProgress)
                 .then(r => {
                     if (!r.ok) {
                         return r.json()

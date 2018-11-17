@@ -8,6 +8,7 @@ import Code from "../../model/code/Code";
 import {CodeCallbackType} from "../../model/code/CodeCallbackType";
 import ICode from "../../model/code/ICode";
 import CodeEditor from "../CodeEditor";
+import PrimarySearchAppBar from "../PrimarySearchAppBar";
 
 
 export default class CodeCallbackPage extends React.Component<ICodeCallbackPageProps, IHistoryPageState> {
@@ -34,6 +35,7 @@ export default class CodeCallbackPage extends React.Component<ICodeCallbackPageP
     public render() {
         return (
             <div>
+                <PrimarySearchAppBar/>
                 <AppBar position="static" color="default">
                     <Tabs
                         value={this.state.value}

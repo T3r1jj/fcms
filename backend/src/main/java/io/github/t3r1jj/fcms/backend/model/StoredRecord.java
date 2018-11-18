@@ -1,6 +1,8 @@
 package io.github.t3r1jj.fcms.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.github.t3r1jj.fcms.external.data.Record;
 import io.github.t3r1jj.fcms.external.data.RecordMeta;
 import org.bson.types.ObjectId;
@@ -19,6 +21,7 @@ public class StoredRecord {
     }
 
     @Id
+    @JsonSerialize(using = ToStringSerializer.class)
     private ObjectId id = ObjectId.get();
     @JsonIgnore
     private ObjectId rootId;
@@ -88,14 +91,14 @@ public class StoredRecord {
         this.data = data;
     }
 
-    public StoredRecord findParent(ObjectId id) {
+    public Optional<StoredRecord> findParent(ObjectId id) {
         if (getVersions().stream().anyMatch(c -> c.getId().equals(id))) {
-            return this;
+            return Optional.of(this);
         } else {
             return getVersions().stream()
                     .map(c -> c.findParent(id))
-                    .findAny()
-                    .orElse(null);
+                    .map(Optional::get)
+                    .findAny();
         }
     }
 

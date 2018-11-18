@@ -1,37 +1,56 @@
 import {Button, Checkbox, FormControlLabel, TextField} from '@material-ui/core';
-import * as React from 'react';
+import LinearProgress from "@material-ui/core/LinearProgress/LinearProgress";
+import * as React from "react";
 import Dropzone from 'react-dropzone';
 import Formatter from '../utils/Formatter';
 
 export interface IUploadProps {
+    parentId?: string
+
     isUploadValid(file: File, name: string, parent: string, tag: string): boolean
+
+    upload(file: File, name: string, parent: string, tag: string, onProgress?: (event: ProgressEvent) => void): Promise<Response>
 }
 
 interface IUploadState {
     files: File[]
     name: string
-    parent: string
+    parentId: string
     tag: string
     throughServer: boolean
-    valid: boolean
+    error?: string
+    ok?: boolean
+    serverProgress?: number
+    clientProgress?: number
 }
 
 export default class Upload extends React.Component<IUploadProps, IUploadState> {
-    constructor(props: any) {
+    private readonly uploadRef: React.RefObject<HTMLInputElement>;
+    constructor(props: IUploadProps) {
         super(props);
-        this.state = {files: [], name: "", parent: "", tag: "", valid: true, throughServer: false}
-        this.onDrop = this.onDrop.bind(this)
-        this.onNameChange = this.onNameChange.bind(this)
-        this.onTagChange = this.onTagChange.bind(this)
-        this.onParentChange = this.onParentChange.bind(this)
-        this.onThroughServerChange = this.onThroughServerChange.bind(this)
-        this.onUploadClick = this.onUploadClick.bind(this)
+        this.state = {files: [], name: "", parentId: "", tag: "", throughServer: false};
+        this.onDrop = this.onDrop.bind(this);
+        this.onNameChange = this.onNameChange.bind(this);
+        this.onTagChange = this.onTagChange.bind(this);
+        this.onParentChange = this.onParentChange.bind(this);
+        this.onThroughServerChange = this.onThroughServerChange.bind(this);
+        this.onUploadClick = this.onUploadClick.bind(this);
+        this.onProgress = this.onProgress.bind(this);
+        this.uploadRef = React.createRef();
+    }
+
+    public componentWillReceiveProps(nextProps: Readonly<IUploadProps>, nextContext: any): void {
+        if (nextProps.parentId) {
+            this.setState({parentId: nextProps.parentId!});
+            this.uploadRef.current!.focus();
+        }
     }
 
     public onDrop(files: File[]) {
-        window.console.log("dropped something")
         this.setState({
-            files
+            files,
+            name: files[0].name,
+            ok: undefined,
         });
     }
 
@@ -48,11 +67,18 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
                         }
                     </Dropzone>
                     <TextField label="Name" value={this.state.name} onChange={this.onNameChange}/>
-                    <TextField label="Parent" value={this.state.parent} onChange={this.onParentChange}/>
-                    <TextField label="Tag" value={this.state.tag} onChange={this.onTagChange}/>
+                    <TextField label="Parent ID" value={this.state.parentId} onChange={this.onParentChange}/>
+                    <TextField label="Tag" value={this.state.tag} onChange={this.onTagChange} inputRef={this.uploadRef}/>
                     <br/>
-                    {!this.state.valid &&
-                    <div>Invalid upload</div>
+                    {this.state.error &&
+                    <div style={{color: "red"}}>{this.state.error}</div>
+                    }
+                    {this.state.ok &&
+                    <div style={{color: "green"}}>OK</div>
+                    }
+                    {this.state.ok === undefined && this.state.error === undefined && this.state.serverProgress &&
+                    <LinearProgress variant="buffer" value={this.state.serverProgress}
+                                    valueBuffer={this.state.clientProgress}/>
                     }
                     <FormControlLabel
                         control={
@@ -75,17 +101,44 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
     }
 
     private onParentChange(event: React.ChangeEvent<HTMLInputElement>) {
-        this.setState({parent: event.target.value})
+        this.setState({parentId: event.target.value})
     }
 
     private onThroughServerChange(event: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
         this.setState({throughServer: checked})
     }
 
+    private onProgress(event: ProgressEvent) {
+        const clientProgress = 100 * event.loaded / event.total;
+        const serverProgress = clientProgress / 2;
+        this.setState({
+            clientProgress,
+            serverProgress,
+        })
+    }
+
     private onUploadClick() {
-        this.setState({valid: this.props.isUploadValid(this.state.files[0], this.state.name, this.state.parent, this.state.tag)})
-        if (this.state.valid) {
-            window.console.log("start uploading - not implemented yet")
+        const valid = this.props.isUploadValid(this.state.files[0], this.state.name, this.state.parentId, this.state.tag);
+        this.setState({
+            clientProgress: undefined,
+            error: valid ? undefined : "Invalid upload: name must not be empty and if you provide parentId, do also provide tag",
+            ok: undefined,
+            serverProgress: undefined
+        });
+        if (valid) {
+            this.props.upload(this.state.files[0], this.state.name, this.state.parentId, this.state.tag, this.onProgress)
+                .then(r => {
+                    if (!r.ok) {
+                        return r.json()
+                    } else {
+                        return new Promise<any>((resolve) => {
+                            this.setState({ok: true});
+                            resolve({})
+                        })
+                    }
+                })
+                .then(r => this.setState({error: r.message}))
+                .catch(r => this.setState({error: r}))
         }
     }
 }

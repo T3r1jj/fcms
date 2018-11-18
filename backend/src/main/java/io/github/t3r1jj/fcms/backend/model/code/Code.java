@@ -1,5 +1,6 @@
 package io.github.t3r1jj.fcms.backend.model.code;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.github.t3r1jj.fcms.backend.model.StoredRecord;
@@ -7,6 +8,7 @@ import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.ScriptEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 
 import static one.util.streamex.EntryStream.zip;
 
@@ -113,7 +115,15 @@ abstract public class Code {
         return id;
     }
 
-    static abstract class Builder<B extends Builder> {
+    @JsonIgnore
+    @Transient
+    public boolean isEmpty() {
+        return (this.code == null || this.code.isEmpty()) &&
+                (this.exceptionHandler == null || this.exceptionHandler.isEmpty()) &&
+                (this.finallyHandler == null || this.finallyHandler.isEmpty());
+    }
+
+    public static abstract class Builder<B extends Builder> {
         String name;
         String code;
         String exceptionHandler;

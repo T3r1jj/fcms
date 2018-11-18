@@ -82,27 +82,27 @@ public class ExternalService {
 
     public static class ApiKey {
         private final String label;
-        private final String key;
+        private final String value;
 
         @PersistenceConstructor
-        public ApiKey(@JsonProperty("label") String label, @JsonProperty("key") String key) {
+        public ApiKey(@JsonProperty("label") String label, @JsonProperty("value") String value) {
             this.label = label;
-            this.key = key;
+            this.value = value;
         }
 
         public String getLabel() {
             return label;
         }
 
-        public String getKey() {
-            return key;
+        public String getValue() {
+            return value;
         }
 
         @Override
         public String toString() {
             return "ApiKey{" +
                     "label='" + label + '\'' +
-                    ", key='" + (key != null && !key.isEmpty()) + '\'' +
+                    ", value='" + (value != null && !value.isEmpty()) + '\'' +
                     '}';
         }
 
@@ -111,7 +111,7 @@ public class ExternalService {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             ApiKey apiKey = (ApiKey) o;
-            return Objects.equals(label, apiKey.label) && Objects.equals(key, apiKey.key);
+            return Objects.equals(label, apiKey.label) && Objects.equals(value, apiKey.value);
         }
 
         @Override

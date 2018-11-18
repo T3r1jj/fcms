@@ -56,7 +56,12 @@ open class Mega(private val userName: String, private val password: String) : Au
 
     override fun login() {
         session = try {
-            com.github.eliux.mega.Mega.currentSession()
+            val currentSession = com.github.eliux.mega.Mega.currentSession()
+            if (currentSession.whoAmI() != userName) {
+                currentSession.logout()
+                throw MegaException("Found another user session, logging out")
+            }
+            currentSession
         } catch (e: MegaException) {
             try {
                 MegaAuthCredentials(userName, password).login()
@@ -67,12 +72,7 @@ open class Mega(private val userName: String, private val password: String) : Au
     }
 
     override fun isLogged(): Boolean {
-        return try {
-            com.github.eliux.mega.Mega.currentSession()
-            true
-        } catch (e: MegaException) {
-            false
-        }
+        return session != null
     }
 
     override fun doAuthenticatedUpload(record: Record): RecordMeta {
@@ -117,5 +117,6 @@ open class Mega(private val userName: String, private val password: String) : Au
 
     override fun logout() {
         session?.logout()
+        session = null
     }
 }

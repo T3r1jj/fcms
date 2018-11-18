@@ -1,44 +1,141 @@
 .App {
-  text-align: center;
+    text-align: center;
 }
 
 .App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 180px;
-  margin-top: -40px;
-  margin-bottom: -40px;
+    animation: App-logo-spin infinite 20s linear;
+    height: 180px;
+    margin-top: -40px;
+    margin-bottom: -40px;
 }
 
 .App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
+    background-color: #222;
+    height: 150px;
+    padding: 20px;
+    color: white;
 }
 
 .App-title {
-  font-size: 1.5em;
+    font-size: 1.5em;
 }
 
 .App-intro {
-  font-size: large;
+    font-size: large;
 }
 
-.dropzone>div {
-  margin: auto;
+.dropzone > div {
+    margin: auto;
 }
 
 .list div {
-  width: 100%;
-  text-align: center;
+    width: 100%;
+    text-align: center;
 }
 
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
 
-  to {
-    transform: rotate(360deg);
-  }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.history-container h6 {
+    text-align: left;
+}
+
+.code-container {
+    text-align: left;
+    margin: auto;
+    font-size: 1.5em;
+}
+
+@media screen and (min-width: 600px) {
+    .react-select {
+        width: 250px;
+    }
+}
+
+.react-select .react-select__control {
+    background-color: inherit;
+}
+
+.react-select .react-select__value-container {
+    cursor: text;
+}
+
+.react-select .react-select__value-container *:not(.react-select__placeholder) {
+    color: inherit;
+}
+
+.react-select .react-select__value-container .react-select__placeholder {
+    color: lightgray;
+}
+
+.react-select .react-select__menu-list * {
+    color: black;
+    text-align: left;
+}
+
+.react-select .react-select__menu-list .react-select__option--is-selected {
+    color: white;
+}
+
+.react-select .react-select__control,
+.react-select .react-select__control--is-focused,
+.react-select .react-select__control--is-focused:hover {
+    border-style: solid;
+    border-width: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.react-select .react-select__indicator.react-select__dropdown-indicator * {
+    color: white;
+}
+
+.react-select .react-select__indicator.react-select__dropdown-indicator svg {
+    visibility: hidden;
+}
+
+.records.list div {
+    text-align: left;
+}
+
+.tab {
+    position: relative;
+}
+
+.tab .tab {
+    padding-left: 24px;
+    margin-left: 24px;
+}
+
+.tab .tab:not(:last-child) {
+    border-left: 1px solid;
+}
+
+.tab .tab:not(:last-child):before {
+    margin-left: -1px;
+}
+
+.tab .tab:before {
+    content: "";
+    display: block;
+    width: 24px;
+    height: 24px;
+    border-bottom: 1px solid;
+    border-left: 1px solid;
+    margin-bottom: -1px;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.records.list > li {
+    margin: auto;
+    width: fit-content;
 }

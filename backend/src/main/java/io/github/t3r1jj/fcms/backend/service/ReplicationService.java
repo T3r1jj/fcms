@@ -200,7 +200,7 @@ public class ReplicationService {
 
     void deleteCascading(StoredRecord storedRecord, boolean force, StoredRecord root) {
         deleteVersionsBackups(storedRecord, force, root);
-        root.findParent(storedRecord.getId()).getVersions().remove(storedRecord);
+        root.findParent(storedRecord.getId()).ifPresent(p -> p.getVersions().remove(storedRecord));
     }
 
     private void deleteVersionsBackups(StoredRecord storedRecord, boolean force, StoredRecord root) {

@@ -34,7 +34,7 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
     public void testCheck404() {
         RestAssured.given()
                 .param("type", Code.Type.AfterReplicationCode)
-                .get("/api/code")
+                .post("/api/code")
                 .then()
                 .assertThat()
                 .statusCode(404);
@@ -46,7 +46,7 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
 
         RestAssured.given()
                 .param("type", Code.Type.OnReplicationCode)
-                .get("/api/code")
+                .post("/api/code")
                 .then()
                 .assertThat()
                 .statusCode(422);
@@ -66,12 +66,12 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
 
     @Test
     public void testUpdate() {
-        OnReplicationCode code = new OnReplicationCode.Builder().build();
+        OnReplicationCode code = new OnReplicationCode.Builder().setCode("test").build();
 
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(code)
-                .post("/api/code")
+                .patch("/api/code")
                 .then()
                 .assertThat()
                 .statusCode(200);
@@ -81,11 +81,13 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
 
     @Test
     public void testDelete() {
-        codeRepository.save(new OnReplicationCode.Builder().build());
+        OnReplicationCode code = new OnReplicationCode.Builder().build();
+        codeRepository.save(code);
 
         RestAssured.given()
-                .param("type", Code.Type.OnReplicationCode)
-                .delete("/api/code")
+                .contentType(ContentType.JSON)
+                .body(code)
+                .patch("/api/code")
                 .then()
                 .assertThat()
                 .statusCode(200);

@@ -4,4 +4,4 @@ Some React (TypeScript 3) with Spring...
 
 ![Code coverage through commits](https://codecov.io/gh/T3r1jj/fcms/branch/master/graphs/commits.svg)
 
-![UI](snapshots/2018-10-17.jpg)
+![UI](snapshots/2018-11-18.jpg)

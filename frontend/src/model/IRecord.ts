@@ -1,3 +1,5 @@
+import IBackup from "./IBackup";
+
 export default interface IRecord {
     id: string;
     name: string;
@@ -6,7 +8,5 @@ export default interface IRecord {
     tag?: string;
 
     versions: IRecord[];
-    meta: IRecord[];
-    backups: IBackup[];
-
+    backups: Map<string, IBackup>;
 }

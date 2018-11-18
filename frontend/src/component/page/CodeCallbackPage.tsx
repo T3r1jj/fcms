@@ -134,14 +134,11 @@ export default class CodeCallbackPage extends React.Component<ICodeCallbackPageP
     }
 
     private onCodeChange(code: ICode, callback?: () => void) {
-        window.console.log(code);
         const codes = new Map<CodeCallbackType, Code>(this.state.codes.entries());
         codes.set(this.state.value, code);
-        window.console.log(codes.get(this.state.value));
         this.setState({
             codes
         }, callback);
-        window.console.log(this.getCurrentCode());
     }
 
     private getCurrentError() {

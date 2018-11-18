@@ -36,7 +36,7 @@ describe("component", () => {
         });
         it("renders parentId", () => {
             const wrapper = shallow(<Upload {...validProps}/>);
-            expect(wrapper.find("TextField").at(1).prop("label")).toEqual("Parent");
+            expect(wrapper.find("TextField").at(1).prop("label")).toEqual("Parent ID");
         });
         it("renders tag", () => {
             const wrapper = shallow(<Upload {...validProps}/>);

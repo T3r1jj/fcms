@@ -1,5 +1,7 @@
+import Tab from "@material-ui/core/Tab/Tab";
 import {mount, shallow} from 'enzyme';
 import * as React from 'react';
+import {BrowserRouter} from "react-router-dom";
 import sinon from 'sinon';
 import Code from "../../model/code/Code";
 import {CodeCallbackType} from "../../model/code/CodeCallbackType";
@@ -45,27 +47,27 @@ describe('component', () => {
 
     describe('rendering', () => {
         it('renders without crashing', () => {
-            shallow(<CodeCallbackPage getCodeCallback={getCodeCallback}
-                                      checkCodeCallback={checkCodeCallback}
-                                      updateCodeCallback={updateCodeCallback}/>);
+            shallow(<BrowserRouter><CodeCallbackPage getCodeCallback={getCodeCallback}
+                                                     checkCodeCallback={checkCodeCallback}
+                                                     updateCodeCallback={updateCodeCallback}/></BrowserRouter>);
         });
         it('renders two tabs with correct names', () => {
-            const wrapper = shallow(<CodeCallbackPage getCodeCallback={getCodeCallback}
-                                                      checkCodeCallback={checkCodeCallback}
-                                                      updateCodeCallback={updateCodeCallback}/>);
+            const wrapper = shallow(<BrowserRouter><CodeCallbackPage getCodeCallback={getCodeCallback}
+                                                                     checkCodeCallback={checkCodeCallback}
+                                                                     updateCodeCallback={updateCodeCallback}/></BrowserRouter>);
             expect(wrapper.html()).toContain("After Replication Code");
             expect(wrapper.html()).toContain("On Replication Code");
         });
         it('renders loading', () => {
-            const wrapper = shallow(<CodeCallbackPage getCodeCallback={getCodeCallback}
-                                                      checkCodeCallback={checkCodeCallback}
-                                                      updateCodeCallback={updateCodeCallback}/>);
+            const wrapper = shallow(<BrowserRouter><CodeCallbackPage getCodeCallback={getCodeCallback}
+                                                                     checkCodeCallback={checkCodeCallback}
+                                                                     updateCodeCallback={updateCodeCallback}/></BrowserRouter>);
             expect(wrapper.html()).toContain("Loading...");
         });
         it('renders CodeEditor after component did mount', (done) => {
-            const wrapper = shallow(<CodeCallbackPage getCodeCallback={getCodeCallback}
-                                                      checkCodeCallback={checkCodeCallback}
-                                                      updateCodeCallback={updateCodeCallback}/>);
+            const wrapper = mount(<BrowserRouter><CodeCallbackPage getCodeCallback={getCodeCallback}
+                                                                   checkCodeCallback={checkCodeCallback}
+                                                                   updateCodeCallback={updateCodeCallback}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 expect(wrapper.find(CodeEditor).length).toEqual(1);
@@ -86,13 +88,14 @@ describe('component', () => {
                     }
                 })
             };
-            const wrapper = mount(<CodeCallbackPage getCodeCallback={getCodeCallback}
-                                                    checkCodeCallback={checkCodeCallback}
-                                                    updateCodeCallback={updateCodeCallback}/>);
+            const wrapper = mount(<BrowserRouter><CodeCallbackPage getCodeCallback={getCodeCallback}
+                                                                   checkCodeCallback={checkCodeCallback}
+                                                                   updateCodeCallback={updateCodeCallback}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 expect(wrapper.html()).toContain(onReplicationText);
-                const secondTab = wrapper.find('button').at(1);
+                window.console.log(wrapper.debug());
+                const secondTab = wrapper.find(Tab).last();
                 secondTab.simulate('click');
                 setImmediate(() => {
                     wrapper.update();
@@ -117,9 +120,9 @@ describe('component', () => {
                     resolve(response);
                 })
             };
-            const wrapper = mount(<CodeCallbackPage getCodeCallback={getCodeCallback}
-                                                    checkCodeCallback={checkCodeCallback}
-                                                    updateCodeCallback={updateCodeCallback}/>);
+            const wrapper = mount(<BrowserRouter><CodeCallbackPage getCodeCallback={getCodeCallback}
+                                                                   checkCodeCallback={checkCodeCallback}
+                                                                   updateCodeCallback={updateCodeCallback}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 expect(wrapper.html()).toContain(errorMsg);
@@ -151,7 +154,7 @@ describe('component', () => {
             };
             const checkCodeCallbackSpy = sinon.spy(props, "checkCodeCallback");
             const updateCodeCallbackSpy = sinon.spy(props, "updateCodeCallback");
-            const wrapper = mount(<CodeCallbackPage {...props}/>);
+            const wrapper = mount(<BrowserRouter><CodeCallbackPage {...props}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 const buttons = wrapper.find('button');
@@ -187,7 +190,7 @@ describe('component', () => {
             };
             const checkCodeCallbackSpy = sinon.spy(props, "checkCodeCallback");
             const updateCodeCallbackSpy = sinon.spy(props, "updateCodeCallback");
-            const wrapper = mount(<CodeCallbackPage {...props}/>);
+            const wrapper = mount(<BrowserRouter><CodeCallbackPage {...props}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 const buttons = wrapper.find('button');

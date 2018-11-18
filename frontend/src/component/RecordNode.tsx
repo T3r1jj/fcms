@@ -41,7 +41,7 @@ export default class RecordNode extends React.Component<IRecordProps, IRecordSta
 
     public render() {
         return (
-            <div id={this.props.id}>
+            <div id={this.props.id} className="tab">
                 <Tooltip title="Create new record" onClick={this.handleNewRecord}>
                     <IconButton aria-label="Create new record"><NewIcon/></IconButton>
                 </Tooltip>
@@ -156,7 +156,7 @@ export default class RecordNode extends React.Component<IRecordProps, IRecordSta
 
     private getBackupsCount(props: IRecord): number {
         let backupsCount = props.backups.size;
-        props.versions.forEach(v => backupsCount += this.getRecordsCount(v));
+        props.versions.forEach(v => backupsCount += this.getBackupsCount(v));
         return backupsCount;
     }
 

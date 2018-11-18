@@ -188,7 +188,7 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
                             </IconButton>
                             <IconButton color={"inherit"}>
                                 <Link to={"/history"} className={getClasses().linkWrapper}>
-                                    <Badge badgeContent={17} color="secondary">
+                                    <Badge badgeContent={0} color="secondary">
                                         <NotificationsIcon/>
                                     </Badge>
                                 </Link>
@@ -206,10 +206,9 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
         );
     }
 
-    private handleChange = (selectedOption: any) => {
+    private handleChange = (selectedOption: SearchItem) => {
         this.setState({selectedOption});
-        window.console.log(selectedOption.value[0]);
-        const element = document.getElementById(selectedOption.value[0]);
+        const element = document.getElementById(selectedOption.value);
         if (element) {
             setTimeout(() => {
                 element.scrollIntoView(true);

@@ -1,6 +1,7 @@
 import Tooltip from "@material-ui/core/Tooltip/Tooltip";
 import {mount, shallow} from "enzyme";
 import * as React from "react";
+import {BrowserRouter} from "react-router-dom";
 import "reflect-metadata";
 import Event from "../../model/event/Event";
 import EventPage from "../../model/event/EventPage";
@@ -55,7 +56,7 @@ describe("component", () => {
         }
 
         it('renders without crashing', () => {
-            shallow(<HistoryPage {...props}/>)
+            shallow(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
         });
 
         it('renders event from pageable call after component did mount', (done) => {
@@ -63,7 +64,7 @@ describe("component", () => {
             prepareGetHistoryPagePromise(event);
             props = {getHistory, getHistoryPage};
 
-            const wrapper = mount(<HistoryPage {...props}/>);
+            const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 expect(wrapper.text()).toContain(event.title);
@@ -81,7 +82,7 @@ describe("component", () => {
             prepareGetHistoryPromise(event2);
             props = {getHistory, getHistoryPage};
 
-            const wrapper = mount(<HistoryPage {...props}/>);
+            const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 const sortButton = wrapper.find(Tooltip).filterWhere(p => p.prop("title") === "Sort").first();
@@ -104,7 +105,7 @@ describe("component", () => {
             prepareGetHistoryPromise(event2);
             props = {getHistory, getHistoryPage};
 
-            const wrapper = mount(<HistoryPage {...props}/>);
+            const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 wrapper.find('button').filterWhere(p => p.prop("aria-label") === "Filter Table").first().simulate('click');
@@ -132,7 +133,7 @@ describe("component", () => {
             prepareGetHistoryPromise(event2);
             props = {getHistory, getHistoryPage};
 
-            const wrapper = mount(<HistoryPage {...props}/>);
+            const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 const searchIcon = wrapper.find('button').filterWhere(p => p.prop("aria-label") === "Search").first();
@@ -165,7 +166,7 @@ describe("component", () => {
             };
             props = {getHistory, getHistoryPage};
 
-            const wrapper = mount(<HistoryPage {...props}/>);
+            const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 const sortButton = wrapper.find(Tooltip).filterWhere(p => p.prop("title") === "Sort").first();
@@ -187,7 +188,7 @@ describe("component", () => {
             };
             props = {getHistory, getHistoryPage};
 
-            const wrapper = mount(<HistoryPage {...props}/>);
+            const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
                 wrapper.update();
                 expect(wrapper.text()).toContain(error);

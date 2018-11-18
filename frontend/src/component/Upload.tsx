@@ -1,6 +1,6 @@
 import {Button, Checkbox, FormControlLabel, TextField} from '@material-ui/core';
 import LinearProgress from "@material-ui/core/LinearProgress/LinearProgress";
-import * as React from 'react';
+import * as React from "react";
 import Dropzone from 'react-dropzone';
 import Formatter from '../utils/Formatter';
 
@@ -25,6 +25,7 @@ interface IUploadState {
 }
 
 export default class Upload extends React.Component<IUploadProps, IUploadState> {
+    private readonly uploadRef: React.RefObject<HTMLInputElement>;
     constructor(props: IUploadProps) {
         super(props);
         this.state = {files: [], name: "", parentId: "", tag: "", throughServer: false};
@@ -35,11 +36,13 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
         this.onThroughServerChange = this.onThroughServerChange.bind(this);
         this.onUploadClick = this.onUploadClick.bind(this);
         this.onProgress = this.onProgress.bind(this);
+        this.uploadRef = React.createRef();
     }
 
     public componentWillReceiveProps(nextProps: Readonly<IUploadProps>, nextContext: any): void {
         if (nextProps.parentId) {
             this.setState({parentId: nextProps.parentId!});
+            this.uploadRef.current!.focus();
         }
     }
 
@@ -65,7 +68,7 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
                     </Dropzone>
                     <TextField label="Name" value={this.state.name} onChange={this.onNameChange}/>
                     <TextField label="Parent ID" value={this.state.parentId} onChange={this.onParentChange}/>
-                    <TextField label="Tag" value={this.state.tag} onChange={this.onTagChange}/>
+                    <TextField label="Tag" value={this.state.tag} onChange={this.onTagChange} inputRef={this.uploadRef}/>
                     <br/>
                     {this.state.error &&
                     <div style={{color: "red"}}>{this.state.error}</div>

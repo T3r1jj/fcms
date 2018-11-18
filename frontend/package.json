@@ -38,7 +38,7 @@
     "start": "react-scripts-ts start",
     "build": "react-scripts-ts build",
     "test": "react-scripts-ts test --env=jsdom",
-    "test:ci": "react-scripts-ts test --env=jsdom --reporters=default --reporters=jest-junit --coverage",
+    "test:ci": "react-scripts-ts test --maxWorkers=1 --env=jsdom --reporters=default --reporters=jest-junit --coverage",
     "eject": "react-scripts-ts eject"
   },
   "devDependencies": {

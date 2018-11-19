@@ -1,16 +1,18 @@
 import Button from "@material-ui/core/Button/Button";
+import Dialog from "@material-ui/core/Dialog/Dialog";
 import LinearProgress from "@material-ui/core/LinearProgress/LinearProgress";
 import TextField from "@material-ui/core/TextField/TextField";
 import {mount, shallow} from 'enzyme';
 import * as React from 'react';
 import IConfiguration from '../model/IConfiguration';
 
-import Configuration from './Configuration';
+import {Configuration} from './Configuration';
 
 describe('component', () => {
     let getConfiguration: () => Promise<IConfiguration>;
     let updateConfiguration: (configuration: IConfiguration) => Promise<Response>;
     let props: IConfiguration;
+    const classes = {};
 
     beforeEach(() => {
         props = {
@@ -34,11 +36,12 @@ describe('component', () => {
 
     describe('rendering', () => {
         it('renders without crashing', () => {
-            shallow(<Configuration getConfiguration={getConfiguration} updateConfiguration={updateConfiguration}/>);
+            shallow(<Configuration classes={classes} getConfiguration={getConfiguration}
+                                   updateConfiguration={updateConfiguration}/>);
         });
 
         it('renders at least limit fields', () => {
-            const wrapper = shallow(<Configuration getConfiguration={getConfiguration}
+            const wrapper = shallow(<Configuration classes={classes} getConfiguration={getConfiguration}
                                                    updateConfiguration={updateConfiguration}/>);
             expect(wrapper.find(TextField).length).toEqual(2);
             expect(wrapper.find('TextField').at(0).props().label!.toLowerCase()).toContain("primary");
@@ -48,28 +51,30 @@ describe('component', () => {
         });
 
         it('renders loading', () => {
-            const wrapper = shallow(<Configuration getConfiguration={getConfiguration}
+            const wrapper = shallow(<Configuration classes={classes} getConfiguration={getConfiguration}
                                                    updateConfiguration={updateConfiguration}/>);
             expect(wrapper.find(LinearProgress).exists()).toBeTruthy();
         });
 
         it('renders child Service', (done) => {
-            const wrapper = mount(<Configuration getConfiguration={getConfiguration}
+            const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration}
                                                  updateConfiguration={updateConfiguration}/>);
+            wrapper.find(Button).first().simulate('click');
             setImmediate(() => {
                 wrapper.update();
-                expect(wrapper.text()).toContain(props.services[0].name);
-                expect(wrapper.find('TextField').at(0).props().value).toEqual(props.services[0].apiKeys[0].value);
+                expect(wrapper.find(Dialog).text()).toContain(props.services[0].name);
+                expect(wrapper.find(Dialog).find('TextField').at(0).props().value).toEqual(props.services[0].apiKeys[0].value);
 
-                expect(wrapper.text()).toContain(props.services[1].name);
-                expect(wrapper.find('TextField').at(1).props().value).toEqual(props.services[1].apiKeys[0].value);
+                expect(wrapper.find(Dialog).text()).toContain(props.services[1].name);
+                expect(wrapper.find(Dialog).find('TextField').at(1).props().value).toEqual(props.services[1].apiKeys[0].value);
                 done();
             });
         });
 
         it('does not render loading after load', (done) => {
-            const wrapper = mount(<Configuration getConfiguration={getConfiguration}
+            const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration}
                                                  updateConfiguration={updateConfiguration}/>);
+            wrapper.find(Button).first().simulate('click');
             setImmediate(() => {
                 wrapper.update();
                 expect(wrapper.find(LinearProgress).exists()).toBeFalsy();
@@ -80,20 +85,22 @@ describe('component', () => {
 
     describe('updating', () => {
         it('updates child Service', (done) => {
-            const wrapper = mount(<Configuration getConfiguration={getConfiguration}
+            const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration}
                                                  updateConfiguration={updateConfiguration}/>);
+            wrapper.find(Button).first().simulate('click');
             setImmediate(() => {
                 wrapper.update();
                 const event = {target: {value: 'new api value', dataset: {index: 0}}};
-                wrapper.find('input').at(0).simulate('change', event);
-                expect(wrapper.text()).toContain(props.services[0].name);
-                expect(wrapper.find('TextField').at(0).props().value).toEqual('new api value');
+                const input = wrapper.find(Dialog).find(TextField).first().find('input');
+                input.simulate('change', event);
+                expect(wrapper.find(Dialog).text()).toContain(props.services[0].name);
+                expect(wrapper.find(Dialog).find('TextField').at(0).props().value).toEqual('new api value');
                 done();
             });
         });
 
         it('update request does not cause crash', (done) => {
-            const wrapper = mount(<Configuration getConfiguration={getConfiguration}
+            const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration}
                                                  updateConfiguration={updateConfiguration}/>);
             setImmediate(() => {
                 wrapper.update();
@@ -109,14 +116,15 @@ describe('component', () => {
                     reject(new Error(someError));
                 });
             };
-            const wrapper = mount(<Configuration getConfiguration={getConfiguration}
+            const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration}
                                                  updateConfiguration={updateConfiguration}/>);
+            wrapper.find(Button).first().simulate('click');
             setImmediate(() => {
                 wrapper.update();
-                wrapper.find(Button).simulate('click');
+                wrapper.find(Button).at(1).simulate('click');
                 setImmediate(() => {
                     wrapper.update();
-                    expect(wrapper.html()).toContain(someError);
+                    expect(wrapper.find(Dialog).html()).toContain(someError);
                     done();
                 });
             });
@@ -129,7 +137,7 @@ describe('component', () => {
                     reject(new Error(someError));
                 });
             };
-            const wrapper = mount(<Configuration getConfiguration={getConfiguration}
+            const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration}
                                                  updateConfiguration={updateConfiguration}/>);
             setImmediate(() => {
                 wrapper.update();

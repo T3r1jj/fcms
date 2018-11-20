@@ -11,7 +11,7 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
 
     private static readonly DISMISS_BUTTON = <Button size="small" color={"inherit"}>Dismiss</Button>;
     private static readonly ONE_MINUTE = 1000 * 60;
-    private static readonly FOREVER = Number.MAX_VALUE;
+    private static readonly FOREVER = 2000000000;
 
     public componentDidMount(): void {
         this.props.subscribeToNotifications(this);

@@ -94,7 +94,6 @@ describe('component', () => {
             setImmediate(() => {
                 wrapper.update();
                 expect(wrapper.html()).toContain(onReplicationText);
-                window.console.log(wrapper.debug());
                 const secondTab = wrapper.find(Tab).last();
                 secondTab.simulate('click');
                 setImmediate(() => {

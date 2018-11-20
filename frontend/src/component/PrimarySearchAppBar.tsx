@@ -14,6 +14,7 @@ import NotificationsIcon from '@material-ui/icons/Notifications';
 import SearchIcon from '@material-ui/icons/Search';
 import React from 'react';
 import {Link} from "react-router-dom";
+import {createFilter} from "react-select";
 import Select from "react-select/lib/Select";
 import SearchItem from "../model/SearchItem";
 
@@ -102,6 +103,12 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
         };
     }
 
+    public shouldComponentUpdate(nextProps: Readonly<IAppBarProps>, nextState: Readonly<IAppBarState>, nextContext: any): boolean {
+        const searchCount = this.props.searchItems ? this.props.searchItems.length : 0;
+        const nextSearchCount = nextProps.searchItems ? nextProps.searchItems.length : 0;
+        return nextState !== this.state || nextSearchCount !== searchCount
+    }
+
     public handleMobileMenuOpen = (event: any) => {
         this.setState({mobileMoreAnchorEl: event.currentTarget});
     };
@@ -165,6 +172,7 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
                                 <SearchIcon/>
                             </div>
                             <Select
+                                filterOption={createFilter({ignoreAccents: false})}
                                 className={"react-select"}
                                 classNamePrefix="react-select"
                                 placeholder={"Search record name..."}
@@ -208,14 +216,31 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
 
     private handleChange = (selectedOption: SearchItem) => {
         this.setState({selectedOption});
-        const element = document.getElementById(selectedOption.value);
-        if (element) {
-            setTimeout(() => {
-                element.scrollIntoView(true);
-                element.focus();
-            }, 0);
+        const ids = selectedOption.value;
+        if (ids === undefined) {
+            return;
         }
+        this.chainFocus(ids, 0)
     };
+
+    private chainFocus(ids: string[], index: number, searchDuration = 0) {
+        if (index < ids.length && searchDuration < 1000) {
+            const element = document.getElementById(ids[index]);
+            if (element === null) {
+                const delay = 10;
+                setTimeout(() => {
+                    this.chainFocus(ids, index, searchDuration + delay);
+                }, delay)
+            } else {
+                element.scrollIntoView();
+                element.focus();
+                setTimeout(() => {
+                    this.chainFocus(ids, index + 1);
+                });
+            }
+        }
+    }
+
     private onInputChange = (inputValue: string) => {
         this.setState({inputValue});
     };

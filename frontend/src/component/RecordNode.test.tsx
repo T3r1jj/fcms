@@ -6,14 +6,16 @@ import * as sinon from "sinon";
 import IBackup from "../model/IBackup";
 
 import Description from "./Description";
-import RecordNode, {IRecordProps} from './RecordNode';
+import {IRecordProps, RecordNode} from './RecordNode';
 
 describe('component', () => {
     let props: IRecordProps;
     beforeEach(() => {
         props = {
             backups: new Map<string, IBackup>(),
+            classes: {},
             description: "some description",
+            expand: false,
             hierarchyTooltipEnabled: true,
             id: "1",
             name: "RecordNode name",

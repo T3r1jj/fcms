@@ -139,3 +139,7 @@
     margin: auto;
     width: fit-content;
 }
+
+.tab.loading {
+    height: 48px;
+}

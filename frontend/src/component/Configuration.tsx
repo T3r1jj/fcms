@@ -64,7 +64,6 @@ export class Configuration extends React.Component<IConfigurationProps, IConfigu
     }
 
     public componentDidMount() {
-        window.console.log("mounting")
         this.fetchData();
     }
 
@@ -152,7 +151,6 @@ export class Configuration extends React.Component<IConfigurationProps, IConfigu
     };
 
     private onApiKeyChange(service: IService) {
-        window.console.log("api key change")
         const currentApiKeys = this.state.services;
         const changedKeyIndex = currentApiKeys.findIndex(ak => ak.name === service.name);
         const newApiKeys = currentApiKeys.slice();
@@ -175,7 +173,6 @@ export class Configuration extends React.Component<IConfigurationProps, IConfigu
     }
 
     private handleConfigClick() {
-        window.console.log("handle config click")
         this.setState({configOpen: true});
         if (!this.state.loading && this.state.error) {
             this.fetchData();

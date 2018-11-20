@@ -150,6 +150,7 @@ export default class Client {
         request.fallbackTransport = 'long-polling';
         request.reconnectInterval = 1000 * 15;
         request.shared = true;
+        request.maxReconnectOnClose = 5;
 
         request.onOpen = notifications.onOpen;
         request.onReconnect = notifications.onReconnect;

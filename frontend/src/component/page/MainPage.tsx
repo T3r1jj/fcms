@@ -127,6 +127,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                                         deleteRecords={this.props.client.deleteRecords}
                                         expand={this.state.expand}
                                         forceDeleteRecords={this.props.client.forceDeleteRecords}
+                                        lazyLoad={true}
                                         updateParentId={this.updateParentId}
                                         hierarchyTooltipEnabled={this.state.records[0] === r}
                                         updateRecordDescription={this.props.client.updateRecordDescription}

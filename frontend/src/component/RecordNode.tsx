@@ -50,6 +50,7 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
         this.handleDelete = this.handleDelete.bind(this);
         this.handleForceDelete = this.handleForceDelete.bind(this);
         this.handleNewRecord = this.handleNewRecord.bind(this);
+        this.renderRecord = this.renderRecord.bind(this);
     }
 
     public shouldComponentUpdate(nextProps: Readonly<IRecordProps>, nextState: Readonly<IRecordState>, nextContext: any): boolean {
@@ -72,108 +73,113 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
     };
 
     public render() {
-        return (
+        return this.props.lazyLoad ? (
             <LazyLoad debounce={50} height={this.getHeight()}
                       placeholder={<div id={this.props.id} tabIndex={-1} onFocus={this.onFocus} className="tab loading">
                           <CircularProgress/></div>}>
-                <div className="tab">
-                    <div id={this.props.id} tabIndex={-1} onFocus={this.onFocus}
-                         style={{overflow: "auto", width: 0, height: 0}}>{this.props.id}
-                    </div>
-                    <Tooltip
-                        classes={{tooltip: this.props.classes.lightTooltip}}
-                        placement="top-end"
-                        title={this.props.tag ? this.props.tag : ""}
-                        onClick={this.handleExpand}>
-                        <IconButton>
-                            {(this.state.expand || this.props.versions.length === 0) ? (
-                                <FolderOpenIcon/>
-                            ) : (
-                                <FolderClosedIcon/>
-                            )}
-                        </IconButton>
-                    </Tooltip>
-                    {this.props.name} {this.getSizeText()} :: Records: {this.getRecordsCount(this.props)},
-                    Depth: {this.getVersionsDepth(this.props)}, Backups: {this.getBackupsCount(this.props)}
-                    {Array.from(this.props.backups.entries()).map(([service, backup]) =>
-                        <Tooltip key={service} title={"Backup " + service}>
-                            <IconButton aria-label="Backup"><BackupIcon/></IconButton>
-                        </Tooltip>
-                    )}
-                    <Tooltip
-                        title={"Create new record"}
-                        onClick={this.handleNewRecord}>
-                        <IconButton aria-label="Create new record"><NewIcon/></IconButton>
-                    </Tooltip>
-                    <Tooltip title="Description" onClick={this.handleDescriptionOpen}>
-                        <IconButton aria-label="Description"><TextIcon/></IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete" onClick={this.handleDeletionOpen}>
-                        <IconButton aria-label="Delete"><DeleteIcon/></IconButton>
-                    </Tooltip>
-                    {/*{this.props.meta.map(m =>*/}
-                    {/*<Tooltip key={m.id} title={"Meta " + m.name}>*/}
-                    {/*<IconButton id={m.id} aria-label="Meta"*/}
-                    {/*onClick={this.onRecordSelected}><AttachmentIcon/></IconButton>*/}
-                    {/*</Tooltip>*/}
-                    {/*)}*/}
-                    {this.state.expand && this.props.versions.map(v =>
-                        <RecordNode {...v} deleteRecords={this.props.deleteRecords}
-                                    key={v.id}
-                                    classes={this.props.classes}
-                                    forceDeleteRecords={this.props.forceDeleteRecords}
-                                    hierarchyTooltipEnabled={false}
-                                    expand={this.props.expand}
-                                    root={false}
-                                    updateParentId={this.props.updateParentId}
-                                    updateRecordDescription={this.props.updateRecordDescription}
-                        />
-                    )}
-                    <Dialog onClose={this.handleDescriptionClose}
-                            aria-labelledby={"description-dialog-title" + this.props.id}
-                            open={this.state.descriptionOpen}>
-                        <DialogTitle id={"description-dialog-title" + this.props.id}>Description</DialogTitle>
-                        <Description rawText={this.textOrEmpty(this.state.description)}
-                                     onChange={this.handleDescriptionChange}/>
-                        <Button onClick={this.handleDescriptionSave}>Save</Button>
-                        <Button onClick={this.handleDescriptionClose}>Cancel</Button>
-                    </Dialog>
-                    <Dialog
-                        open={this.state.deletionOpen}
-                        onClose={this.handleDeletionClose}
-                        aria-labelledby="alert-dialog-title"
-                        aria-describedby="alert-dialog-description"
-                    >
-                        <DialogTitle id="alert-dialog-title">{"Delete record?"}</DialogTitle>
-                        <DialogContent>
-                            <DialogContentText id="alert-dialog-description">
-                                Are you sure you want to delete this version <b>and all of its children</b>?<br/>
-                                The <b><i>deletion</i></b> will stop in case of any error.<br/>
-                                <b><i>Forced deletion</i></b> will not stop in case of an error, and it may leave some
-                                backups online.
-                            </DialogContentText>
-                        </DialogContent>
-                        <DialogActions>
-                            <Button onClick={this.handleDelete} color="secondary">
-                                <DeleteIcon/>
-                                Delete
-                            </Button>
-                            <Button onClick={this.handleForceDelete} color="secondary">
-                                <ForceDeleteIcon/>
-                                Force delete
-                            </Button>
-                            <Button onClick={this.handleDeletionClose} color="primary" variant={"contained"}
-                                    autoFocus={true}>
-                                Cancel
-                            </Button>
-                        </DialogActions>
-                    </Dialog>
-                </div>
+                {this.renderRecord()}
             </LazyLoad>
-        )
+        ) : this.renderRecord();
     }
 
-    // private createPlaceholder = () => {
+    private renderRecord() {
+        return <div className="tab">
+            <div id={this.props.id} tabIndex={-1} onFocus={this.onFocus}
+                 style={{overflow: "auto", width: 0, height: 0}}>{this.props.id}
+            </div>
+            <Tooltip
+                classes={{tooltip: this.props.classes.lightTooltip}}
+                placement="top-end"
+                title={this.props.tag ? this.props.tag : ""}
+                onClick={this.handleExpand}>
+                <IconButton>
+                    {(this.state.expand || this.props.versions.length === 0) ? (
+                        <FolderOpenIcon/>
+                    ) : (
+                        <FolderClosedIcon/>
+                    )}
+                </IconButton>
+            </Tooltip>
+            {this.props.name} {this.getSizeText()} :: Records: {this.getRecordsCount(this.props)},
+            Depth: {this.getVersionsDepth(this.props)}, Backups: {this.getBackupsCount(this.props)}
+            {Array.from(this.props.backups.entries()).map(([service, backup]) =>
+                <Tooltip key={service} title={"Backup " + service}>
+                    <IconButton aria-label="Backup"><BackupIcon/></IconButton>
+                </Tooltip>
+            )}
+            <Tooltip
+                title={"Create new record"}
+                onClick={this.handleNewRecord}>
+                <IconButton aria-label="Create new record"><NewIcon/></IconButton>
+            </Tooltip>
+            <Tooltip title="Description" onClick={this.handleDescriptionOpen}>
+                <IconButton aria-label="Description"><TextIcon/></IconButton>
+            </Tooltip>
+            <Tooltip title="Delete" onClick={this.handleDeletionOpen}>
+                <IconButton aria-label="Delete"><DeleteIcon/></IconButton>
+            </Tooltip>
+            {/*{this.props.meta.map(m =>*/}
+            {/*<Tooltip key={m.id} title={"Meta " + m.name}>*/}
+            {/*<IconButton id={m.id} aria-label="Meta"*/}
+            {/*onClick={this.onRecordSelected}><AttachmentIcon/></IconButton>*/}
+            {/*</Tooltip>*/}
+            {/*)}*/}
+            {this.state.expand && this.props.versions.map(v =>
+                <RecordNode {...v} deleteRecords={this.props.deleteRecords}
+                            key={v.id}
+                            lazyLoad={this.props.lazyLoad}
+                            classes={this.props.classes}
+                            forceDeleteRecords={this.props.forceDeleteRecords}
+                            hierarchyTooltipEnabled={false}
+                            expand={this.props.expand}
+                            root={false}
+                            updateParentId={this.props.updateParentId}
+                            updateRecordDescription={this.props.updateRecordDescription}
+                />
+            )}
+            <Dialog onClose={this.handleDescriptionClose}
+                    aria-labelledby={"description-dialog-title" + this.props.id}
+                    open={this.state.descriptionOpen}>
+                <DialogTitle id={"description-dialog-title" + this.props.id}>Description</DialogTitle>
+                <Description rawText={this.textOrEmpty(this.state.description)}
+                             onChange={this.handleDescriptionChange}/>
+                <Button onClick={this.handleDescriptionSave}>Save</Button>
+                <Button onClick={this.handleDescriptionClose}>Cancel</Button>
+            </Dialog>
+            <Dialog
+                open={this.state.deletionOpen}
+                onClose={this.handleDeletionClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">{"Delete record?"}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure you want to delete this version <b>and all of its children</b>?<br/>
+                        The <b><i>deletion</i></b> will stop in case of any error.<br/>
+                        <b><i>Forced deletion</i></b> will not stop in case of an error, and it may leave some
+                        backups online.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={this.handleDelete} color="secondary">
+                        <DeleteIcon/>
+                        Delete
+                    </Button>
+                    <Button onClick={this.handleForceDelete} color="secondary">
+                        <ForceDeleteIcon/>
+                        Force delete
+                    </Button>
+                    <Button onClick={this.handleDeletionClose} color="primary" variant={"contained"}
+                            autoFocus={true}>
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </div>;
+    }
+
+// private createPlaceholder = () => {
     //     return <div>Loading...</div>
     // }
 
@@ -279,6 +285,7 @@ export interface IRecordProps extends IRecord, WithStyles<typeof styles> {
     hierarchyTooltipEnabled: boolean;
     root: boolean;
     expand: boolean;
+    lazyLoad: boolean;
 
     updateRecordDescription(id: string, description: string): Promise<Response>;
 

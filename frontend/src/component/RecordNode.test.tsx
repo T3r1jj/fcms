@@ -18,8 +18,10 @@ describe('component', () => {
             expand: false,
             hierarchyTooltipEnabled: true,
             id: "1",
+            lazyLoad: false,
             name: "RecordNode name",
             root: true,
+            tag: "some tag",
             updateParentId: (parentId: string) => {
                 ;
             },
@@ -60,12 +62,12 @@ describe('component', () => {
 
         it("renders description option", () => {
             const wrapper = mount(<RecordNode {...props} />);
-            expect(wrapper.find('Tooltip').at(1).props().title).toEqual("Description");
+            expect(wrapper.find('Tooltip').at(2).props().title).toEqual("Description");
         });
 
-        it("renders hierarchy tooltip", () => {
+        it("renders hierarchy expand option", () => {
             const wrapper = mount(<RecordNode {...props} />);
-            expect(wrapper.text()).toContain("Select child record");
+            expect(wrapper.find('Tooltip').at(0).props().title).toEqual(props.tag);
         });
 
         it("does not render hierarchy tooltip", () => {
@@ -74,9 +76,9 @@ describe('component', () => {
             expect(wrapper.text()).not.toContain("Select child record");
         });
 
-        it("does not render more than three option (add,update,delete)", () => {
+        it("does not render more or less than 4 option (expand,add,update,delete)", () => {
             const wrapper = mount(<RecordNode {...props} />);
-            expect(wrapper.find('Tooltip').length).toEqual(3);
+            expect(wrapper.find('Tooltip').length).toEqual(4);
         });
 
         it("renders backups if there are any", () => {
@@ -105,21 +107,20 @@ describe('component', () => {
         //     expect(metaRecordsCount).toEqual(2)
         // })
 
-        it("renders version records if there are any", () => {
+        it("does not render children if not expanded", () => {
             const propsWithVersions: IRecordProps = {
                 ...props,
+                expand: false,
                 versions: [{...props, id: "V1", tag: "Version tag 1"}, {...props, id: "V2", tag: "Version tag 2"}]
             };
             const wrapper = mount(<RecordNode {...propsWithVersions} />);
-            let versionRecordCount = 0;
-            wrapper.find('Tooltip').forEach(n => (n.props().title === "Version " + propsWithVersions.versions[0].tag) ? versionRecordCount++ : null);
-            wrapper.find('Tooltip').forEach(n => (n.props().title === "Version " + propsWithVersions.versions[1].tag) ? versionRecordCount++ : null);
-            expect(versionRecordCount).toEqual(2);
+            expect(wrapper.find(RecordNode).length).toEqual(1);
         });
 
-        it("renders two records if selected", () => {
+        it("renders two records if expanded", () => {
             const propsWithVersions: IRecordProps = {
                 ...props,
+                expand: true,
                 versions: [{...props, id: "V1", tag: "Version tag 1", versions: []}, {
                     ...props,
                     id: "V2",
@@ -128,9 +129,7 @@ describe('component', () => {
                 }]
             };
             const wrapper = mount(<RecordNode {...propsWithVersions} />);
-            expect(wrapper.find('RecordNode').length).toEqual(1);
-            wrapper.find("Tooltip").last().find('IconButton').simulate('click');
-            expect(wrapper.find('RecordNode').length).toEqual(2);
+            expect(wrapper.find(RecordNode).length).toEqual(propsWithVersions.versions.length + 1);
         });
 
         it("renders one record if selected twice", () => {

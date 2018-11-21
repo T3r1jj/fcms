@@ -101,7 +101,7 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
                         </Tooltip>
                     )}
                     <Tooltip
-                        title={"Create new record under " + this.props.tag}
+                        title={"Create new record"}
                         onClick={this.handleNewRecord}>
                         <IconButton aria-label="Create new record"><NewIcon/></IconButton>
                     </Tooltip>

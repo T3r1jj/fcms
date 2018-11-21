@@ -1,3 +1,4 @@
+import {Tooltip} from "@material-ui/core";
 import IconButton from "@material-ui/core/IconButton/IconButton";
 import List from "@material-ui/core/List/List";
 import ListItem from "@material-ui/core/ListItem/ListItem";
@@ -5,7 +6,7 @@ import Step from "@material-ui/core/Step/Step";
 import StepLabel from "@material-ui/core/StepLabel/StepLabel";
 import Stepper from "@material-ui/core/Stepper/Stepper";
 import ExpandIcon from '@material-ui/icons/ExpandLess';
-import ContractIcon from '@material-ui/icons/ExpandMore';
+import CollapseIcon from '@material-ui/icons/ExpandMore';
 import * as React from "react";
 import Client from "../../model/Client";
 import IBackup from "../../model/IBackup";
@@ -24,7 +25,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
         super(props);
         this.state = {configOpen: false, records: [], expand: false};
         this.updateParentId = this.updateParentId.bind(this);
-        this.handleExpandContract = this.handleExpandContract.bind(this);
+        this.handleExpand = this.handleExpand.bind(this);
     }
 
     public componentDidMount() {
@@ -90,18 +91,6 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
         }
     }
 
-    // Problem 1: lags when expanding/contracting due to rerendering whole tree
-    // Problem 2: lags when updating single component due to rerendering whole tree
-
-    // new/update item -> new state -> should comp get updated on each + render new one
-    // delete -> worst case update on each
-    // expand -> creates each
-    // contract -> removes each
-
-    // Solution 1: implement shouldUpdate (half fix of p1/p2), implement expand display none (half fix of p1), https://github.com/yosbelms/react-progressive-loader (another half of p1/p2)
-    //// ^ can cause loading...
-    // Solution 2: render only visible records
-
     public render() {
         return (
             <div>
@@ -119,14 +108,18 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                         upload={this.props.client.upload}/>
                 <Configuration updateConfiguration={this.props.client.updateConfiguration}
                                getConfiguration={this.props.client.getConfiguration}/>
-                <IconButton aria-label="Expand">
-                    {this.state.expand &&
-                    <ExpandIcon onClick={this.handleExpandContract} fontSize="small"/>
-                    }
-                    {!this.state.expand &&
-                    <ContractIcon onClick={this.handleExpandContract} fontSize="small"/>
-                    }
-                </IconButton>
+                <Tooltip
+                    placement="bottom"
+                    title={this.state.expand ? "Expand records" : "Collapse records"}
+                    onClick={this.handleExpand}>
+                    <IconButton aria-label={this.state.expand ? "Expand" : "Collapse"}>
+                        {this.state.expand ? (
+                            <ExpandIcon/>
+                        ) : (
+                            <CollapseIcon/>
+                        )}
+                    </IconButton>
+                </Tooltip>
                 <List className="list records">
                     {this.state.records.map(r =>
                         <ListItem key={r.id}>
@@ -157,7 +150,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
         this.setState({currentParentRecordId: parentId})
     }
 
-    private handleExpandContract() {
+    private handleExpand() {
         this.setState({expand: !this.state.expand})
     }
 

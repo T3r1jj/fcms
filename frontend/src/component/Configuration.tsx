@@ -16,6 +16,9 @@ import IService from '../model/IService';
 import Service from './Service';
 
 const styles: StyleRulesCallback = theme => ({
+    bottomSpace: {
+        "margin-bottom": theme.spacing.unit
+    },
     cssFocused: {},
     cssLabelPrimary: {
         '&$cssFocused': {
@@ -70,7 +73,7 @@ export class Configuration extends React.Component<IConfigurationProps, IConfigu
     public render() {
         const classes = this.props.classes;
         return (
-            <div>
+            <div className={classes.bottomSpace}>
                 <Button variant="contained" onClick={this.handleConfigClick}>Configuration</Button>
                 <Dialog onClose={this.handleConfigClose} aria-labelledby="simple-dialog-title"
                         open={this.state.configOpen}>

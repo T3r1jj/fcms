@@ -16,6 +16,7 @@ import React from 'react';
 import {Link} from "react-router-dom";
 import {createFilter} from "react-select";
 import Select from "react-select/lib/Select";
+import {CellMeasurer, CellMeasurerCache, List, ListRowRenderer} from 'react-virtualized';
 import SearchItem from "../model/SearchItem";
 
 const styles: StyleRulesCallback = theme => ({
@@ -90,6 +91,54 @@ const styles: StyleRulesCallback = theme => ({
             display: 'block',
         },
     },
+});
+const MenuList = (props: any) => {
+    const rows = props.children;
+    let rowCount: number;
+    let height = 300;
+    if (rows === undefined || rows.length === undefined) {
+        rowCount = 0;
+    } else {
+        rowCount = rows.length;
+    }
+    if (rowCount < 10) {
+        height = 0;
+        for (let i = 0; i < rowCount; i++) {
+            height += cache.rowHeight({index: i});
+        }
+    }
+
+    const rowRenderer: ListRowRenderer = ({key, parent, index, isScrolling, isVisible, style}) => (
+        <CellMeasurer
+            cache={cache}
+            columnIndex={0}
+            key={key}
+            parent={parent}
+            rowIndex={index}
+        >
+            {({measure}) => (
+                <div style={style}>
+                    <div onLoad={measure}>{rows[index]}</div>
+                </div>
+            )}
+        </CellMeasurer>
+    );
+
+    return (
+        <List
+            style={{width: '100%'}}
+            width={250}
+            height={height}
+            rowCount={rowCount}
+            rowRenderer={rowRenderer}
+            deferredMeasurementCache={cache}
+            rowHeight={cache.rowHeight}
+        />
+    )
+};
+const cache = new CellMeasurerCache({
+    fixedHeight: false,
+    fixedWidth: true,
 });
 
 class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
@@ -173,6 +222,7 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
                             </div>
                             <Select
                                 filterOption={createFilter({ignoreAccents: false})}
+                                components={{MenuList}}
                                 className={"react-select"}
                                 classNamePrefix="react-select"
                                 placeholder={"Search record name..."}
@@ -242,6 +292,7 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
     }
 
     private onInputChange = (inputValue: string) => {
+        cache.clearAll();
         this.setState({inputValue});
     };
     private onMenuOpen = () => {

@@ -75,12 +75,13 @@
     color: lightgray;
 }
 
-.react-select .react-select__menu-list * {
-    color: black;
+.react-select .react-select__menu * {
+    color: #222;
     text-align: left;
+    cursor: pointer;
 }
 
-.react-select .react-select__menu-list .react-select__option--is-selected {
+.react-select .react-select__menu .react-select__option.react-select__option--is-selected {
     color: white;
 }
 

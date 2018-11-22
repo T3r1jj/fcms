@@ -24,6 +24,11 @@ public class HistoryController {
         return historyService.findAll();
     }
 
+    @GetMapping("/unread")
+    public long countAllUnread() {
+        return historyService.countAllUnread();
+    }
+
     @GetMapping(params = "size")
     public Page<Event> getAll(
             @RequestParam int size,
@@ -35,6 +40,16 @@ public class HistoryController {
     @DeleteMapping
     public void deleteAll() {
         historyService.deleteAll();
+    }
+
+    @PostMapping
+    public void setAsRead(@RequestParam String eventId) {
+        historyService.setAsRead(eventId);
+    }
+
+    @PatchMapping
+    public void setAllAsRead() {
+        historyService.setAllAsRead();
     }
 
 }

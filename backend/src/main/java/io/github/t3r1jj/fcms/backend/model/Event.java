@@ -1,5 +1,9 @@
 package io.github.t3r1jj.fcms.backend.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -8,11 +12,15 @@ import java.time.Instant;
 
 @Document
 public class Event {
+    @Id
+    @JsonSerialize(using = ToStringSerializer.class)
+    private ObjectId id = ObjectId.get();
     private final String title;
     private final String description;
     private final EventType type;
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     private final Instant time;
+    private boolean read;
 
     public Event(String title, String description, EventType type) {
         this(title, description, type, Instant.now());
@@ -40,6 +48,18 @@ public class Event {
 
     public Instant getTime() {
         return time;
+    }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(boolean read) {
+        this.read = read;
+    }
+
+    public ObjectId getId() {
+        return id;
     }
 
     @Override

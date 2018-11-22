@@ -44,7 +44,7 @@ public class HistoryServiceTest {
             inMemoryEventRepository.deleteAll();
             return null;
         }).when(repository).deleteAll();
-        service = new HistoryService(repository, notificationService);
+        service = new HistoryService(repository, notificationService, null);
     }
 
     @Test

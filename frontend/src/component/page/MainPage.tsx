@@ -14,7 +14,6 @@ import IRecord from "../../model/IRecord";
 import Record from "../../model/Record";
 import SearchItem from "../../model/SearchItem";
 import Configuration from "../Configuration";
-import PrimarySearchAppBar from "../PrimarySearchAppBar";
 import RecordNode from "../RecordNode";
 import Upload from "../Upload";
 
@@ -58,7 +57,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
             }
             records.push(record);
         }
-        this.setState({records});
+        this.setState({records}, this.handleSearchItemsUpdate);
         for (let i = 100; i < 110; i++) {
             const record = new Record();
             record.backups = new Map<string, IBackup>();
@@ -86,16 +85,18 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
             setTimeout(() => {
                 this.setState({
                     records: [...this.state.records, record]
-                });
+                }, this.handleSearchItemsUpdate);
             }, (i - 99) * 1000)
         }
+    }
+
+    public componentWillUnmount(): void {
+        this.props.onSearchItemsUpdate();
     }
 
     public render() {
         return (
             <div>
-                <PrimarySearchAppBar
-                    searchItems={this.getSearchItems(this.state.records)}/>
                 <Stepper>
                     {this.steps.map((label) =>
                         <Step key={label} active={true} completed={false} disabled={false}>
@@ -155,10 +156,16 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
         this.setState({expand: !this.state.expand})
     }
 
+    private handleSearchItemsUpdate = () => {
+        this.props.onSearchItemsUpdate(this.getSearchItems(this.state.records))
+    };
+
 }
 
 export interface IMainPageProps {
     client: Client;
+
+    onSearchItemsUpdate(items?: SearchItem[]): void;
 }
 
 interface IMainPageState {

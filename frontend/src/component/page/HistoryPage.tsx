@@ -1,13 +1,17 @@
+import Checkbox from "@material-ui/core/Checkbox/Checkbox";
+import IconButton from "@material-ui/core/IconButton/IconButton";
+import Tooltip from "@material-ui/core/Tooltip/Tooltip";
 import {capitalize} from "@material-ui/core/utils/helpers";
-import MUIDataTable, {IMUIDataTableOptions, IMuiDatatablesTableState} from "mui-datatables";
+import DeleteIcon from '@material-ui/icons/Delete';
+import ReadIcon from '@material-ui/icons/Drafts';
+import MUIDataTable, {IMUIDataTableColumn, IMUIDataTableOptions, IMuiDatatablesTableState} from "mui-datatables";
 import * as React from "react";
 import Event from "../../model/event/Event";
 import EventPage from "../../model/event/EventPage";
 import {EventType} from "../../model/event/EventType";
-import PrimarySearchAppBar from "../PrimarySearchAppBar";
 
 
-export default class HistoryPage extends React.Component<IHistoryPageProps, IHistoryPageState> {
+export default class HistoryPage extends React.PureComponent<IHistoryPageProps, IHistoryPageState> {
 
     private columns = new Event().getKeys().map(k => this.keyToColumn(k))
 
@@ -23,37 +27,60 @@ export default class HistoryPage extends React.Component<IHistoryPageProps, IHis
     }
 
     public componentWillReceiveProps(nextProps: Readonly<IHistoryPageProps>, nextContext: any): void {
-        if (this.state.page === 0 || !this.state.serverSide) {
-            this.setState({
-                count: this.state.count + 1,
-                events: [nextProps.newEvent!, ...this.state.events]
-            })
+        if (nextProps.newEvent !== undefined) {
+            const changedIndex = this.state.events.findIndex(e => e.id === nextProps.newEvent!.id);
+            if (changedIndex >= 0) {
+                if (nextProps.newEvent.read !== this.state.events[changedIndex].read) {
+                    const events = this.state.events.slice();
+                    events.splice(changedIndex, 1, nextProps.newEvent!);
+                    this.setState({events});
+                }
+            } else if ((this.state.page === 0 || !this.state.serverSide)) {
+                this.setState({
+                    count: this.state.count + 1,
+                    events: [nextProps.newEvent, ...this.state.events]
+                })
+            }
         }
     }
 
     public render() {
         return (
-            <div>
-                <PrimarySearchAppBar/>
-                <div className={"history-container"}>
-                    <MUIDataTable
-                        title={"History"}
-                        data={this.eventsToData()}
-                        columns={this.columns}
-                        options={this.getOptions()}
-                    />
-                </div>
+            <div className={"history-container"}>
+                <MUIDataTable
+                    title={"History"}
+                    data={this.eventsToData()}
+                    columns={this.columns}
+                    options={this.getOptions()}
+                />
             </div>
         );
     }
 
     private getOptions(): IMUIDataTableOptions {
-        const defaultProps = {
+        const defaultProps: IMUIDataTableOptions = {
             count: this.state.count,
+            customToolbar: () => {
+                return (
+                    <React.Fragment>
+                        <Tooltip title={"Delete all"} onClick={this.deleteAll} style={{marginLeft: 24}}>
+                            <IconButton>
+                                <DeleteIcon/>
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title={"Read all"} onClick={this.readAll}>
+                            <IconButton>
+                                <ReadIcon/>
+                            </IconButton>
+                        </Tooltip>
+                    </React.Fragment>
+                );
+            },
             filterType: 'checkbox',
             page: this.state.page,
             rowsPerPage: this.state.rowsPerPage,
             rowsPerPageOptions: [10, 30, 50],
+            selectableRows: false,
             serverSide: this.state.serverSide
         };
         return this.state.serverSide ? {
@@ -106,6 +133,8 @@ export default class HistoryPage extends React.Component<IHistoryPageProps, IHis
 
     private showErrorInTable(error: any) {
         const event = new Event();
+        event.id = "undefined";
+        event.read = true;
         event.type = EventType.ERROR;
         event.title = "History API error";
         event.description = error.toString();
@@ -126,15 +155,76 @@ export default class HistoryPage extends React.Component<IHistoryPageProps, IHis
     }
 
     private keyToColumn(key: string) {
-        return {
+        const column: IMUIHistoryTableColumn = {
             key,
             name: capitalize(key),
             options: {
+                display: key.toLowerCase() === "id" ? "false" : "true",
                 filter: key.toLowerCase() === "type",
                 sort: true
             }
+        };
+        if (key.toLowerCase() === "read") {
+            column.options!.customBodyRender = (value: string, tableMeta: any, updateValue: any) => {
+                const read = value === 'true';
+                const rowData = tableMeta.rowData;
+                const onChange = (_: any) => {
+                    if (!read) {
+                        const event = this.state.events.find(e => e.id === rowData[0])!;
+                        this.markAsRead({...event} as Event);
+                    }
+                };
+                return (
+                    <Checkbox
+                        checked={read}
+                        onChange={onChange}
+                        disabled={read}
+                    />
+                )
+            }
         }
+        return column
     }
+
+    private markAsRead = (event: Event) => {
+        this.props.setEventAsRead(event)
+            .then(r => {
+                const changedIndex = this.state.events.findIndex(e => e.id === event.id);
+                const events = this.state.events.slice();
+                events.splice(changedIndex, 1, event);
+                this.setState({events});
+                this.props.onEventRead(event);
+            })
+    };
+
+    private readAll = () => {
+        this.props.setHistoryAsRead()
+            .then(r => {
+                const events = this.state.events.map(it => {
+                    const event: Event = {...it} as Event;
+                    event.read = true;
+                    this.props.onEventRead(event, true);
+                    return event;
+                });
+                this.setState({events})
+            })
+    };
+
+    private deleteAll = () => {
+        this.props.deleteHistory()
+            .then(r => {
+                this.state.events.forEach(it => {
+                    const event: Event = {...it} as Event;
+                    event.read = true;
+                    this.props.onEventRead(event, true);
+                });
+                this.setState({events: []})
+            })
+    };
+}
+
+interface IMUIHistoryTableColumn extends IMUIDataTableColumn {
+    key: string;
 }
 
 export interface IHistoryPageProps {
@@ -143,6 +233,14 @@ export interface IHistoryPageProps {
     getHistoryPage(size: number, page: number): Promise<EventPage>;
 
     getHistory(): Promise<Event[]>;
+
+    setEventAsRead(event: Event): Promise<Response>
+
+    onEventRead(event: Event, all?: boolean): void
+
+    deleteHistory(): Promise<Response>
+
+    setHistoryAsRead(): Promise<Response>
 }
 
 interface IHistoryPageState extends IMuiDatatablesTableState {

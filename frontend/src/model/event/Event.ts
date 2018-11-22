@@ -1,11 +1,14 @@
 import {Transform} from "class-transformer";
-import {IsDate, IsString} from "class-validator";
+import {IsBoolean, IsDate, IsString} from "class-validator";
 import {EventType} from "./EventType";
 
 // tslint:disable-next-line:no-var-requires
 const moment = require('moment')
 
 export default class Event {
+    @IsString()
+    // @ts-ignore
+    public id: string;
     @IsString()
     // @ts-ignore
     public title: string;
@@ -20,9 +23,12 @@ export default class Event {
     @IsDate()
     // @ts-ignore
     public time: Date;
+    @IsBoolean()
+    // @ts-ignore
+    public read: boolean;
 
     public getKeys() {
-        return ["title", "description", "type", "time"];
+        return ["id", "read", "title", "description", "type", "time"];
     }
 }
 

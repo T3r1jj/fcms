@@ -141,7 +141,7 @@ const cache = new CellMeasurerCache({
     fixedWidth: true,
 });
 
-class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
+class PrimarySearchAppBar extends React.PureComponent<IAppBarProps, IAppBarState> {
 
     constructor(props: IAppBarProps) {
         super(props);
@@ -150,12 +150,6 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
             menuOpen: false,
             mobileMoreAnchorEl: null,
         };
-    }
-
-    public shouldComponentUpdate(nextProps: Readonly<IAppBarProps>, nextState: Readonly<IAppBarState>, nextContext: any): boolean {
-        const searchCount = this.props.searchItems ? this.props.searchItems.length : 0;
-        const nextSearchCount = nextProps.searchItems ? nextProps.searchItems.length : 0;
-        return nextState !== this.state || nextSearchCount !== searchCount
     }
 
     public handleMobileMenuOpen = (event: any) => {
@@ -173,6 +167,10 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
         const getClasses = () => {
             return classes as any
         };
+        const notificationIcon = this.props.unreadCount === 0 ? <NotificationsIcon/> :
+            <Badge badgeContent={this.props.unreadCount} color="secondary">
+                <NotificationsIcon/>
+            </Badge>
 
         const renderMobileMenu = (
             <Menu
@@ -193,9 +191,7 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
                 <MenuItem>
                     <IconButton color="inherit">
                         <Link to={"/history"} className={getClasses().linkWrapper}>
-                            <Badge badgeContent={11} color="secondary">
-                                <NotificationsIcon/>
-                            </Badge>
+                            {notificationIcon}
                         </Link>
                     </IconButton>
                     <p>Notifications</p>
@@ -246,9 +242,7 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
                             </IconButton>
                             <IconButton color={"inherit"}>
                                 <Link to={"/history"} className={getClasses().linkWrapper}>
-                                    <Badge badgeContent={0} color="secondary">
-                                        <NotificationsIcon/>
-                                    </Badge>
+                                    {notificationIcon}
                                 </Link>
                             </IconButton>
                         </div>
@@ -304,14 +298,15 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
 }
 
 interface IAppBarProps extends AppBarProps {
-    searchItems?: SearchItem[]
+    searchItems?: SearchItem[];
+    unreadCount: number;
 }
 
 interface IAppBarState {
-    mobileMoreAnchorEl: any
-    selectedOption?: any
-    inputValue: string
-    menuOpen: boolean
+    mobileMoreAnchorEl: any;
+    selectedOption?: any;
+    inputValue: string;
+    menuOpen: boolean;
 }
 
 export default withStyles(styles)(PrimarySearchAppBar);

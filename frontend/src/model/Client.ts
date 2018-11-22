@@ -60,6 +60,31 @@ export default class Client {
             })
     };
 
+    public deleteHistory = () => {
+        return fetch(this.getBackendPath() + "/api/history", {
+            method: 'DELETE'
+        });
+    };
+
+    public setEventAsRead = (event: Event) => {
+        event.read = true;
+        return fetch(this.getBackendPath() + "/api/history?eventId=" + event.id, {
+            method: 'POST'
+        });
+    };
+
+    public setHistoryAsRead = () => {
+        return fetch(this.getBackendPath() + "/api/history", {
+            method: 'PATCH'
+        });
+    };
+
+    public countUnreadEvents = () => {
+        return fetch(this.getBackendPath() + "/api/history/unread", {
+            method: 'GET'
+        });
+    };
+
     public getCodeCallback = (type: CodeCallbackType) => {
         return fetch(this.getBackendPath() + "/api/code?type=" + CodeCallbackType[type])
             .then(response => {

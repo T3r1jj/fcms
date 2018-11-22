@@ -7,7 +7,7 @@ import PrimarySearchAppBar from "./PrimarySearchAppBar";
 describe("component", () => {
     describe("rendering", () => {
         it('renders without crashing', () => {
-            shallow(<BrowserRouter><PrimarySearchAppBar/></BrowserRouter>)
+            shallow(<BrowserRouter><PrimarySearchAppBar unreadCount={0}/></BrowserRouter>)
         });
     });
 });

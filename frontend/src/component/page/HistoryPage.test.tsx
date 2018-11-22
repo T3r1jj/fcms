@@ -12,8 +12,22 @@ describe("component", () => {
     let props: IHistoryPageProps;
     let getHistoryPage: (size: number, page?: number) => Promise<EventPage>;
     let getHistory: () => Promise<Event[]>;
+    let setEventAsRead: (event: Event) => Promise<Response>;
+    let deleteHistory: () => Promise<Response>;
+    let setHistoryAsRead: () => Promise<Response>;
+    let onEventRead: (event: Event, all?: boolean) => void;
 
     beforeEach(() => {
+        setEventAsRead = (event: Event) => {
+            return new Promise<Response>((resolve) => resolve(new Response()));
+        };
+        deleteHistory = () => {
+            return new Promise<Response>((resolve) => resolve(new Response()));
+        };
+        setHistoryAsRead = () => {
+            return new Promise<Response>((resolve) => resolve(new Response()));
+        };
+        onEventRead = (event: Event, all?: boolean) => undefined;
         getHistoryPage = () => {
             return new Promise<EventPage>((resolve) => {
                 resolve(new EventPage());
@@ -24,13 +38,15 @@ describe("component", () => {
                 resolve([new Event()])
             }));
         };
-        props = {getHistory, getHistoryPage};
+        props = {getHistory, getHistoryPage, setEventAsRead, deleteHistory, setHistoryAsRead, onEventRead};
     });
 
     describe("rendering", () => {
         function prepareGetHistoryPagePromise(event: Event) {
             getHistoryPage = () => {
                 return new Promise<EventPage>((resolve) => {
+                    event.id = "some id";
+                    event.read = false;
                     event.time = new Date();
                     event.title = "Database is flooding";
                     event.description = "Switch off the power";
@@ -46,6 +62,8 @@ describe("component", () => {
         function prepareGetHistoryPromise(event: Event) {
             getHistory = () => {
                 return new Promise<Event[]>((resolve) => {
+                    event.id = "some different id";
+                    event.read = false;
                     event.time = new Date();
                     event.title = "Database is safe";
                     event.description = "It's in the clouds";
@@ -62,7 +80,7 @@ describe("component", () => {
         it('renders event from pageable call after component did mount', (done) => {
             const event = new Event();
             prepareGetHistoryPagePromise(event);
-            props = {getHistory, getHistoryPage};
+            props = {...props, getHistory, getHistoryPage};
 
             const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
@@ -80,7 +98,7 @@ describe("component", () => {
             const event2 = new Event();
             prepareGetHistoryPagePromise(event);
             prepareGetHistoryPromise(event2);
-            props = {getHistory, getHistoryPage};
+            props = {...props, getHistory, getHistoryPage};
 
             const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
@@ -103,7 +121,7 @@ describe("component", () => {
             const event2 = new Event();
             prepareGetHistoryPagePromise(event);
             prepareGetHistoryPromise(event2);
-            props = {getHistory, getHistoryPage};
+            props = {...props, getHistory, getHistoryPage};
 
             const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
@@ -131,7 +149,7 @@ describe("component", () => {
             const event2 = new Event();
             prepareGetHistoryPagePromise(event);
             prepareGetHistoryPromise(event2);
-            props = {getHistory, getHistoryPage};
+            props = {...props, getHistory, getHistoryPage};
 
             const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
@@ -164,7 +182,7 @@ describe("component", () => {
                     reject(new Error(error));
                 });
             };
-            props = {getHistory, getHistoryPage};
+            props = {...props, getHistory, getHistoryPage};
 
             const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {
@@ -186,7 +204,7 @@ describe("component", () => {
                     reject(new Error(error));
                 });
             };
-            props = {getHistory, getHistoryPage};
+            props = {...props, getHistory, getHistoryPage};
 
             const wrapper = mount(<BrowserRouter><HistoryPage{...props}/></BrowserRouter>);
             setImmediate(() => {

@@ -7,7 +7,7 @@ import Code from "../../model/code/Code";
 import {CodeCallbackType} from "../../model/code/CodeCallbackType";
 import ICode from "../../model/code/ICode";
 import CodeEditor from "../CodeEditor";
-import CodeCallbackPage, {ICodeCallbackPageProps} from "./CodeCallbackPage";
+import CodeCallbackPage from "./CodeCallbackPage";
 
 describe('component', () => {
     let getCodeCallback: (t: CodeCallbackType) => Promise<Code>;
@@ -146,7 +146,7 @@ describe('component', () => {
                 })
             };
 
-            const props: ICodeCallbackPageProps = {
+            const props = {
                 checkCodeCallback,
                 getCodeCallback,
                 updateCodeCallback
@@ -157,7 +157,7 @@ describe('component', () => {
             setImmediate(() => {
                 wrapper.update();
                 const buttons = wrapper.find('button');
-                const saveButton = buttons.at(buttons.length - 2);
+                const saveButton = buttons.at(buttons.length - 3);
                 saveButton.simulate('click');
                 expect(updateCodeCallbackSpy.callCount).toEqual(1);
                 expect(updateCodeCallbackSpy.args[0][0].code).toEqual(onReplicationText);
@@ -182,7 +182,7 @@ describe('component', () => {
                 })
             };
 
-            const props: ICodeCallbackPageProps = {
+            const props = {
                 checkCodeCallback,
                 getCodeCallback,
                 updateCodeCallback
@@ -193,7 +193,7 @@ describe('component', () => {
             setImmediate(() => {
                 wrapper.update();
                 const buttons = wrapper.find('button');
-                const deleteButton = buttons.at(buttons.length - 1);
+                const deleteButton = buttons.at(buttons.length - 2);
                 deleteButton.simulate('click');
                 expect(updateCodeCallbackSpy.callCount).toEqual(1);
                 expect(updateCodeCallbackSpy.args[0][0].code).toEqual("");

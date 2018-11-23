@@ -5,11 +5,14 @@ import {InjectedNotistackProps, withSnackbar} from "notistack";
 import * as React from "react";
 import Event from "../model/event/Event";
 import {EventType} from "../model/event/EventType";
+import {ClientPayloadType} from "../model/event/PayloadType";
 import {INotifications} from "../model/INotifiations";
 
+// TODO: Enforce VariantType from App
 export class Notifications extends React.Component<INotificationsProps, {}> implements INotifications {
 
     private static readonly ONE_MINUTE = 1000 * 60;
+    private static readonly SEC_5 = 1000 * 5;
     private static readonly FOREVER = 2000000000;
 
     public componentDidMount(): void {
@@ -55,10 +58,20 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
                 errors = [e];
             } finally {
                 if (errors.length === 0) {
-                    this.props.enqueueSnackbar(event.title, {
-                        action: this.createDismissButton(event),
-                        variant: EventType.toNotificationType(event.type) as any,
-                    });
+                    if (event.type === EventType.PAYLOAD) {
+                        event.payload!.onConsume = (info, variant) => {
+                            this.props.enqueueSnackbar(info, {
+                                action: this.createDismissButton(event),
+                                autoHideDuration: Notifications.SEC_5,
+                                variant: ClientPayloadType.toNotificationType(variant) as any
+                            });
+                        }
+                    } else {
+                        this.props.enqueueSnackbar(event.title, {
+                            action: this.createDismissButton(event),
+                            variant: EventType.toNotificationType(event.type) as any
+                        });
+                    }
                     this.props.onEventReceived(event);
                 } else {
                     this.props.enqueueSnackbar('Invalid json', {
@@ -112,13 +125,13 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
     };
 
     private createDismissButton = (event?: Event) => {
-        if (event) {
+        if (event && event.type !== EventType.PAYLOAD) {
             const onClick = (e: any) => {
                 if (e.isTrusted) {
                     this.props.onEventDismiss({...event} as Event);
                 }
             };
-            return <Button id={event.id} size="small" color={"inherit"} onClick={onClick}>Dismiss</Button>
+            return <Button id={event.id} size="small" color={"inherit"} onClick={onClick}>Mark as read</Button>
         } else {
             return <Button size="small" color={"inherit"}>Dismiss</Button>
         }

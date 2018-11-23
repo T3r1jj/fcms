@@ -9,6 +9,8 @@ import ExpandIcon from '@material-ui/icons/ExpandLess';
 import CollapseIcon from '@material-ui/icons/ExpandMore';
 import * as React from "react";
 import Client from "../../model/Client";
+import Payload from "../../model/event/Payload";
+import {ClientPayloadType, PayloadType} from "../../model/event/PayloadType";
 import IBackup from "../../model/IBackup";
 import IRecord from "../../model/IRecord";
 import Record from "../../model/Record";
@@ -90,6 +92,48 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
         }
     }
 
+    public componentWillReceiveProps(nextProps: Readonly<IMainPageProps>, nextContext: any): void {
+        if (nextProps.payload !== undefined && nextProps.payload !== this.props.payload) {
+            window.console.log(nextProps.payload);
+            const payload = nextProps.payload;
+            let action: string;
+            let name: string;
+            let clientPayloadType: ClientPayloadType | undefined;
+            if (payload.type === PayloadType.SAVE) {
+                name = payload.record.name;
+                const indexToUpdate = this.state.records.findIndex(r => r.id === payload.record.id);
+                if (indexToUpdate >= 0) {
+                    clientPayloadType = ClientPayloadType.UPDATE;
+                    action = "Updated";
+                    const records = [...this.state.records];
+                    records.splice(indexToUpdate, 1, payload.record);
+                    this.setState({records}, this.handleSearchItemsUpdate);
+                } else {
+                    clientPayloadType = ClientPayloadType.ADD;
+                    action = "Added";
+                    window.console.log("Payload is ADD");
+                    this.setState({records: [...this.state.records, payload.record]}, this.handleSearchItemsUpdate);
+                }
+            } else if (payload.type === PayloadType.DELETE) {
+                clientPayloadType = ClientPayloadType.DELETE;
+                action = "Deleted";
+                const records = [...this.state.records];
+                const indexToDelete = records.findIndex(r => r.id === payload.record.id);
+                if (indexToDelete >= 0) {
+                    name = records[indexToDelete].name;
+                    records.splice(indexToDelete, 1);
+                    this.setState({records}, this.handleSearchItemsUpdate);
+                } else { // Should not happen
+                    name = payload.record.id;
+                }
+            } else {
+                action = "unknown";
+                name = payload.record.id;
+            }
+            payload.onConsume!(`${action} ${name}`, clientPayloadType);
+        }
+    }
+
     public componentWillUnmount(): void {
         this.props.onSearchItemsUpdate();
     }
@@ -164,6 +208,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
 
 export interface IMainPageProps {
     client: Client;
+    payload?: Payload;
 
     onSearchItemsUpdate(items?: SearchItem[]): void;
 }

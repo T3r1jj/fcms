@@ -1,6 +1,7 @@
-import {Transform} from "class-transformer";
+import {Transform, Type} from "class-transformer";
 import {IsBoolean, IsDate, IsString} from "class-validator";
 import {EventType} from "./EventType";
+import Payload from "./Payload";
 
 // tslint:disable-next-line:no-var-requires
 const moment = require('moment')
@@ -26,6 +27,9 @@ export default class Event {
     @IsBoolean()
     // @ts-ignore
     public read: boolean;
+    @Type(() => Payload)
+    // @ts-ignore
+    public payload?: Payload;
 
     public getKeys() {
         return ["id", "read", "title", "description", "type", "time"];

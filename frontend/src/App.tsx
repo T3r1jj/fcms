@@ -1,4 +1,11 @@
 import {createMuiTheme, MuiThemeProvider} from '@material-ui/core/styles';
+import AddIcon from '@material-ui/icons/AddBox';
+import ErrorIcon from '@material-ui/icons/BugReport';
+import DeleteIcon from '@material-ui/icons/Delete';
+import SuccessIcon from '@material-ui/icons/DoneOutline';
+import InfoIcon from '@material-ui/icons/Info';
+import UpdateIcon from '@material-ui/icons/Update';
+import WarningIcon from '@material-ui/icons/Warning';
 import {SnackbarProvider} from "notistack";
 import * as React from 'react';
 import {Route} from "react-router";
@@ -10,8 +17,20 @@ import MainPage from "./component/page/MainPage";
 import PrimarySearchAppBar from "./component/PrimarySearchAppBar";
 import Client from "./model/Client";
 import Event from "./model/event/Event";
+import {EventType} from "./model/event/EventType";
+import Payload from "./model/event/Payload";
 import SearchItem from "./model/SearchItem";
 import Notifications from './notification/Notifications';
+
+const iconVariants = {
+    add: <AddIcon/>,
+    delete: <DeleteIcon/>,
+    error: <ErrorIcon/>,
+    info: <InfoIcon/>,
+    success: <SuccessIcon/>,
+    update: <UpdateIcon/>,
+    warning: <WarningIcon/>,
+};
 
 class App extends React.Component<{}, IAppState> {
     private readonly theme = createMuiTheme({
@@ -58,6 +77,7 @@ class App extends React.Component<{}, IAppState> {
         return (
             <BrowserRouter>
                 <SnackbarProvider maxSnack={100} anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+                                  iconVariant={iconVariants as any}
                                   autoHideDuration={1000 * 60 * 15}>
                     <MuiThemeProvider theme={this.theme}>
                         <Notifications {...this.client} eventToDismiss={this.state.readEvent}
@@ -79,7 +99,10 @@ class App extends React.Component<{}, IAppState> {
     }
 
     private renderMainPage() {
-        return <MainPage onSearchItemsUpdate={this.onSearchItemsUpdate} client={this.client}/>
+        return <MainPage
+            payload={this.state.payload}
+            onSearchItemsUpdate={this.onSearchItemsUpdate}
+            client={this.client}/>
     }
 
     private renderHistoryPage() {
@@ -100,7 +123,14 @@ class App extends React.Component<{}, IAppState> {
     }
 
     private onEventReceived(event: Event) {
-        this.setState({newOrDismissedEvent: event, unreadEventsCount: this.state.unreadEventsCount + 1});
+        window.console.log("EVENT received");
+        if (event.type === EventType.PAYLOAD) {
+            window.console.log("IS A PAYLOAD");
+            this.setState({payload: event.payload});
+        } else {
+            window.console.log("NOT A PAYLOAD");
+            this.setState({newOrDismissedEvent: event, unreadEventsCount: this.state.unreadEventsCount + 1});
+        }
     }
 
     private onEventDismiss(event: Event) {
@@ -114,7 +144,11 @@ class App extends React.Component<{}, IAppState> {
     }
 
     private onEventRead = (event: Event, all?: boolean) => {
-        this.setState({newOrDismissedEvent: undefined, readEvent: event, unreadEventsCount: all ? 0 : this.state.unreadEventsCount - 1});
+        this.setState({
+            newOrDismissedEvent: undefined,
+            readEvent: event,
+            unreadEventsCount: all ? 0 : this.state.unreadEventsCount - 1
+        });
     };
 
     private onSearchItemsUpdate = (searchItems?: SearchItem[]) => {
@@ -126,6 +160,7 @@ interface IAppState {
     readEvent?: Event;
     newOrDismissedEvent?: Event;
     searchItems?: SearchItem[];
+    payload?: Payload;
     unreadEventsCount: number;
 }
 

@@ -29,9 +29,9 @@ public class HistoryControllerTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         wholeHistory = Arrays.asList(
-                new Event("event1", "description1", Event.EventType.INFO),
-                new Event("event22", "description22", Event.EventType.WARNING),
-                new Event("event333", "description333", Event.EventType.ERROR));
+                new Event("event1", "description1", Event.Type.INFO),
+                new Event("event22", "description22", Event.Type.WARNING),
+                new Event("event333", "description333", Event.Type.ERROR));
     }
 
     @Test

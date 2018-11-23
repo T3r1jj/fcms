@@ -239,7 +239,7 @@ public class ReplicationService {
                     .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage. Though, the storage might be ephemeral.", externalService,
                             meta.getName(), meta.getPath(), meta.getId())
-                    .setType(Event.EventType.DEBUG)
+                    .setType(Event.Type.DEBUG)
                     .build());
         }
     }
@@ -271,7 +271,7 @@ public class ReplicationService {
                     .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage due to an exception:\n", storage.toString(),
                             meta.getName(), meta.getPath(), meta.getId(), se.getMessage())
-                    .setType(Event.EventType.WARNING)
+                    .setType(Event.Type.WARNING)
                     .build());
         } catch (RuntimeException e) {
             historyService.addAndNotify(new Event.Builder()
@@ -279,7 +279,7 @@ public class ReplicationService {
                     .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage due to an unknown exception:\n", storage.toString(),
                             meta.getName(), meta.getPath(), meta.getId(), e.getMessage())
-                    .setType(Event.EventType.WARNING)
+                    .setType(Event.Type.WARNING)
                     .build());
         }
     }

@@ -1,8 +1,11 @@
 package io.github.t3r1jj.fcms.backend.schedule;
 
 import io.github.t3r1jj.fcms.backend.model.Event;
+import io.github.t3r1jj.fcms.backend.model.Payload;
+import io.github.t3r1jj.fcms.backend.model.StoredRecord;
 import io.github.t3r1jj.fcms.backend.service.HistoryService;
 import io.github.t3r1jj.fcms.backend.service.ReplicationService;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -33,7 +36,8 @@ public class ReplicationScheduler {
         historyService.addAndNotify(new Event.Builder()
                 .formatTitle("HELLO")
                 .formatDescription("DESCRIPTION")
-                .setType(Event.EventType.values()[new Random().nextInt(Event.EventType.values().length)])
+                .setType(Event.Type.values()[new Random().nextInt(Event.Type.values().length)])
+                .setPayload(new Payload(new StoredRecord(ObjectId.get()), Payload.Type.values()[new Random().nextInt(Payload.Type.values().length)]))
                 .build());
     }
 }

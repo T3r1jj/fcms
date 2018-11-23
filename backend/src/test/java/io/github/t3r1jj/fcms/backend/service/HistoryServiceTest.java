@@ -49,8 +49,8 @@ public class HistoryServiceTest {
 
     @Test
     public void getAllShouldReturn2EventsAfterAddingThemToRepo() {
-        Event event1 = new Event("a", "b", Event.EventType.INFO);
-        Event event2 = new Event("aaa", "bbb", Event.EventType.WARNING);
+        Event event1 = new Event("a", "b", Event.Type.INFO);
+        Event event2 = new Event("aaa", "bbb", Event.Type.WARNING);
         repository.save(event1);
         repository.save(event2);
         List<Event> history = service.findAll();
@@ -61,9 +61,9 @@ public class HistoryServiceTest {
 
     @Test
     public void getAllLimitTo1() {
-        Event event1 = new Event("a", "b", Event.EventType.INFO);
-        Event event2 = new Event("aaa", "bbb", Event.EventType.WARNING);
-        Event event3 = new Event("cccccc", "cccccc", Event.EventType.ERROR);
+        Event event1 = new Event("a", "b", Event.Type.INFO);
+        Event event2 = new Event("aaa", "bbb", Event.Type.WARNING);
+        Event event3 = new Event("cccccc", "cccccc", Event.Type.ERROR);
         repository.save(event1);
         repository.save(event2);
         repository.save(event3);
@@ -79,9 +79,9 @@ public class HistoryServiceTest {
 
     @Test
     public void getAllOffsetBy1() {
-        Event event1 = new Event("a", "b", Event.EventType.INFO);
-        Event event2 = new Event("aaa", "bbb", Event.EventType.WARNING);
-        Event event3 = new Event("cccccc", "cccccc", Event.EventType.ERROR);
+        Event event1 = new Event("a", "b", Event.Type.INFO);
+        Event event2 = new Event("aaa", "bbb", Event.Type.WARNING);
+        Event event3 = new Event("cccccc", "cccccc", Event.Type.ERROR);
         repository.save(event1);
         repository.save(event2);
         repository.save(event3);
@@ -97,9 +97,9 @@ public class HistoryServiceTest {
 
     @Test
     public void getAllOffsetBy2Uneven() {
-        Event event1 = new Event("a", "b", Event.EventType.INFO);
-        Event event2 = new Event("aaa", "bbb", Event.EventType.WARNING);
-        Event event3 = new Event("cccccc", "cccccc", Event.EventType.ERROR);
+        Event event1 = new Event("a", "b", Event.Type.INFO);
+        Event event2 = new Event("aaa", "bbb", Event.Type.WARNING);
+        Event event3 = new Event("cccccc", "cccccc", Event.Type.ERROR);
         repository.save(event1);
         repository.save(event2);
         repository.save(event3);
@@ -115,22 +115,22 @@ public class HistoryServiceTest {
 
     @Test
     public void addShouldAddEventToRepo() {
-        Event event1 = new Event("a", "b", Event.EventType.INFO);
+        Event event1 = new Event("a", "b", Event.Type.INFO);
         service.addAndNotify(event1);
         assertTrue(repository.findAllByOrderByTimeDesc().contains(event1));
     }
 
     @Test
     public void addShouldBroadcastNotification() {
-        Event event1 = new Event("a", "b", Event.EventType.INFO);
+        Event event1 = new Event("a", "b", Event.Type.INFO);
         service.addAndNotify(event1);
         verify(notificationService, times(1)).broadcast(event1);
     }
 
     @Test
     public void deleteAllShouldClearRepo() {
-        Event event1 = new Event("a", "b", Event.EventType.INFO);
-        Event event2 = new Event("aaa", "bbb", Event.EventType.WARNING);
+        Event event1 = new Event("a", "b", Event.Type.INFO);
+        Event event2 = new Event("aaa", "bbb", Event.Type.WARNING);
         repository.save(event1);
         repository.save(event2);
         service.deleteAll();

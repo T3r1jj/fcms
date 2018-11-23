@@ -33,6 +33,11 @@ public class StoredRecord {
     private List<StoredRecord> versions = new ArrayList<>();
     private Map<String, RecordMeta> backups = new HashMap<>();
 
+    public StoredRecord(ObjectId id) {
+        this(null, null);
+        this.id = id;
+    }
+
     public StoredRecord(String name, String tag, byte[] data, String rootId) {
         this.name = name;
         this.tag = tag;

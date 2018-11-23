@@ -31,8 +31,8 @@ public class HistoryServiceIT extends AbstractTestNGSpringContextTests {
 
     @Test
     public void setAsRead() {
-        Event event1 = new Event("a", "b", Event.EventType.INFO);
-        Event event2 = new Event("aaa", "bbb", Event.EventType.WARNING);
+        Event event1 = new Event("a", "b", Event.Type.INFO);
+        Event event2 = new Event("aaa", "bbb", Event.Type.WARNING);
         repository.save(event1);
         repository.save(event2);
         service.setAsRead(event1.getId().toString());
@@ -44,8 +44,8 @@ public class HistoryServiceIT extends AbstractTestNGSpringContextTests {
 
     @Test
     public void setAllAsRead() {
-        Event event1 = new Event("a", "b", Event.EventType.INFO);
-        Event event2 = new Event("aaa", "bbb", Event.EventType.WARNING);
+        Event event1 = new Event("a", "b", Event.Type.INFO);
+        Event event2 = new Event("aaa", "bbb", Event.Type.WARNING);
         repository.save(event1);
         repository.save(event2);
         long unreadCount = repository.findAll().stream().filter(e -> !e.isRead()).count();
@@ -57,8 +57,8 @@ public class HistoryServiceIT extends AbstractTestNGSpringContextTests {
 
     @Test
     public void countAllUnread() {
-        Event event1 = new Event("a", "b", Event.EventType.INFO);
-        Event event2 = new Event("aaa", "bbb", Event.EventType.WARNING);
+        Event event1 = new Event("a", "b", Event.Type.INFO);
+        Event event2 = new Event("aaa", "bbb", Event.Type.WARNING);
         repository.save(event1);
         repository.save(event2);
         assertEquals(2, service.countAllUnread());

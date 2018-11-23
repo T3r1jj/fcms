@@ -9,12 +9,12 @@ import DialogTitle from "@material-ui/core/DialogTitle/DialogTitle";
 import IconButton from '@material-ui/core/IconButton';
 import withStyles from "@material-ui/core/styles/withStyles";
 import BackupIcon from '@material-ui/icons/Backup';
-// import AttachmentIcon from "@material-ui/core/SvgIcon/SvgIcon";
 import NewIcon from '@material-ui/icons/CreateNewFolder';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ForceDeleteIcon from '@material-ui/icons/DeleteForever';
 import FolderClosedIcon from '@material-ui/icons/Folder';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
+import SaveIcon from '@material-ui/icons/Save';
 import TextIcon from '@material-ui/icons/TextFormat';
 import * as React from 'react';
 import LazyLoad from "react-lazyload";
@@ -23,6 +23,12 @@ import Formatter from "../utils/Formatter";
 import Description from "./Description";
 
 const styles: StyleRulesCallback = theme => ({
+    descriptionActions: {
+        justifyContent: "flex-start"
+    },
+    leftIcon: {
+        marginRight: theme.spacing.unit
+    },
     lightTooltip: {
         background: theme.palette.common.white,
         boxShadow: theme.shadows[1],
@@ -118,12 +124,6 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
             <Tooltip title="Delete" onClick={this.handleDeletionOpen}>
                 <IconButton aria-label="Delete"><DeleteIcon/></IconButton>
             </Tooltip>
-            {/*{this.props.meta.map(m =>*/}
-            {/*<Tooltip key={m.id} title={"Meta " + m.name}>*/}
-            {/*<IconButton id={m.id} aria-label="Meta"*/}
-            {/*onClick={this.onRecordSelected}><AttachmentIcon/></IconButton>*/}
-            {/*</Tooltip>*/}
-            {/*)}*/}
             {this.state.expand && this.props.versions.map(v =>
                 <RecordNode {...v} deleteRecords={this.props.deleteRecords}
                             key={v.id}
@@ -138,13 +138,21 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
                 />
             )}
             <Dialog onClose={this.handleDescriptionClose}
+                    fullScreen={true}
                     aria-labelledby={"description-dialog-title" + this.props.id}
                     open={this.state.descriptionOpen}>
                 <DialogTitle id={"description-dialog-title" + this.props.id}>Description</DialogTitle>
-                <Description rawText={this.textOrEmpty(this.state.description)}
-                             onChange={this.handleDescriptionChange}/>
-                <Button onClick={this.handleDescriptionSave}>Save</Button>
-                <Button onClick={this.handleDescriptionClose}>Cancel</Button>
+                <DialogContent style={{flexBasis: 0}}>
+                    <Description rawText={this.textOrEmpty(this.state.description)}
+                                 onChange={this.handleDescriptionChange}/>
+                </DialogContent>
+                <DialogActions className={this.props.classes.descriptionActions}>
+                    <Button onClick={this.handleDescriptionSave} variant={"contained"}>
+                        <SaveIcon className={this.props.classes.leftIcon}/>
+                        Save
+                    </Button>
+                    <Button onClick={this.handleDescriptionClose} color="primary" variant={"contained"}>Cancel</Button>
+                </DialogActions>
             </Dialog>
             <Dialog
                 open={this.state.deletionOpen}
@@ -163,11 +171,11 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={this.handleDelete} color="secondary">
-                        <DeleteIcon/>
+                        <DeleteIcon className={this.props.classes.leftIcon}/>
                         Delete
                     </Button>
                     <Button onClick={this.handleForceDelete} color="secondary">
-                        <ForceDeleteIcon/>
+                        <ForceDeleteIcon className={this.props.classes.leftIcon}/>
                         Force delete
                     </Button>
                     <Button onClick={this.handleDeletionClose} color="primary" variant={"contained"}
@@ -178,10 +186,6 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
             </Dialog>
         </div>;
     }
-
-// private createPlaceholder = () => {
-    //     return <div>Loading...</div>
-    // }
 
     private textOrEmpty(text: string) {
         return text !== null ? text : "";

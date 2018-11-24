@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.platform.runner.JUnitPlatform
 import org.junit.runner.RunWith
-import org.mockito.Mockito.doReturn
-import org.mockito.Mockito.verify
+import org.mockito.ArgumentMatchers
+import org.mockito.Mockito.*
 import org.mockito.Spy
 import org.mockito.junit.jupiter.MockitoExtension
 import kotlin.test.assertEquals
@@ -75,6 +75,14 @@ class AuthenticatedStorageTemplateTest {
         doReturn(true).`when`(storage).isLogged()
         storage.upload(record)
         verify(storage).doAuthenticatedUpload(record)
+    }
+
+    @Test
+    fun testUploadProgress() {
+        doReturn(true).`when`(storage).isLogged()
+        val progressListener: (Long) -> Unit = {}
+        storage.upload(record, progressListener)
+        verify(storage).doAuthenticatedUpload(record, progressListener)
     }
 
     @Test

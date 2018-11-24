@@ -10,6 +10,9 @@ interface UpstreamStorage : Storage {
      */
     fun upload(record: Record): RecordMeta
 
+
+    fun upload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta
+
     /**
      * Returns [Record] for [filePath] from received [RecordMeta] from upload.
      */

@@ -5,6 +5,7 @@ import com.github.eliux.mega.MegaUtils
 import com.github.eliux.mega.auth.MegaAuthCredentials
 import com.github.eliux.mega.cmd.AbstractMegaCmdPathHandler
 import com.github.eliux.mega.error.*
+import io.github.t3r1jj.fcms.external.Loggable
 import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorageTemplate
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
@@ -15,11 +16,13 @@ import net.bytebuddy.agent.ByteBuddyAgent
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy
 import net.bytebuddy.implementation.MethodDelegation
 import net.bytebuddy.matcher.ElementMatchers
+import java.io.File
 import java.io.FileInputStream
+import java.lang.Exception
 import java.nio.file.Paths
 
 open class Mega(private val userName: String, private val password: String) : AuthenticatedStorageTemplate() {
-    companion object {
+    companion object : Loggable {
         init {
             ByteBuddyAgent.install()
             ByteBuddy()
@@ -50,6 +53,9 @@ open class Mega(private val userName: String, private val password: String) : Au
                 else -> throw MegaUnexpectedFailureException()
             }
         }
+
+        val logger = logger();
+        const val progressRateMS: Long = 1000
     }
 
     private var session: MegaSession? = null
@@ -76,11 +82,35 @@ open class Mega(private val userName: String, private val password: String) : Au
     }
 
     override fun doAuthenticatedUpload(record: Record): RecordMeta {
+        return doAuthenticatedUpload(record, null)
+    }
+
+    override fun doAuthenticatedUpload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
         val file = stream2file(record.data)
+        val size = file.length()
+        if (progressListener != null) {
+            startUploadListener(record.path.split("/").last(), progressListener, size)
+        }
         session!!.uploadFile(file.absolutePath, record.path)
                 .createRemoteIfNotPresent<AbstractMegaCmdPathHandler>()
                 .run()
-        return RecordMeta(record.name, record.path, file.length())
+        return RecordMeta(record.name, record.path, size)
+    }
+
+    private fun startUploadListener(transferName: String, progressListener: (bytesWritten: Long) -> Unit, size: Long) {
+        Thread {
+            try {
+                do {
+                    Thread.sleep(progressRateMS)
+                    val transfer = MegaCmdTransfers().call().find { t -> java.lang.String(t.sourcePath).contains(transferName) }
+                    transfer!!
+                    progressListener.invoke((transfer.progress * size).toLong())
+                } while (transfer!!.progress <= 0.9999)
+            } catch (e: Exception) {
+                logger.error("Progress listener finished listening", e)
+                progressListener.invoke(size);
+            }
+        }.start()
     }
 
     override fun doAuthenticatedDownload(filePath: String): Record {

@@ -10,6 +10,8 @@ import okhttp3.RequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import io.github.t3r1jj.fcms.external.upstream.CountingRequestBody
+
 
 abstract class StorageClient<T>(private val baseUrl: String, service: Class<T>) : NamedStorage() {
     protected val client = getRetrofit().create(service)!!
@@ -35,6 +37,25 @@ abstract class StorageClient<T>(private val baseUrl: String, service: Class<T>) 
         val requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), bytes)
         val body = MultipartBody.Part.createFormData("file", record.name, requestFile)
         return Pair(bytes.size.toLong(), body)
+    }
+
+    /**
+     * @return pair of <size in bytes, file form data>
+     */
+    protected fun createFileForm(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): Pair<Long, MultipartBody.Part> {
+        val bytes = record.data.readBytes()
+        val size = bytes.size.toLong()
+        val requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), bytes)
+        if (progressListener != null) {
+            CountingRequestBody(requestFile, object : CountingRequestBody.Listener {
+                override fun onRequestProgress(bytesWritten: Long, contentLength: Long) {
+                    val progress = bytesWritten.toDouble() / contentLength
+                    progressListener.invoke((progress * size).toLong())
+                }
+            })
+        }
+        val body = MultipartBody.Part.createFormData("file", record.name, requestFile)
+        return Pair(size, body)
     }
 
     /**

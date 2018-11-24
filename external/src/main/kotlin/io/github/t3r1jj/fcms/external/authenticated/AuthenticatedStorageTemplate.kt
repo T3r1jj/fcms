@@ -18,6 +18,11 @@ abstract class AuthenticatedStorageTemplate : NamedStorage(), AuthenticatedStora
         return doAuthenticatedUpload(record)
     }
 
+    final override fun upload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
+        throwIfNotAuthenticated()
+        return doAuthenticatedUpload(record, progressListener)
+    }
+
     final override fun download(filePath: String): Record {
         throwIfNotAuthenticated()
         return doAuthenticatedDownload(filePath)
@@ -39,6 +44,7 @@ abstract class AuthenticatedStorageTemplate : NamedStorage(), AuthenticatedStora
     }
 
     abstract fun doAuthenticatedUpload(record: Record): RecordMeta
+    abstract fun doAuthenticatedUpload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta
     abstract fun doAuthenticatedDownload(filePath: String): Record
     abstract fun doAuthenticatedFindAll(filePath: String): List<RecordMeta>
     abstract fun doAuthenticatedGetInfo(): StorageInfo

@@ -15,10 +15,13 @@ open class Openload(baseUrl: String) : StorageInfoClient<OpenloadApi>(baseUrl, O
     constructor() : this("https://api.openload.co")
 
     override fun upload(record: Record): RecordMeta {
+        return this.upload(record, null)
+    }
+    override fun upload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
         var response = client.getUploadUrl().execute()
         if (response.isSuccessful) {
             val uploadUrl = response.body()!!.result.url
-            val (size, body) = createFileForm(record)
+            val (size, body) = createFileForm(record, progressListener)
             response = client.upload(uploadUrl, body).execute()
             if (response.isSuccessful) {
                 return RecordMeta(record.name, response.body()!!.result.url, size)

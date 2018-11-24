@@ -3,6 +3,8 @@ package io.github.t3r1jj.fcms.external.authenticated
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.auth.oauth2.TokenResponseException
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.api.client.googleapis.media.MediaHttpUploader
+import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener
 import com.google.api.client.http.FileContent
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
@@ -54,14 +56,25 @@ open class GoogleDrive(private val clientId: String,
     }
 
     override fun doAuthenticatedUpload(record: Record): RecordMeta {
+        return doAuthenticatedUpload(record, null)
+    }
+
+    override fun doAuthenticatedUpload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
         deleteBasedOnDescription(record.path)
         val fileMeta = File()
         fileMeta.name = record.name
         fileMeta.description = record.path
         val fileContent = FileContent("application/octet-stream", stream2file(record.data))
-        val result = drive!!.files()
+        val uploadBuilder = drive!!.files()
                 .create(fileMeta, fileContent)
                 .setFields(FILE_FIELDS_DEFAULT_UPLOAD_SIZE)
+        if (progressListener != null) {
+            val httpUploader = uploadBuilder.mediaHttpUploader
+            httpUploader.isDirectUploadEnabled = false
+            httpUploader.chunkSize = MediaHttpUploader.MINIMUM_CHUNK_SIZE
+            httpUploader.progressListener = MediaHttpUploaderProgressListener { uploader -> progressListener.invoke(uploader.numBytesUploaded) }
+        }
+        val result = uploadBuilder
                 .execute()
         return RecordMeta(record.name, record.path, result.getSize())
     }

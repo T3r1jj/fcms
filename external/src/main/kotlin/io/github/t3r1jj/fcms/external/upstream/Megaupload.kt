@@ -14,7 +14,11 @@ open class Megaupload(baseUrl: String) : StorageInfoClient<MegauploadApi>(baseUr
     constructor() : this("https://megaupload.nz")
 
     override fun upload(record: Record): RecordMeta {
-        val (size, body) = createFileForm(record)
+        return upload(record, null)
+    }
+
+    override fun upload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
+        val (size, body) = createFileForm(record, progressListener)
         val response = client.upload(body).execute()
         if (response.isSuccessful) {
             return RecordMeta(record.name, response.body()!!.data.file.url.full, size)

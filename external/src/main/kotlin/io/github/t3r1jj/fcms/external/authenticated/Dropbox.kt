@@ -40,10 +40,18 @@ open class Dropbox(private val accessToken: String) : AuthenticatedStorageTempla
     }
 
     override fun doAuthenticatedUpload(record: Record): RecordMeta {
-        val result = client!!.files()
+        return doAuthenticatedUpload(record, null)
+    }
+
+    override fun doAuthenticatedUpload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
+        val uploadBuilder = client!!.files()
                 .uploadBuilder(record.path)
                 .withMode(WriteMode.OVERWRITE)
-                .uploadAndFinish(record.data)
+        val result = if (progressListener != null) {
+            uploadBuilder.uploadAndFinish(record.data, progressListener)
+        } else {
+            uploadBuilder.uploadAndFinish(record.data)
+        }
         return RecordMeta(record.name, record.path, result.size)
                 .apply { id = result.id }
     }

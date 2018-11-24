@@ -24,7 +24,7 @@ apply plugin: "idea"
 apply plugin: "kotlin"
 
 group = 'io.github.t3r1jj'
-version = '1.1.1'
+version = '1.2.0-SNAPSHOT'
 sourceCompatibility = 1.8
 
 repositories {

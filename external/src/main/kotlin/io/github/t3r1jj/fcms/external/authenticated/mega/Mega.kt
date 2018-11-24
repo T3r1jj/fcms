@@ -16,7 +16,6 @@ import net.bytebuddy.agent.ByteBuddyAgent
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy
 import net.bytebuddy.implementation.MethodDelegation
 import net.bytebuddy.matcher.ElementMatchers
-import java.io.File
 import java.io.FileInputStream
 import java.lang.Exception
 import java.nio.file.Paths
@@ -89,7 +88,7 @@ open class Mega(private val userName: String, private val password: String) : Au
         val file = stream2file(record.data)
         val size = file.length()
         if (progressListener != null) {
-            startUploadListener(record.path.split("/").last(), progressListener, size)
+            startProgressListener(record.path.split("/").last(), progressListener)
         }
         session!!.uploadFile(file.absolutePath, record.path)
                 .createRemoteIfNotPresent<AbstractMegaCmdPathHandler>()
@@ -97,30 +96,39 @@ open class Mega(private val userName: String, private val password: String) : Au
         return RecordMeta(record.name, record.path, size)
     }
 
-    private fun startUploadListener(transferName: String, progressListener: (bytesWritten: Long) -> Unit, size: Long) {
-        Thread {
-            try {
-                do {
-                    Thread.sleep(progressRateMS)
-                    val transfer = MegaCmdTransfers().call().find { t -> java.lang.String(t.sourcePath).contains(transferName) }
-                    transfer!!
-                    progressListener.invoke((transfer.progress * size).toLong())
-                } while (transfer!!.progress <= 0.9999)
-            } catch (e: Exception) {
-                logger.error("Progress listener finished listening", e)
-                progressListener.invoke(size);
-            }
-        }.start()
+    override fun doAuthenticatedDownload(filePath: String): Record {
+        return doAuthenticatedDownload(filePath, null)
     }
 
-    override fun doAuthenticatedDownload(filePath: String): Record {
+    override fun doAuthenticatedDownload(filePath: String, progressListener: ((bytesWritten: Long) -> Unit)?): Record {
         val tempFile = java.io.File.createTempFile(System.currentTimeMillis().toString(), null)
         tempFile.delete()
+        if (progressListener != null) {
+            startProgressListener(filePath, progressListener)
+        }
         session!!.get(filePath)
                 .setLocalPath(tempFile.absolutePath)
                 .run()
         val path = Paths.get(filePath)
         return Record(path.fileName.toString(), filePath, FileInputStream(tempFile.absolutePath))
+    }
+
+    private fun startProgressListener(transferName: String, progressListener: (bytesWritten: Long) -> Unit) {
+        Thread {
+            var bytesTotal = 0L
+            try {
+                do {
+                    Thread.sleep(progressRateMS)
+                    val transfer = MegaCmdTransfers().call().find { t -> java.lang.String(t.sourcePath).contains(transferName) }
+                    transfer!!
+                    progressListener.invoke(transfer.bytesWritten)
+                    bytesTotal = transfer.bytesTotal
+                } while (transfer!!.progress <= 0.9999)
+            } catch (e: Exception) {
+                logger.error("Progress listener finished listening", e)
+                progressListener.invoke(bytesTotal)
+            }
+        }.start()
     }
 
     override fun doAuthenticatedFindAll(filePath: String): List<RecordMeta> {

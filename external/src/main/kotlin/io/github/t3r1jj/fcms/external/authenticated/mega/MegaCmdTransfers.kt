@@ -18,7 +18,9 @@ internal class MegaCmdTransfers : AbstractMegaCmdCaller<List<MegaTransfer>>() {
                     .skip(1)
                     .map { result ->
                         val results = trimSplit(result)
-                        MegaTransfer(results[0], results[1].toInt(), results[2], results[3], results[4].removeSuffix("%").toFloat() / 100f, results[8])
+                        MegaTransfer(results[0], results[1].toInt(), results[2],
+                                results[3], results[4].removeSuffix("%").toFloat() / 100f, results[6].toFloat(),
+                                results[7], results[8])
                     }.toList()
         } catch (e: IOException) {
             throw MegaIOException("MegauploadError while executing transfers")
@@ -34,4 +36,17 @@ internal class MegaCmdTransfers : AbstractMegaCmdCaller<List<MegaTransfer>>() {
     }
 }
 
-internal data class MegaTransfer(val dirSync: String, val tag: Int, val sourcePath: String, val destinyPath: String, val progress: Float, val state: String);
+internal data class MegaTransfer(val dirSync: String, val tag: Int, val sourcePath: String,
+                                 val destinyPath: String, val progress: Float, val totalSize: Float,
+                                 val unit: String, val state: String) {
+    val bytesTotal: Long
+
+    init {
+        val fileSizeUnits = arrayOf("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+        val unitIndex = if (fileSizeUnits.contains(unit)) fileSizeUnits.indexOf(unit) else 0
+        bytesTotal = (totalSize * Math.pow(1024.toDouble(), unitIndex.toDouble())).toLong()
+    }
+
+    val bytesWritten: Long
+        get() = (progress * bytesTotal + 0.5).toLong()
+}

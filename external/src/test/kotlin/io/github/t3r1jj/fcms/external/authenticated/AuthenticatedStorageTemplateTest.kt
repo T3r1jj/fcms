@@ -93,6 +93,14 @@ class AuthenticatedStorageTemplateTest {
     }
 
     @Test
+    fun testDownloadProgress() {
+        doReturn(true).`when`(storage).isLogged()
+        val progressListener: (Long) -> Unit = {}
+        storage.download(filePath, progressListener)
+        verify(storage).doAuthenticatedDownload(filePath, progressListener)
+    }
+
+    @Test
     fun testFindAll() {
         doReturn(true).`when`(storage).isLogged()
         storage.findAll(filePath)

@@ -3,6 +3,7 @@ package io.github.t3r1jj.fcms.external.authenticated
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.auth.oauth2.TokenResponseException
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.api.client.googleapis.media.MediaHttpDownloaderProgressListener
 import com.google.api.client.googleapis.media.MediaHttpUploader
 import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener
 import com.google.api.client.http.FileContent
@@ -12,8 +13,10 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
-import io.github.t3r1jj.fcms.external.data.exception.StorageException
 import io.github.t3r1jj.fcms.external.data.StorageInfo
+import io.github.t3r1jj.fcms.external.data.exception.StorageException
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.math.BigInteger
 
 open class GoogleDrive(private val clientId: String,
@@ -74,18 +77,29 @@ open class GoogleDrive(private val clientId: String,
             httpUploader.chunkSize = MediaHttpUploader.MINIMUM_CHUNK_SIZE
             httpUploader.progressListener = MediaHttpUploaderProgressListener { uploader -> progressListener.invoke(uploader.numBytesUploaded) }
         }
-        val result = uploadBuilder
-                .execute()
+        val result = uploadBuilder.execute()
         return RecordMeta(record.name, record.path, result.getSize())
     }
 
     override fun doAuthenticatedDownload(filePath: String): Record {
+        return doAuthenticatedDownload(filePath, null)
+    }
+
+    override fun doAuthenticatedDownload(filePath: String, progressListener: ((bytesWritten: Long) -> Unit)?): Record {
         val fileMeta = drive!!.files()
                 .list()
                 .setFields(FILE_FIELDS_DEFAULT_DESCRIPTION)
                 .execute().files.last { it.description == filePath }
-        val data = drive!!.files().get(fileMeta.id).executeMediaAsInputStream()
-        return Record(fileMeta.name, filePath, data)
+        val get = drive!!.files().get(fileMeta.id)
+        if (progressListener != null) {
+            val httpDownloader = get.mediaHttpDownloader
+            httpDownloader.isDirectDownloadEnabled = false
+            httpDownloader.chunkSize = MediaHttpUploader.MINIMUM_CHUNK_SIZE
+            httpDownloader.progressListener = MediaHttpDownloaderProgressListener { downloader -> progressListener.invoke(downloader.numBytesDownloaded) }
+        }
+        val data = ByteArrayOutputStream()
+        get.executeMediaAndDownloadTo(data)
+        return Record(fileMeta.name, filePath, ByteArrayInputStream(data.toByteArray()))
     }
 
     override fun doAuthenticatedFindAll(filePath: String): List<RecordMeta> {

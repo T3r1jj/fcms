@@ -2,6 +2,7 @@ package io.github.t3r1jj.fcms.external.authenticated
 
 import com.dropbox.core.BadRequestException
 import com.dropbox.core.DbxRequestConfig
+import com.dropbox.core.util.ProgressOutputStream
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.FileMetadata
 import com.dropbox.core.v2.files.GetMetadataErrorException
@@ -60,6 +61,17 @@ open class Dropbox(private val accessToken: String) : AuthenticatedStorageTempla
         val os = ByteArrayOutputStream()
         val meta = client!!.files().downloadBuilder(filePath)
                 .download(os)
+        return Record(meta.name, meta.pathLower, ByteArrayInputStream(os.toByteArray()))
+    }
+
+    override fun doAuthenticatedDownload(filePath: String, progressListener: ((bytesWritten: Long) -> Unit)?): Record {
+        val os = ByteArrayOutputStream()
+        val downloadBuilder = client!!.files().downloadBuilder(filePath)
+        val meta = if (progressListener != null) {
+            downloadBuilder.download(ProgressOutputStream(os, progressListener))
+        } else {
+            downloadBuilder.download(os)
+        }
         return Record(meta.name, meta.pathLower, ByteArrayInputStream(os.toByteArray()))
     }
 

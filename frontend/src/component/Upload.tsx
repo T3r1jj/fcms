@@ -1,11 +1,15 @@
 import {Button, Checkbox, FormControlLabel, TextField} from '@material-ui/core';
+import FormLabel from "@material-ui/core/es/FormLabel";
 import LinearProgress from "@material-ui/core/LinearProgress/LinearProgress";
 import * as React from "react";
 import Dropzone from 'react-dropzone';
+import Progress from "../model/event/Progress";
 import Formatter from '../utils/Formatter';
 
 export interface IUploadProps {
     parentId?: string
+
+    progresses: Progress[]
 
     isUploadValid(file: File, name: string, parent: string, tag: string): boolean
 
@@ -15,17 +19,20 @@ export interface IUploadProps {
 interface IUploadState {
     files: File[]
     name: string
+    currentUploadName?: string
     parentId: string
     tag: string
     throughServer: boolean
     error?: string
     ok?: boolean
+    progressInfo?: string
     serverProgress?: number
     clientProgress?: number
 }
 
 export default class Upload extends React.Component<IUploadProps, IUploadState> {
     private readonly uploadRef: React.RefObject<HTMLInputElement>;
+
     constructor(props: IUploadProps) {
         super(props);
         this.state = {files: [], name: "", parentId: "", tag: "", throughServer: false};
@@ -40,9 +47,15 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
     }
 
     public componentWillReceiveProps(nextProps: Readonly<IUploadProps>, nextContext: any): void {
-        if (nextProps.parentId) {
+        if (this.props.parentId !== nextProps.parentId) {
             this.setState({parentId: nextProps.parentId!});
             this.uploadRef.current!.focus();
+        }
+        const currentUploadProgressIndex = nextProps.progresses.findIndex(p => p.recordName === this.state.currentUploadName);
+        if (currentUploadProgressIndex >= 0) {
+            const currentProgress = nextProps.progresses[currentUploadProgressIndex];
+            const serverProgress = 50 + 50 * currentProgress.bytesWritten / currentProgress.bytesTotal;
+            this.setState({progressInfo: currentProgress.toString(), serverProgress});
         }
     }
 
@@ -58,6 +71,13 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
         return (
             <section>
                 <div className="dropzone">
+                    {this.props.progresses
+                        .filter(p => p.recordName !== this.state.currentUploadName)
+                        .map(p =>
+                            <div key={p.id}>
+                                <FormLabel>{p.toString()}</FormLabel>
+                                <LinearProgress variant="determinate" value={100 * p.bytesWritten / p.bytesTotal}/>
+                            </div>)}
                     <Dropzone onDrop={this.onDrop} multiple={false}>
                         <p>Try dropping some files here, or click to select files to upload.</p>
                         {this.state.files.length > 0 &&
@@ -68,7 +88,8 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
                     </Dropzone>
                     <TextField label="Name" value={this.state.name} onChange={this.onNameChange}/>
                     <TextField label="Parent ID" value={this.state.parentId} onChange={this.onParentChange}/>
-                    <TextField label="Tag" value={this.state.tag} onChange={this.onTagChange} inputRef={this.uploadRef}/>
+                    <TextField label="Tag" value={this.state.tag} onChange={this.onTagChange}
+                               inputRef={this.uploadRef}/>
                     <br/>
                     {this.state.error &&
                     <div style={{color: "red"}}>{this.state.error}</div>
@@ -77,8 +98,11 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
                     <div style={{color: "green"}}>OK</div>
                     }
                     {this.state.ok === undefined && this.state.error === undefined && this.state.serverProgress &&
-                    <LinearProgress variant="buffer" value={this.state.serverProgress}
-                                    valueBuffer={this.state.clientProgress}/>
+                    <div>
+                        <FormLabel>{this.state.progressInfo}</FormLabel>
+                        <LinearProgress variant="buffer" value={this.state.serverProgress}
+                                        valueBuffer={this.state.clientProgress}/>
+                    </div>
                     }
                     <FormControlLabel
                         control={
@@ -111,9 +135,12 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
     private onProgress(event: ProgressEvent) {
         const clientProgress = 100 * event.loaded / event.total;
         const serverProgress = clientProgress / 2;
+        const progressInfo = (event.loaded === event.total ? "SEARCHING configuration for enabled primary service for backup replication" :
+            `UPLOADING ${this.state.currentUploadName} TO SERVER ${Formatter.formatBytes(event.loaded)} / ${Formatter.formatBytes(event.total)}`);
         this.setState({
             clientProgress,
-            serverProgress,
+            progressInfo,
+            serverProgress
         })
     }
 
@@ -121,6 +148,7 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
         const valid = this.props.isUploadValid(this.state.files[0], this.state.name, this.state.parentId, this.state.tag);
         this.setState({
             clientProgress: undefined,
+            currentUploadName: this.state.name,
             error: valid ? undefined : "Invalid upload: name must not be empty and if you provide parentId, do also provide tag",
             ok: undefined,
             serverProgress: undefined

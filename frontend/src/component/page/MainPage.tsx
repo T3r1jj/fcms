@@ -11,6 +11,7 @@ import * as React from "react";
 import Client from "../../model/Client";
 import Payload from "../../model/event/Payload";
 import {ClientPayloadType, PayloadType} from "../../model/event/PayloadType";
+import Progress from "../../model/event/Progress";
 import IBackup from "../../model/IBackup";
 import IRecord from "../../model/IRecord";
 import Record from "../../model/Record";
@@ -24,7 +25,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
 
     constructor(props: IMainPageProps) {
         super(props);
-        this.state = {configOpen: false, records: [], expand: false};
+        this.state = {configOpen: false, progresses: [], records: [], expand: false};
         this.updateParentId = this.updateParentId.bind(this);
         this.handleExpand = this.handleExpand.bind(this);
     }
@@ -94,43 +95,58 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
 
     public componentWillReceiveProps(nextProps: Readonly<IMainPageProps>, nextContext: any): void {
         if (nextProps.payload !== undefined && nextProps.payload !== this.props.payload) {
-            window.console.log(nextProps.payload);
             const payload = nextProps.payload;
             let action: string;
             let name: string;
             let clientPayloadType: ClientPayloadType | undefined;
             if (payload.type === PayloadType.SAVE) {
-                name = payload.record.name;
-                const indexToUpdate = this.state.records.findIndex(r => r.id === payload.record.id);
+                const record = payload.record!;
+                name = record.name;
+                const records = [...this.state.records];
+                const indexToUpdate = records.findIndex(r => r.id === record.id);
                 if (indexToUpdate >= 0) {
                     clientPayloadType = ClientPayloadType.UPDATE;
                     action = "Updated";
-                    const records = [...this.state.records];
-                    records.splice(indexToUpdate, 1, payload.record);
-                    this.setState({records}, this.handleSearchItemsUpdate);
+                    records.splice(indexToUpdate, 1, record);
                 } else {
                     clientPayloadType = ClientPayloadType.ADD;
                     action = "Added";
-                    window.console.log("Payload is ADD");
-                    this.setState({records: [...this.state.records, payload.record]}, this.handleSearchItemsUpdate);
+                    records.push(record);
                 }
+                this.setState({records}, this.handleSearchItemsUpdate);
+                payload.onConsume!(`${action} ${name}`, clientPayloadType);
             } else if (payload.type === PayloadType.DELETE) {
+                const record = payload.record!;
                 clientPayloadType = ClientPayloadType.DELETE;
                 action = "Deleted";
                 const records = [...this.state.records];
-                const indexToDelete = records.findIndex(r => r.id === payload.record.id);
+                const indexToDelete = records.findIndex(r => r.id === record.id);
                 if (indexToDelete >= 0) {
                     name = records[indexToDelete].name;
                     records.splice(indexToDelete, 1);
                     this.setState({records}, this.handleSearchItemsUpdate);
                 } else { // Should not happen
-                    name = payload.record.id;
+                    name = record.id;
                 }
-            } else {
-                action = "unknown";
-                name = payload.record.id;
+                payload.onConsume!(`${action} ${name}`, clientPayloadType);
+            } else if (payload.type === PayloadType.PROGRESS) {
+                const progress = payload.progress!;
+                const progresses = [...this.state.progresses];
+                const foundProgressIndex = progresses.findIndex(p => p.id === progress.id);
+                progress.timeoutId = window.setTimeout(() => {
+                    const futureProgresses = [...this.state.progresses];
+                    const progressIndexToRemove = futureProgresses.findIndex(p => p.id === progress.id);
+                    futureProgresses.splice(progressIndexToRemove, 1);
+                    this.setState({progresses: futureProgresses});
+                }, 1000 * (progress.bytesWritten >= progress.bytesTotal ? 5 : 60));
+                if (foundProgressIndex >= 0) {
+                    window.clearTimeout(this.state.progresses[foundProgressIndex].timeoutId);
+                    progresses.splice(foundProgressIndex, 1, progress);
+                } else {
+                    progresses.push(progress);
+                }
+                this.setState({progresses});
             }
-            payload.onConsume!(`${action} ${name}`, clientPayloadType);
         }
     }
 
@@ -149,6 +165,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                     )}
                 </Stepper>
                 <Upload parentId={this.state.currentParentRecordId}
+                        progresses={this.state.progresses}
                         isUploadValid={this.props.client.isUploadValid}
                         upload={this.props.client.upload}/>
                 <Configuration updateConfiguration={this.props.client.updateConfiguration}
@@ -216,6 +233,7 @@ export interface IMainPageProps {
 interface IMainPageState {
     configOpen: boolean;
     records: IRecord[];
+    progresses: Progress[];
     expand: boolean;
     currentParentRecordId?: string;
 }

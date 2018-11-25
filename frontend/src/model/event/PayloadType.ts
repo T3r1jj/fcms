@@ -1,5 +1,5 @@
 export enum PayloadType {
-    SAVE = 'SAVE', DELETE = 'DELETE'
+    SAVE = 'SAVE', DELETE = 'DELETE', PROGRESS = 'PROGRESS'
 }
 
 export enum ClientPayloadType {

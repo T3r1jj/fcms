@@ -19,6 +19,7 @@ import Client from "./model/Client";
 import Event from "./model/event/Event";
 import {EventType} from "./model/event/EventType";
 import Payload from "./model/event/Payload";
+import {PayloadType} from "./model/event/PayloadType";
 import SearchItem from "./model/SearchItem";
 import Notifications from './notification/Notifications';
 
@@ -123,12 +124,13 @@ class App extends React.Component<{}, IAppState> {
     }
 
     private onEventReceived(event: Event) {
-        window.console.log("EVENT received");
         if (event.type === EventType.PAYLOAD) {
-            window.console.log("IS A PAYLOAD");
+            if (event.payload!.type === PayloadType.PROGRESS) {
+                event.payload!.progress!.id = event.id;
+                event.payload!.progress!.action = event.title;
+            }
             this.setState({payload: event.payload});
         } else {
-            window.console.log("NOT A PAYLOAD");
             this.setState({newOrDismissedEvent: event, unreadEventsCount: this.state.unreadEventsCount + 1});
         }
     }

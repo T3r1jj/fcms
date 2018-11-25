@@ -3,6 +3,7 @@ package io.github.t3r1jj.fcms.external.upstream
 import io.github.t3r1jj.fcms.external.Storage
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
+import java.util.function.Consumer
 
 interface UpstreamStorage : Storage {
     /**
@@ -11,7 +12,7 @@ interface UpstreamStorage : Storage {
     fun upload(record: Record): RecordMeta
 
 
-    fun upload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta
+    fun upload(record: Record, bytesWrittenConsumer: Consumer<Long>?): RecordMeta
 
     /**
      * Returns [Record] for [filePath] from received [RecordMeta] from upload.

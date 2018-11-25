@@ -16,6 +16,7 @@ import io.github.t3r1jj.fcms.external.data.StorageInfo
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.math.BigInteger
+import java.util.function.Consumer
 
 
 open class Dropbox(private val accessToken: String) : AuthenticatedStorageTemplate() {
@@ -44,12 +45,12 @@ open class Dropbox(private val accessToken: String) : AuthenticatedStorageTempla
         return doAuthenticatedUpload(record, null)
     }
 
-    override fun doAuthenticatedUpload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
+    override fun doAuthenticatedUpload(record: Record, bytesWrittenConsumer: Consumer<Long>?): RecordMeta {
         val uploadBuilder = client!!.files()
                 .uploadBuilder(record.path)
                 .withMode(WriteMode.OVERWRITE)
-        val result = if (progressListener != null) {
-            uploadBuilder.uploadAndFinish(record.data, progressListener)
+        val result = if (bytesWrittenConsumer != null) {
+            uploadBuilder.uploadAndFinish(record.data) { bytesWritten ->  bytesWrittenConsumer.accept(bytesWritten)}
         } else {
             uploadBuilder.uploadAndFinish(record.data)
         }
@@ -64,11 +65,11 @@ open class Dropbox(private val accessToken: String) : AuthenticatedStorageTempla
         return Record(meta.name, meta.pathLower, ByteArrayInputStream(os.toByteArray()))
     }
 
-    override fun doAuthenticatedDownload(filePath: String, progressListener: ((bytesWritten: Long) -> Unit)?): Record {
+    override fun doAuthenticatedDownload(filePath: String, bytesWrittenConsumer: Consumer<Long>?): Record {
         val os = ByteArrayOutputStream()
         val downloadBuilder = client!!.files().downloadBuilder(filePath)
-        val meta = if (progressListener != null) {
-            downloadBuilder.download(ProgressOutputStream(os, progressListener))
+        val meta = if (bytesWrittenConsumer != null) {
+            downloadBuilder.download(ProgressOutputStream(os) { bytesWritten ->  bytesWrittenConsumer.accept(bytesWritten)})
         } else {
             downloadBuilder.download(os)
         }

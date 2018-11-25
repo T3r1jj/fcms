@@ -18,6 +18,7 @@ import io.github.t3r1jj.fcms.external.data.exception.StorageException
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.math.BigInteger
+import java.util.function.Consumer
 
 open class GoogleDrive(private val clientId: String,
                        private val clientSecret: String,
@@ -62,7 +63,7 @@ open class GoogleDrive(private val clientId: String,
         return doAuthenticatedUpload(record, null)
     }
 
-    override fun doAuthenticatedUpload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
+    override fun doAuthenticatedUpload(record: Record, bytesWrittenConsumer: Consumer<Long>?): RecordMeta {
         deleteBasedOnDescription(record.path)
         val fileMeta = File()
         fileMeta.name = record.name
@@ -71,11 +72,11 @@ open class GoogleDrive(private val clientId: String,
         val uploadBuilder = drive!!.files()
                 .create(fileMeta, fileContent)
                 .setFields(FILE_FIELDS_DEFAULT_UPLOAD_SIZE)
-        if (progressListener != null) {
+        if (bytesWrittenConsumer != null) {
             val httpUploader = uploadBuilder.mediaHttpUploader
             httpUploader.isDirectUploadEnabled = false
             httpUploader.chunkSize = MediaHttpUploader.MINIMUM_CHUNK_SIZE
-            httpUploader.progressListener = MediaHttpUploaderProgressListener { uploader -> progressListener.invoke(uploader.numBytesUploaded) }
+            httpUploader.progressListener = MediaHttpUploaderProgressListener { uploader -> bytesWrittenConsumer.accept(uploader.numBytesUploaded) }
         }
         val result = uploadBuilder.execute()
         return RecordMeta(record.name, record.path, result.getSize())
@@ -85,17 +86,17 @@ open class GoogleDrive(private val clientId: String,
         return doAuthenticatedDownload(filePath, null)
     }
 
-    override fun doAuthenticatedDownload(filePath: String, progressListener: ((bytesWritten: Long) -> Unit)?): Record {
+    override fun doAuthenticatedDownload(filePath: String, bytesWrittenConsumer: Consumer<Long>?): Record {
         val fileMeta = drive!!.files()
                 .list()
                 .setFields(FILE_FIELDS_DEFAULT_DESCRIPTION)
                 .execute().files.last { it.description == filePath }
         val get = drive!!.files().get(fileMeta.id)
-        if (progressListener != null) {
+        if (bytesWrittenConsumer != null) {
             val httpDownloader = get.mediaHttpDownloader
             httpDownloader.isDirectDownloadEnabled = false
             httpDownloader.chunkSize = MediaHttpUploader.MINIMUM_CHUNK_SIZE
-            httpDownloader.progressListener = MediaHttpDownloaderProgressListener { downloader -> progressListener.invoke(downloader.numBytesDownloaded) }
+            httpDownloader.progressListener = MediaHttpDownloaderProgressListener { downloader -> bytesWrittenConsumer.accept(downloader.numBytesDownloaded) }
         }
         val data = ByteArrayOutputStream()
         get.executeMediaAndDownloadTo(data)

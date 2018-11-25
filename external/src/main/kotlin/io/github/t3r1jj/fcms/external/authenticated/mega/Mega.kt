@@ -19,6 +19,7 @@ import net.bytebuddy.matcher.ElementMatchers
 import java.io.FileInputStream
 import java.lang.Exception
 import java.nio.file.Paths
+import java.util.function.Consumer
 
 open class Mega(private val userName: String, private val password: String) : AuthenticatedStorageTemplate() {
     companion object : Loggable {
@@ -84,11 +85,11 @@ open class Mega(private val userName: String, private val password: String) : Au
         return doAuthenticatedUpload(record, null)
     }
 
-    override fun doAuthenticatedUpload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
+    override fun doAuthenticatedUpload(record: Record,  bytesWrittenConsumer: Consumer<Long>?): RecordMeta {
         val file = stream2file(record.data)
         val size = file.length()
-        if (progressListener != null) {
-            startProgressListener(record.path.split("/").last(), progressListener)
+        if (bytesWrittenConsumer != null) {
+            startProgressListener(record.path.split("/").last(), bytesWrittenConsumer)
         }
         session!!.uploadFile(file.absolutePath, record.path)
                 .createRemoteIfNotPresent<AbstractMegaCmdPathHandler>()
@@ -100,11 +101,11 @@ open class Mega(private val userName: String, private val password: String) : Au
         return doAuthenticatedDownload(filePath, null)
     }
 
-    override fun doAuthenticatedDownload(filePath: String, progressListener: ((bytesWritten: Long) -> Unit)?): Record {
+    override fun doAuthenticatedDownload(filePath: String, bytesWrittenConsumer: Consumer<Long>?): Record {
         val tempFile = java.io.File.createTempFile(System.currentTimeMillis().toString(), null)
         tempFile.delete()
-        if (progressListener != null) {
-            startProgressListener(filePath, progressListener)
+        if (bytesWrittenConsumer != null) {
+            startProgressListener(filePath, bytesWrittenConsumer)
         }
         session!!.get(filePath)
                 .setLocalPath(tempFile.absolutePath)
@@ -113,7 +114,7 @@ open class Mega(private val userName: String, private val password: String) : Au
         return Record(path.fileName.toString(), filePath, FileInputStream(tempFile.absolutePath))
     }
 
-    private fun startProgressListener(transferName: String, progressListener: (bytesWritten: Long) -> Unit) {
+    private fun startProgressListener(transferName: String, bytesWrittenConsumer: Consumer<Long>) {
         Thread {
             var bytesTotal = 0L
             try {
@@ -121,12 +122,12 @@ open class Mega(private val userName: String, private val password: String) : Au
                     Thread.sleep(progressRateMS)
                     val transfer = MegaCmdTransfers().call().find { t -> java.lang.String(t.sourcePath).contains(transferName) }
                     transfer!!
-                    progressListener.invoke(transfer.bytesWritten)
+                    bytesWrittenConsumer.accept(transfer.bytesWritten)
                     bytesTotal = transfer.bytesTotal
                 } while (transfer!!.progress <= 0.9999)
             } catch (e: Exception) {
                 logger.error("Progress listener finished listening", e)
-                progressListener.invoke(bytesTotal)
+                bytesWrittenConsumer.accept(bytesTotal)
             }
         }.start()
     }

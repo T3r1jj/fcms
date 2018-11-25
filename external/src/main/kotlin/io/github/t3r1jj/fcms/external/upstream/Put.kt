@@ -5,10 +5,10 @@ import io.github.t3r1jj.fcms.external.data.RecordMeta
 import io.github.t3r1jj.fcms.external.data.exception.StorageException
 import io.github.t3r1jj.fcms.external.upstream.api.MegauploadErrorResponse
 import io.github.t3r1jj.fcms.external.upstream.api.PutApi
-import okhttp3.MultipartBody
 import org.apache.commons.io.FileUtils
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.function.Consumer
 
 open class Put(baseUrl: String) : StorageClient<PutApi>(baseUrl, PutApi::class.java), UpstreamStorage, CleanableStorage {
     constructor() : this("https://api.put.re")
@@ -17,8 +17,8 @@ open class Put(baseUrl: String) : StorageClient<PutApi>(baseUrl, PutApi::class.j
         return this.upload(record, null)
     }
 
-    override fun upload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
-        val (size, body) = createFileForm(record, progressListener)
+    override fun upload(record: Record, bytesWrittenConsumer: Consumer<Long>?): RecordMeta {
+        val (size, body) = createFileForm(record, bytesWrittenConsumer)
         val response = client.upload(body).execute()
         if (response.isSuccessful) {
             return RecordMeta(record.name, response.body()!!.data.link, size)

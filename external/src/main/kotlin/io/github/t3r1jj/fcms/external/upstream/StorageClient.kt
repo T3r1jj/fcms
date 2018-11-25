@@ -10,7 +10,7 @@ import okhttp3.RequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import io.github.t3r1jj.fcms.external.upstream.CountingRequestBody
+import java.util.function.Consumer
 
 
 abstract class StorageClient<T>(private val baseUrl: String, service: Class<T>) : NamedStorage() {
@@ -42,15 +42,15 @@ abstract class StorageClient<T>(private val baseUrl: String, service: Class<T>) 
     /**
      * @return pair of <size in bytes, file form data>
      */
-    protected fun createFileForm(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): Pair<Long, MultipartBody.Part> {
+    protected fun createFileForm(record: Record, bytesWrittenConsumer: Consumer<Long>?): Pair<Long, MultipartBody.Part> {
         val bytes = record.data.readBytes()
         val size = bytes.size.toLong()
         val requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), bytes)
-        if (progressListener != null) {
+        if (bytesWrittenConsumer != null) {
             CountingRequestBody(requestFile, object : CountingRequestBody.Listener {
                 override fun onRequestProgress(bytesWritten: Long, contentLength: Long) {
                     val progress = bytesWritten.toDouble() / contentLength
-                    progressListener.invoke((progress * size).toLong())
+                    bytesWrittenConsumer.accept((progress * size).toLong())
                 }
             })
         }

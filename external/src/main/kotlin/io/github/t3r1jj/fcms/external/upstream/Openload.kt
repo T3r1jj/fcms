@@ -9,6 +9,7 @@ import io.github.t3r1jj.fcms.external.upstream.api.OpenloadFileError
 import io.github.t3r1jj.fcms.external.upstream.api.OpenloadFileInfo
 import org.jsoup.Jsoup
 import java.io.ByteArrayInputStream
+import java.util.function.Consumer
 
 
 open class Openload(baseUrl: String) : StorageInfoClient<OpenloadApi>(baseUrl, OpenloadApi::class.java), UpstreamStorage {
@@ -17,11 +18,11 @@ open class Openload(baseUrl: String) : StorageInfoClient<OpenloadApi>(baseUrl, O
     override fun upload(record: Record): RecordMeta {
         return this.upload(record, null)
     }
-    override fun upload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
+    override fun upload(record: Record, bytesWrittenConsumer: Consumer<Long>?): RecordMeta {
         var response = client.getUploadUrl().execute()
         if (response.isSuccessful) {
             val uploadUrl = response.body()!!.result.url
-            val (size, body) = createFileForm(record, progressListener)
+            val (size, body) = createFileForm(record, bytesWrittenConsumer)
             response = client.upload(uploadUrl, body).execute()
             if (response.isSuccessful) {
                 return RecordMeta(record.name, response.body()!!.result.url, size)

@@ -5,6 +5,7 @@ import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
 import io.github.t3r1jj.fcms.external.data.StorageInfo
 import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedException
+import java.util.function.Consumer
 
 abstract class AuthenticatedStorageTemplate : NamedStorage(), AuthenticatedStorage {
     private fun throwIfNotAuthenticated() {
@@ -18,9 +19,9 @@ abstract class AuthenticatedStorageTemplate : NamedStorage(), AuthenticatedStora
         return doAuthenticatedUpload(record)
     }
 
-    final override fun upload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta {
+    final override fun upload(record: Record, bytesWrittenConsumer: Consumer<Long>?): RecordMeta {
         throwIfNotAuthenticated()
-        return doAuthenticatedUpload(record, progressListener)
+        return doAuthenticatedUpload(record, bytesWrittenConsumer)
     }
 
     final override fun download(filePath: String): Record {
@@ -28,9 +29,9 @@ abstract class AuthenticatedStorageTemplate : NamedStorage(), AuthenticatedStora
         return doAuthenticatedDownload(filePath)
     }
 
-    final override fun download(filePath: String, progressListener: ((bytesWritten: Long) -> Unit)?): Record {
+    final override fun download(filePath: String, bytesWrittenConsumer: Consumer<Long>?): Record {
         throwIfNotAuthenticated()
-        return doAuthenticatedDownload(filePath, progressListener)
+        return doAuthenticatedDownload(filePath, bytesWrittenConsumer)
     }
 
     final override fun findAll(filePath: String): List<RecordMeta> {
@@ -49,9 +50,9 @@ abstract class AuthenticatedStorageTemplate : NamedStorage(), AuthenticatedStora
     }
 
     abstract fun doAuthenticatedUpload(record: Record): RecordMeta
-    abstract fun doAuthenticatedUpload(record: Record, progressListener: ((bytesWritten: Long) -> Unit)?): RecordMeta
+    abstract fun doAuthenticatedUpload(record: Record, bytesWrittenConsumer: Consumer<Long>?): RecordMeta
     abstract fun doAuthenticatedDownload(filePath: String): Record
-    abstract fun doAuthenticatedDownload(filePath: String, progressListener: ((bytesWritten: Long) -> Unit)?): Record
+    abstract fun doAuthenticatedDownload(filePath: String, bytesWrittenConsumer: Consumer<Long>?): Record
     abstract fun doAuthenticatedFindAll(filePath: String): List<RecordMeta>
     abstract fun doAuthenticatedGetInfo(): StorageInfo
     abstract fun doAuthenticatedDelete(meta: RecordMeta)

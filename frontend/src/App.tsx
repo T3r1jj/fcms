@@ -1,3 +1,5 @@
+import {Tooltip} from "@material-ui/core";
+import LinearProgress from "@material-ui/core/LinearProgress";
 import {createMuiTheme, MuiThemeProvider} from '@material-ui/core/styles';
 import AddIcon from '@material-ui/icons/AddBox';
 import ErrorIcon from '@material-ui/icons/BugReport';
@@ -88,6 +90,13 @@ class App extends React.Component<{}, IAppState> {
                             <PrimarySearchAppBar
                                 unreadCount={this.state.unreadEventsCount}
                                 searchItems={this.state.searchItems}/>
+                            {this.state.payload && this.state.payload.type === PayloadType.REPLICATION_PROGRESS && this.state.payload.progress!.done !== this.state.payload.progress!.total &&
+                            <Tooltip
+                                title={`REPLICATING ${this.state.payload.progress!.done} of ${this.state.payload.progress!.total}`}>
+                                <LinearProgress variant="determinate" color="secondary"
+                                                value={100 * this.state.payload.progress!.done / this.state.payload.progress!.total}/>
+                            </Tooltip>
+                            }
 
                             <Route path="/" exact={true} render={this.renderMainPage}/>
                             <Route path="/history" render={this.renderHistoryPage}/>
@@ -125,9 +134,10 @@ class App extends React.Component<{}, IAppState> {
 
     private onEventReceived(event: Event) {
         if (event.type === EventType.PAYLOAD) {
-            if (event.payload!.type === PayloadType.PROGRESS) {
-                event.payload!.progress!.id = event.id;
-                event.payload!.progress!.action = event.title;
+            const payload = event.payload!;
+            if (payload.type === PayloadType.PROGRESS) {
+                payload.progress!.id = event.id;
+                payload.progress!.action = event.title;
             }
             this.setState({payload: event.payload});
         } else {

@@ -11,19 +11,14 @@ import io.github.t3r1jj.fcms.external.data.exception.StorageException;
 import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedException;
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
 import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class ReplicationService {
@@ -56,10 +51,26 @@ public class ReplicationService {
 
     @AfterReplicationCode.Callback
     public void safelyReplicateAll() {
-        recordService.findAll()
-                .parallelStream()
+        AtomicInteger progress = new AtomicInteger(0);
+        Collection<StoredRecord> records = recordService.findAll();
+        final long recordCount = records.size();
+        notificationService.broadcast(buildReplicationProgressEvent(recordCount, 0L));
+        records.parallelStream()
                 .sorted(Collections.reverseOrder())
-                .forEach(this::replicateSafely);
+                .forEach(r -> {
+                    this.replicateSafely(r);
+                    int doneCount = progress.incrementAndGet();
+                    notificationService.broadcast(buildReplicationProgressEvent(recordCount, doneCount));
+                });
+    }
+
+    private Event buildReplicationProgressEvent(long recordCount, long done) {
+        return new Event.Builder()
+                .formatTitle("REPLICATION_PROGRESS")
+                .formatDescription("PROGRESS")
+                .setType(Event.Type.PAYLOAD)
+                .setPayload(new Payload(new Progress(recordCount, done)))
+                .build();
     }
 
     private void replicateSafely(StoredRecord storedRecord) {

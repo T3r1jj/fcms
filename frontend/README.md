@@ -1415,7 +1415,7 @@ it('renders welcome message', () => {
 All Jest matchers are [extensively documented here](http://facebook.github.io/jest/docs/expect.html).<br>
 Nevertheless you can use a third-party assertion library like [Chai](http://chaijs.com/) if you want to, as described below.
 
-Additionally, you might find [jest-enzyme](https://github.com/blainekasten/enzyme-matchers) helpful to simplify your tests with readable matchers. The above `contains` code can be written more simply with jest-enzyme.
+Additionally, you might find [jest-enzyme](https://github.com/blainekasten/enzyme-matchers) helpful to simplify your tests with readable matchers. The above `contains` code can be done more simply with jest-enzyme.
 
 ```js
 expect(wrapper).toContainReact(welcome)
@@ -2074,7 +2074,7 @@ Then run the `firebase init` command from your project’s root. You need to cho
     === Database Setup
 
     Firebase Realtime Database Rules allow you to define how your data should be
-    structured and when your data can be read from and written to.
+    structured and when your data can be read from and done to.
 
     ? What file should be used for Database Rules? database.rules.json
     ✔  Database Rules for example-app-fd690 have been downloaded to database.rules.json.

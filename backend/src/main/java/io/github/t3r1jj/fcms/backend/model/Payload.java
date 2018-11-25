@@ -12,7 +12,11 @@ public class Payload {
 
     public Payload(Progress progress) {
         this.progress = progress;
-        this.type = Type.PROGRESS;
+        if (progress.getRecordName() == null || progress.getRecordName().isEmpty()) {
+            this.type = Type.REPLICATION_PROGRESS;
+        } else {
+            this.type = Type.PROGRESS;
+        }
     }
 
     public StoredRecord getRecord() {
@@ -28,6 +32,6 @@ public class Payload {
     }
 
     public enum Type {
-        SAVE, DELETE, PROGRESS
+        SAVE, DELETE, PROGRESS, REPLICATION_PROGRESS
     }
 }

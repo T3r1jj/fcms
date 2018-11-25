@@ -54,7 +54,7 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
         const currentUploadProgressIndex = nextProps.progresses.findIndex(p => p.recordName === this.state.currentUploadName);
         if (currentUploadProgressIndex >= 0) {
             const currentProgress = nextProps.progresses[currentUploadProgressIndex];
-            const serverProgress = 50 + 50 * currentProgress.bytesWritten / currentProgress.bytesTotal;
+            const serverProgress = 50 + 50 * currentProgress.done / currentProgress.total;
             this.setState({progressInfo: currentProgress.toString(), serverProgress});
         }
     }
@@ -76,7 +76,7 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
                         .map(p =>
                             <div key={p.id}>
                                 <FormLabel>{p.toString()}</FormLabel>
-                                <LinearProgress variant="determinate" value={100 * p.bytesWritten / p.bytesTotal}/>
+                                <LinearProgress variant="determinate" value={100 * p.done / p.total}/>
                             </div>)}
                     <Dropzone onDrop={this.onDrop} multiple={false}>
                         <p>Try dropping some files here, or click to select files to upload.</p>

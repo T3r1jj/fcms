@@ -138,7 +138,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                     const progressIndexToRemove = futureProgresses.findIndex(p => p.id === progress.id);
                     futureProgresses.splice(progressIndexToRemove, 1);
                     this.setState({progresses: futureProgresses});
-                }, 1000 * (progress.bytesWritten >= progress.bytesTotal ? 5 : 60));
+                }, 1000 * (progress.done >= progress.total ? 5 : 60));
                 if (foundProgressIndex >= 0) {
                     window.clearTimeout(this.state.progresses[foundProgressIndex].timeoutId);
                     progresses.splice(foundProgressIndex, 1, progress);

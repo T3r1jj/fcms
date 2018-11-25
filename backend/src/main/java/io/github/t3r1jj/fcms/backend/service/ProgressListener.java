@@ -3,16 +3,15 @@ package io.github.t3r1jj.fcms.backend.service;
 import io.github.t3r1jj.fcms.backend.model.Event;
 import io.github.t3r1jj.fcms.backend.model.Payload;
 import io.github.t3r1jj.fcms.backend.model.Progress;
-import io.github.t3r1jj.fcms.backend.model.StoredRecord;
 
 import java.util.function.Consumer;
 
 public class ProgressListener implements Consumer<Long> {
     private final Progress progress;
-    Event progressEvent;
-    NotificationService notificationService;
+    private final Event progressEvent;
+    private final NotificationService notificationService;
 
-    public ProgressListener(Progress progress, NotificationService notificationService, boolean upload) {
+    ProgressListener(Progress progress, NotificationService notificationService, boolean upload) {
         this.progress = progress;
         this.notificationService = notificationService;
         this.progressEvent = new Event.Builder()
@@ -24,7 +23,7 @@ public class ProgressListener implements Consumer<Long> {
 
     @Override
     public void accept(Long bytesWritten) {
-        progress.setBytesWritten(bytesWritten);
+        progress.setDone(bytesWritten);
         notificationService.broadcast(progressEvent);
     }
 }

@@ -2,15 +2,25 @@ package io.github.t3r1jj.fcms.backend.model;
 
 public class Payload {
     private StoredRecord record;
-    private Type type;
+    private Progress progress;
+    private final Type type;
 
     public Payload(StoredRecord record, Type type) {
         this.record = record;
         this.type = type;
     }
 
+    public Payload(Progress progress) {
+        this.progress = progress;
+        this.type = Type.PROGRESS;
+    }
+
     public StoredRecord getRecord() {
         return record;
+    }
+
+    public Progress getProgress() {
+        return progress;
     }
 
     public Type getType() {
@@ -18,6 +28,6 @@ public class Payload {
     }
 
     public enum Type {
-        SAVE, DELETE
+        SAVE, DELETE, PROGRESS
     }
 }

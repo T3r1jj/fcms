@@ -53,7 +53,6 @@ abstract public class Code {
                 finallyHeader +
                 finallyHandler +
                 finallyFooter;
-        System.out.println(javaCode);
         scriptEvaluator.cook(javaCode);
         return scriptEvaluator;
     }

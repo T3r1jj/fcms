@@ -1,10 +1,7 @@
 package io.github.t3r1jj.fcms.backend.service;
 
 import io.github.t3r1jj.fcms.backend.controller.exception.ResourceNotFoundException;
-import io.github.t3r1jj.fcms.backend.model.Configuration;
-import io.github.t3r1jj.fcms.backend.model.Event;
-import io.github.t3r1jj.fcms.backend.model.ExternalService;
-import io.github.t3r1jj.fcms.backend.model.StoredRecord;
+import io.github.t3r1jj.fcms.backend.model.*;
 import io.github.t3r1jj.fcms.backend.model.code.AfterReplicationCode;
 import io.github.t3r1jj.fcms.backend.model.code.OnReplicationCode;
 import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorage;
@@ -14,7 +11,10 @@ import io.github.t3r1jj.fcms.external.data.exception.StorageException;
 import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedException;
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
 import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -23,17 +23,21 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 @Service
 public class ReplicationService {
     private final ConfigurationService configurationService;
     private final RecordService recordService;
     private final HistoryService historyService;
+    private final NotificationService notificationService;
 
-    public ReplicationService(ConfigurationService configurationService, RecordService recordService, HistoryService historyService) {
+    @Autowired
+    public ReplicationService(ConfigurationService configurationService, RecordService recordService, HistoryService historyService, NotificationService notificationService) {
         this.configurationService = configurationService;
         this.recordService = recordService;
         this.historyService = historyService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -168,9 +172,12 @@ public class ReplicationService {
     }
 
     private Record download(RecordMeta meta, AuthenticatedStorage storage) {
+        ProgressListener progressListener = new ProgressListener(new Progress(meta.getSize(), meta.getName(), storage.toString()),
+                notificationService, false);
         storage.login();
-        Record record = storage.download(meta.getPath());
+        Record record = storage.download(meta.getPath(), progressListener);
         storage.logout();
+        progressListener.accept(meta.getSize());
         return record;
     }
 
@@ -186,15 +193,18 @@ public class ReplicationService {
 
     private void upload(StoredRecord recordToStore, UpstreamStorage storage) {
         Record recordToUpload = recordToStore.prepareRecord();
+        ProgressListener progressListener = new ProgressListener(new Progress(recordToStore.getData().length, recordToStore.getName(), storage.toString()),
+                notificationService, true);
         RecordMeta meta;
         try {
-            meta = storage.upload(recordToUpload);
+            meta = storage.upload(recordToUpload, progressListener);
         } catch (StorageUnauthenticatedException sue) {
             AuthenticatedStorage authenticatedStorage = sue.getStorage();
             authenticatedStorage.login();
-            meta = authenticatedStorage.upload(recordToUpload);
+            meta = authenticatedStorage.upload(recordToUpload, progressListener);
             authenticatedStorage.logout();
         }
+        progressListener.accept((long) recordToStore.getData().length);
         recordToStore.getBackups().put(storage.toString(), meta);
     }
 

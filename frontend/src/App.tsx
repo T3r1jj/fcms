@@ -22,6 +22,7 @@ import Event from "./model/event/Event";
 import {EventType} from "./model/event/EventType";
 import Payload from "./model/event/Payload";
 import {PayloadType} from "./model/event/PayloadType";
+import Progress from "./model/event/Progress";
 import SearchItem from "./model/SearchItem";
 import Notifications from './notification/Notifications';
 
@@ -88,13 +89,14 @@ class App extends React.Component<{}, IAppState> {
                                        onEventDismiss={this.onEventDismiss}/>
                         <div className="App">
                             <PrimarySearchAppBar
+                                status={this.state.status}
                                 unreadCount={this.state.unreadEventsCount}
                                 searchItems={this.state.searchItems}/>
-                            {this.state.payload && this.state.payload.type === PayloadType.REPLICATION_PROGRESS && this.state.payload.progress!.done !== this.state.payload.progress!.total &&
+                            {this.state.replicationProgress && this.state.replicationProgress.done !== this.state.replicationProgress.total &&
                             <Tooltip
-                                title={`REPLICATING ${this.state.payload.progress!.done} of ${this.state.payload.progress!.total}`}>
+                                title={`REPLICATING ${this.state.replicationProgress.done} of ${this.state.replicationProgress.total}`}>
                                 <LinearProgress variant="determinate" color="secondary"
-                                                value={100 * this.state.payload.progress!.done / this.state.payload.progress!.total}/>
+                                                value={100 * this.state.replicationProgress.done / this.state.replicationProgress.total}/>
                             </Tooltip>
                             }
 
@@ -112,6 +114,7 @@ class App extends React.Component<{}, IAppState> {
         return <MainPage
             payload={this.state.payload}
             onSearchItemsUpdate={this.onSearchItemsUpdate}
+            onStatusChange={this.onStatusChange}
             client={this.client}/>
     }
 
@@ -139,7 +142,11 @@ class App extends React.Component<{}, IAppState> {
                 payload.progress!.id = event.id;
                 payload.progress!.action = event.title;
             }
-            this.setState({payload: event.payload});
+            if (payload.type === PayloadType.REPLICATION_PROGRESS) {
+                this.setState({replicationProgress: payload.progress!})
+            } else {
+                this.setState({payload: event.payload});
+            }
         } else {
             this.setState({newOrDismissedEvent: event, unreadEventsCount: this.state.unreadEventsCount + 1});
         }
@@ -166,6 +173,10 @@ class App extends React.Component<{}, IAppState> {
     private onSearchItemsUpdate = (searchItems?: SearchItem[]) => {
         this.setState({searchItems});
     };
+
+    private onStatusChange = (status: string) => {
+        this.setState({status});
+    }
 }
 
 interface IAppState {
@@ -173,7 +184,9 @@ interface IAppState {
     newOrDismissedEvent?: Event;
     searchItems?: SearchItem[];
     payload?: Payload;
+    replicationProgress?: Progress;
     unreadEventsCount: number;
+    status?: string
 }
 
 export default App;

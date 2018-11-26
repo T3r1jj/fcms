@@ -1807,7 +1807,7 @@ The [`sw-precache-webpack-plugin`](https://github.com/goldhand/sw-precache-webpa
 is integrated into production configuration,
 and it will take care of generating a service worker file that will automatically
 precache all of your local assets and keep them up to date as you deploy updates.
-The service worker will use a [cache-first strategy](https://developers.google.com/web/fundamentals/instant-and-offline/offline-cookbook/#cache-falling-back-to-network)
+The service worker will use a [cache-first strategy](https://developers.google.com/web/fundamentals/time-and-offline/offline-cookbook/#cache-falling-back-to-network)
 for handling all requests for local assets, including the initial HTML, ensuring
 that your web app is reliably fast, even on a slow or unreliable network.
 
@@ -1862,7 +1862,7 @@ will temporarily disable the service worker and retrieve all assets from the
 network.
 
 1. Users aren't always familiar with offline-first web apps. It can be useful to
-[let the user know](https://developers.google.com/web/fundamentals/instant-and-offline/offline-ux#inform_the_user_when_the_app_is_ready_for_offline_consumption)
+[let the user know](https://developers.google.com/web/fundamentals/time-and-offline/offline-ux#inform_the_user_when_the_app_is_ready_for_offline_consumption)
 when the service worker has finished populating your caches (showing a "This web
 app works offline!" message) and also let them know when the service worker has
 fetched the latest updates that will be available the next time they load the

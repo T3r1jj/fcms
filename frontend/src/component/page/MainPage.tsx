@@ -34,15 +34,20 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
         // this.props.client.getRecords()
         //     .then(records => this.setState({records}))
         const records: IRecord[] = [];
+        const backup = {size: Math.random() * 1024 * 1024} as IBackup;
+        const backup2 = {size: Math.random() * 1024 * 1024} as IBackup;
         for (let i = 0; i < 100; i++) {
             const record = new Record();
             record.backups = new Map<string, IBackup>();
+            record.backups.set("Mega", backup);
+            record.backups.set("Megaupload", backup2);
             record.id = i.toString();
-            record.name = i.toString() + " root  That way, it won't cause a rerender every time because ";
+            record.name = i.toString() + " root  That way, it won't cause a rerender every end because ";
             record.versions = [];
             for (let v = 0; v < 3; v++) {
                 const vrecord = new Record();
                 vrecord.backups = new Map<string, IBackup>();
+                vrecord.backups.set("Mega", backup)
                 vrecord.id = i.toString() + "_" + v.toString();
                 vrecord.name = i.toString() + "_" + v.toString();
                 vrecord.versions = [];
@@ -50,6 +55,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                     for (let l = 0; l < 2; l++) {
                         const lrecord = new Record();
                         lrecord.backups = new Map<string, IBackup>();
+                        lrecord.backups.set("Mega", backup)
                         lrecord.id = i.toString() + "_" + v.toString() + "_" + l.toString();
                         lrecord.name = i.toString() + "_" + v.toString() + "_" + l.toString();
                         lrecord.versions = [];
@@ -64,12 +70,14 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
         for (let i = 100; i < 110; i++) {
             const record = new Record();
             record.backups = new Map<string, IBackup>();
+            record.backups.set("Mega", backup)
             record.id = i.toString();
             record.name = i.toString() + " root";
             record.versions = [];
             for (let v = 0; v < 3; v++) {
                 const vrecord = new Record();
                 vrecord.backups = new Map<string, IBackup>();
+                vrecord.backups.set("Mega", backup)
                 vrecord.id = i.toString() + "_" + v.toString();
                 vrecord.name = i.toString() + "_" + v.toString();
                 vrecord.versions = [];
@@ -77,6 +85,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                     for (let l = 0; l < 2; l++) {
                         const lrecord = new Record();
                         lrecord.backups = new Map<string, IBackup>();
+                        lrecord.backups.set("Mega", backup)
                         lrecord.id = i.toString() + "_" + v.toString() + "_" + l.toString();
                         lrecord.name = i.toString() + "_" + v.toString() + "_" + l.toString();
                         lrecord.versions = [];
@@ -168,8 +177,12 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                         progresses={this.state.progresses}
                         isUploadValid={this.props.client.isUploadValid}
                         upload={this.props.client.upload}/>
-                <Configuration updateConfiguration={this.props.client.updateConfiguration}
-                               getConfiguration={this.props.client.getConfiguration}/>
+                <Configuration
+                    onStatusChange={this.props.onStatusChange}
+                    updateConfiguration={this.props.client.updateConfiguration}
+                    getConfiguration={this.props.client.getConfiguration}
+                    getHealth={this.props.client.getHealth}
+                    records={this.state.records}/>
                 <Tooltip
                     placement="bottom"
                     title={this.state.expand ? "Expand records" : "Collapse records"}
@@ -220,7 +233,6 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
     private handleSearchItemsUpdate = () => {
         this.props.onSearchItemsUpdate(this.getSearchItems(this.state.records))
     };
-
 }
 
 export interface IMainPageProps {
@@ -228,6 +240,7 @@ export interface IMainPageProps {
     payload?: Payload;
 
     onSearchItemsUpdate(items?: SearchItem[]): void;
+    onStatusChange(status: string): void;
 }
 
 interface IMainPageState {

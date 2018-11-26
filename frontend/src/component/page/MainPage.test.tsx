@@ -10,7 +10,7 @@ describe("component", () => {
     let props: IMainPageProps;
 
     beforeEach(() => {
-        props = {client: new Client(), onSearchItemsUpdate: (items: SearchItem[]) => undefined};
+        props = {onStatusChange: ()=>undefined, client: new Client(), onSearchItemsUpdate: (items: SearchItem[]) => undefined};
     });
 
     describe("rendering", () => {

@@ -235,6 +235,7 @@ class PrimarySearchAppBar extends React.PureComponent<IAppBarProps, IAppBarState
                         }
                         <div className={getClasses().grow}/>
                         <div className={getClasses().sectionDesktop}>
+                            {this.props.status && <span>{this.props.status}</span>}
                             <IconButton color={"inherit"}>
                                 <Link to={"/code"} className={getClasses().linkWrapper}>
                                     <CallbackIcon/>
@@ -300,6 +301,7 @@ class PrimarySearchAppBar extends React.PureComponent<IAppBarProps, IAppBarState
 interface IAppBarProps extends AppBarProps {
     searchItems?: SearchItem[];
     unreadCount: number;
+    status?: string;
 }
 
 interface IAppBarState {

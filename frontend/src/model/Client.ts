@@ -4,6 +4,7 @@ import Code from "./code/Code";
 import {CodeCallbackType} from "./code/CodeCallbackType";
 import Event from "./event/Event";
 import EventPage from "./event/EventPage";
+import Health from "./health/Health";
 import IConfiguration from "./IConfiguration";
 import {INotifications} from "./INotifiations";
 import Record from "./Record";
@@ -29,6 +30,19 @@ export default class Client {
             },
             method: 'POST'
         });
+    };
+
+    public getHealth = () => {
+        return fetch(this.getBackendPath() + "/api/health")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText)
+                }
+                return response.json()
+            })
+            .then(json => {
+                return plainToClass(Health, json as Health);
+            })
     };
 
     public getHistoryPage = (size: number, page: number) => {

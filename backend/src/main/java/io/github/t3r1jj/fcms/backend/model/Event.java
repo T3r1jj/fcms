@@ -101,7 +101,7 @@ public class Event {
         }
 
         public Builder formatDescription(String description, Object... args) {
-            this.description = String.format(title, args);
+            this.description = String.format(description, args);
             return this;
         }
 

@@ -1,6 +1,7 @@
 package io.github.t3r1jj.fcms.backend.service;
 
 import io.github.t3r1jj.fcms.backend.model.Event;
+import io.github.t3r1jj.fcms.backend.model.Health;
 import io.github.t3r1jj.fcms.backend.repository.EventRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -64,5 +66,17 @@ public class HistoryService {
 
     public long countAllUnread() {
         return eventRepository.countAllByReadFalse();
+    }
+
+    public List<Health.BandwidthSize> getBandwidthFromEvents() {
+        List<Health.BandwidthSize> bandwidth = new ArrayList<>();
+        eventRepository.findAll().forEach(e -> {
+            Health.BandwidthSize bandwidthSize = new Health.BandwidthSize();
+            if (bandwidthSize.loadFromText(e.getDescription())) {
+                bandwidthSize.setEnd(e.getTime());
+                bandwidth.add(bandwidthSize);
+            }
+        });
+        return bandwidth;
     }
 }

@@ -12,6 +12,7 @@ import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedExcep
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
 import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ public class ReplicationService {
     private final RecordService recordService;
     private final HistoryService historyService;
     private final NotificationService notificationService;
+    private final ThreadLocal<ProgressListenerFactory> localProgressFactory = new ThreadLocal<>(); // TODO: Refactor this into Replicator
 
     @Autowired
     public ReplicationService(ConfigurationService configurationService, RecordService recordService, HistoryService historyService, NotificationService notificationService) {
@@ -51,26 +53,38 @@ public class ReplicationService {
 
     @AfterReplicationCode.Callback
     public void safelyReplicateAll() {
-        AtomicInteger progress = new AtomicInteger(0);
+        localProgressFactory.set(new ProgressListenerFactory(notificationService));
+        addReplicationEvent("REPLICATION START", "Started replication for current records");
         Collection<StoredRecord> records = recordService.findAll();
         final long recordCount = records.size();
-        notificationService.broadcast(buildReplicationProgressEvent(recordCount, 0L));
+        final AtomicInteger progress = new AtomicInteger(0);
+        notifyAboutReplicationProgress(recordCount, progress.get());
         records.parallelStream()
                 .sorted(Collections.reverseOrder())
                 .forEach(r -> {
                     this.replicateSafely(r);
-                    int doneCount = progress.incrementAndGet();
-                    notificationService.broadcast(buildReplicationProgressEvent(recordCount, doneCount));
+                    notifyAboutReplicationProgress(recordCount, progress.incrementAndGet());
                 });
+        addReplicationEvent("REPLICATION END", "Ended replication. %s",
+                localProgressFactory.get().getBandwidth());
+        localProgressFactory.remove();
     }
 
-    private Event buildReplicationProgressEvent(long recordCount, long done) {
-        return new Event.Builder()
-                .formatTitle("REPLICATION_PROGRESS")
+    private void addReplicationEvent(String title, String description, Object... descriptionFormatArgs) {
+        historyService.addAndNotify(new Event.Builder()
+                .formatTitle(title)
+                .formatDescription(description, descriptionFormatArgs)
+                .setType(Event.Type.INFO)
+                .build());
+    }
+
+    private void notifyAboutReplicationProgress(long recordCount, long done) {
+        notificationService.broadcast(new Event.Builder()
+                .formatTitle("REPLICATION")
                 .formatDescription("PROGRESS")
                 .setType(Event.Type.PAYLOAD)
                 .setPayload(new Payload(new Progress(recordCount, done)))
-                .build();
+                .build());
     }
 
     private void replicateSafely(StoredRecord storedRecord) {
@@ -79,7 +93,8 @@ public class ReplicationService {
         } catch (Exception e) {
             historyService.addAndNotify(new Event.Builder()
                     .formatTitle("REPLICATE [%s]", storedRecord.getName())
-                    .formatTitle("Error during replication of record with %s id:\n %s", storedRecord.getId().toString(), e.getMessage())
+                    .formatDescription("Error during replication of record with %s id:\n %s", storedRecord.getId().toString(), e.getMessage())
+                    .setType(Event.Type.ERROR)
                     .build()
             );
         }

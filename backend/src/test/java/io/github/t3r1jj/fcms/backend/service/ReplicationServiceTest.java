@@ -43,6 +43,8 @@ public class ReplicationServiceTest {
     private UpstreamStorage upstreamStorage;
     @Mock
     private StorageFactory storageFactory;
+    @Mock
+    private NotificationService notificationService;
     private ReplicationService replicationService;
 
     private Configuration configuration;
@@ -51,7 +53,7 @@ public class ReplicationServiceTest {
     @BeforeMethod
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        replicationService = new ReplicationService(configurationService, recordService, historyService);
+        replicationService = new ReplicationService(configurationService, recordService, historyService, notificationService);
     }
 
     private void setUpDefaultConfig(String serviceName, boolean enabled) {

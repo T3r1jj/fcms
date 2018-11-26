@@ -13,8 +13,10 @@ import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import sun.net.ProgressListener
 import java.math.BigInteger
 import java.util.*
+import java.util.function.Consumer
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -86,7 +88,7 @@ class AuthenticatedStorageIT(private val factory: StorageFactory<AuthenticatedSt
         val oneMBText = String(chars)
         val record = Record("$name.tmp", "$testRootPath/$name.tmp", oneMBText.byteInputStream())
         storage.login()
-        val progressListener: (Long) -> Unit = { bytesWritten ->
+        val progressListener = Consumer<Long> { bytesWritten ->
             progressResults.add(bytesWritten)
             println("WRITTEN: $bytesWritten bytes of $size (${bytesWritten.toDouble() * 100 / size}%), finished: " + (bytesWritten == size.toLong()))
         }
@@ -146,7 +148,7 @@ class AuthenticatedStorageIT(private val factory: StorageFactory<AuthenticatedSt
         val unreadRecord = record.copy(data = oneMBText.byteInputStream())
         storage.login()
         storage.upload(record)
-        val progressListener: (Long) -> Unit = { bytesWritten ->
+        val progressListener = Consumer<Long> { bytesWritten ->
             progressResults.add(bytesWritten)
             println("WRITTEN: $bytesWritten bytes of $size (${bytesWritten.toDouble() * 100 / size}%), finished: " + (bytesWritten == size.toLong()))
         }

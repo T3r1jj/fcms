@@ -7,10 +7,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.platform.runner.JUnitPlatform
 import org.junit.runner.RunWith
-import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.*
+import org.mockito.Mockito.doReturn
+import org.mockito.Mockito.verify
 import org.mockito.Spy
 import org.mockito.junit.jupiter.MockitoExtension
+import java.util.function.Consumer
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -80,7 +81,7 @@ class AuthenticatedStorageTemplateTest {
     @Test
     fun testUploadProgress() {
         doReturn(true).`when`(storage).isLogged()
-        val progressListener: (Long) -> Unit = {}
+        val progressListener = Consumer<Long> { }
         storage.upload(record, progressListener)
         verify(storage).doAuthenticatedUpload(record, progressListener)
     }
@@ -95,7 +96,7 @@ class AuthenticatedStorageTemplateTest {
     @Test
     fun testDownloadProgress() {
         doReturn(true).`when`(storage).isLogged()
-        val progressListener: (Long) -> Unit = {}
+        val progressListener = Consumer<Long> { }
         storage.download(filePath, progressListener)
         verify(storage).doAuthenticatedDownload(filePath, progressListener)
     }

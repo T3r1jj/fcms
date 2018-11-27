@@ -105,7 +105,7 @@ public class ReplicationService {
             replicate(storedRecord);
         } catch (Exception e) {
             historyService.addAndNotify(new Event.Builder()
-                    .formatTitle("REPLICATE [%s]", storedRecord.getName())
+                    .formatTitle("REPLICATE [%s]", storedRecord.getMeta().getName())
                     .formatDescription("Error during replication of record with %s id:\n %s", storedRecord.getId().toString(), e.getMessage())
                     .setType(Event.Type.ERROR)
                     .build()
@@ -232,7 +232,7 @@ public class ReplicationService {
 
     private void upload(StoredRecord recordToStore, UpstreamStorage storage) {
         Record recordToUpload = recordToStore.prepareRecord();
-        ProgressListener progressListener = new ProgressListener(new Progress(recordToStore.getData().length, recordToStore.getName(), storage.toString()),
+        ProgressListener progressListener = new ProgressListener(new Progress(recordToStore.getData().length, recordToStore.getMeta().getName(), storage.toString()),
                 notificationService, true);
         RecordMeta meta;
         try {

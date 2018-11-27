@@ -1,6 +1,7 @@
 package io.github.t3r1jj.fcms.backend.controller;
 
 import io.github.t3r1jj.fcms.backend.model.StoredRecord;
+import io.github.t3r1jj.fcms.backend.model.StoredRecordMeta;
 import io.github.t3r1jj.fcms.backend.service.RecordService;
 import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
@@ -105,19 +106,18 @@ public class RecordControllerTest {
 
     @Test
     public void updateDescriptionShouldCallServiceUpdateDescriptionAndReturn200() {
-        String id = "abc";
-        String description = "description text";
+        StoredRecordMeta meta = new StoredRecordMeta("abc", "some tag");
         RestAssuredMockMvc
                 .given()
-                .param("id", id)
-                .body(description)
+                .body(meta)
+                .contentType(ContentType.JSON)
                 .standaloneSetup(new RecordController(recordService))
                 .when()
                 .put("/api/records")
                 .then()
                 .assertThat()
                 .statusCode(200);
-        verify(recordService, times(1)).updateDescription(id, description);
+        verify(recordService, times(1)).updateMeta(meta);
     }
 
 }

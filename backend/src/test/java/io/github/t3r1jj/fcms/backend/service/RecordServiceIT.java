@@ -1,7 +1,10 @@
 package io.github.t3r1jj.fcms.backend.service;
 
 import io.github.t3r1jj.fcms.backend.model.StoredRecord;
+import io.github.t3r1jj.fcms.backend.model.StoredRecordMeta;
+import io.github.t3r1jj.fcms.backend.repository.StoredRecordMetaRepository;
 import io.github.t3r1jj.fcms.backend.repository.StoredRecordRepository;
+import io.github.t3r1jj.fcms.external.data.RecordMeta;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,13 +25,15 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
     private RecordService recordService;
     @Autowired
     private StoredRecordRepository recordRepository;
+    @Autowired
+    private StoredRecordMetaRepository metaRepository;
     @Mock
     private ReplicationService replicationService;
 
     @BeforeMethod
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        recordService = new RecordService(recordRepository, replicationService);
+        recordService = new RecordService(recordRepository, metaRepository, replicationService);
     }
 
     @AfterMethod
@@ -51,12 +56,11 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
     public void updateRoot() {
         StoredRecord storedRecord = new StoredRecord("a", "a");
         recordService.store(storedRecord);
-        String newDescription = "new description";
-        storedRecord.setDescription(newDescription);
+        storedRecord.getBackups().put("new backup", null);
         recordService.update(storedRecord);
         storedRecord = recordRepository.findById(storedRecord.getId()).get();
-        assertEquals(newDescription, storedRecord.getDescription());
-        assertEquals(recordRepository.count(), 1);
+        assertEquals(recordRepository.count(), 1 );
+        assertEquals(storedRecord.getBackups().size(), 1);
     }
 
     @Test
@@ -65,12 +69,11 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
         StoredRecord childRecord = new StoredRecord("2", "2", null, storedRecord.getId().toString());
         recordService.store(storedRecord);
         recordService.store(childRecord);
-        String newDescription = "new description";
-        childRecord.setDescription(newDescription);
+        childRecord.getBackups().put("new backup", new RecordMeta("x","y",0));
         recordService.update(childRecord);
         storedRecord = recordRepository.findById(storedRecord.getId()).get();
-        assertEquals(storedRecord.getVersions().get(0).getDescription(), newDescription);
         assertEquals(recordRepository.count(), 1);
+        assertEquals(storedRecord.getVersions().get(0).getBackups().size(), 1);
     }
 
     @Test
@@ -87,19 +90,18 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void updateDescription() {
+    public void updateMeta() {
         StoredRecord storedRecord = new StoredRecord("a", "a");
-        assertNull(storedRecord.getDescription());
+        StoredRecordMeta meta = storedRecord.getMeta();
         recordService.store(storedRecord);
-        String newDescription = "new description";
-        recordService.updateDescription(storedRecord.getId().toString(), newDescription);
-        assertEquals(recordRepository.findById(storedRecord.getId()).get().getDescription(), newDescription);
+        StoredRecordMeta newMeta = new StoredRecordMeta(meta.getId(), "2", "3", "4");
+        recordService.updateMeta(newMeta);
+        assertEquals(recordRepository.findById(storedRecord.getId()).get().getMeta(), newMeta);
     }
 
     @Test
     public void storeShouldCauseReplication() {
         StoredRecord storedRecord = new StoredRecord("a", "a");
-        assertNull(storedRecord.getDescription());
         recordService.store(storedRecord);
         verify(replicationService, times(1)).uploadToPrimary(storedRecord);
     }

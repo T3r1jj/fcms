@@ -9,6 +9,7 @@ import org.bson.types.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.ByteArrayInputStream;
@@ -25,31 +26,33 @@ public class StoredRecord {
     private ObjectId id = ObjectId.get();
     @JsonIgnore
     private ObjectId rootId;
-    private final String name;
-    private final String tag;
+    @DBRef
+    private StoredRecordMeta meta;
     transient private byte[] data;
-    private String description;
 
     private List<StoredRecord> versions = new ArrayList<>();
     private Map<String, RecordMeta> backups = new HashMap<>();
 
     public StoredRecord(ObjectId id) {
-        this(null, null);
         this.id = id;
     }
 
     public StoredRecord(String name, String tag, byte[] data, String rootId) {
-        this.name = name;
-        this.tag = tag;
+        this.meta = new StoredRecordMeta(name, tag);
         this.data = data;
         if (rootId != null) {
             this.rootId = stringToObjectId(rootId);
         }
     }
 
-    @PersistenceConstructor
     public StoredRecord(String name, String tag) {
         this(name, tag, null, null);
+    }
+
+    @PersistenceConstructor
+    public StoredRecord(ObjectId id, StoredRecordMeta meta) {
+        this.meta = meta;
+        this.id = id;
     }
 
     public List<StoredRecord> getVersions() {
@@ -64,24 +67,12 @@ public class StoredRecord {
         return id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
+    public StoredRecordMeta getMeta() {
+        return meta;
     }
 
     public byte[] getData() {
         return data;
-    }
-
-    public String getTag() {
-        return tag;
     }
 
     public Optional<ObjectId> getRootId() {
@@ -117,7 +108,7 @@ public class StoredRecord {
             throw new RuntimeException("Dude... there is no data to store!");
         }
         return new Record(
-                this.getName(),
+                this.meta.getName(),
                 this.getId().toString(),
                 new ByteArrayInputStream(this.getData())
         );
@@ -130,9 +121,7 @@ public class StoredRecord {
         StoredRecord that = (StoredRecord) o;
         return id.equals(that.id) &&
                 Objects.equals(rootId, that.rootId) &&
-                name.equals(that.name) &&
-                Objects.equals(tag, that.tag) &&
-                Objects.equals(description, that.description) &&
+                Objects.equals(meta, that.meta) &&
                 Objects.equals(versions, that.versions) &&
                 Objects.equals(backups, that.backups);
     }
@@ -140,5 +129,17 @@ public class StoredRecord {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "StoredRecord{" +
+                "id=" + id +
+                ", rootId=" + rootId +
+                ", meta=" + meta +
+                ", data=" + Arrays.toString(data) +
+                ", versions=" + versions +
+                ", backups=" + backups +
+                '}';
     }
 }

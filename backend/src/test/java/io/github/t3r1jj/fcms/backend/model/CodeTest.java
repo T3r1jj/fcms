@@ -30,28 +30,28 @@ public class CodeTest {
     @Test
     public void testExecute() {
         OnReplicationCode code = new OnReplicationCode.Builder()
-                .setCode("System.out.println(storedRecord.getName());")
+                .setCode("System.out.println(storedRecord.getMeta());")
                 .build();
         code.execute(storedRecord);
-        verify(storedRecord, times(1)).getName();
+        verify(storedRecord, times(1)).getMeta();
     }
 
     @Test
     public void testExecuteShouldPersistDataChange() {
-        String newDescription = "new description";
+        String newBackup = "new description";
         OnReplicationCode code = new OnReplicationCode.Builder()
-                .setCode("storedRecord.setDescription(\"" + newDescription + "\");")
+                .setCode("storedRecord.getBackups().put(\"" + newBackup + "\", null);")
                 .build();
         code.execute(storedRecord);
-        assertEquals(storedRecord.getDescription(), newDescription);
+        assertEquals(storedRecord.getBackups().size(), 1);
     }
 
     @Test
     public void testExecuteWithCatch() {
         RuntimeException testException = spy(new RuntimeException("test exception"));
-        doThrow(testException).when(storedRecord).getName();
+        doThrow(testException).when(storedRecord).getMeta();
         OnReplicationCode code = new OnReplicationCode.Builder()
-                .setCode("storedRecord.getName();")
+                .setCode("storedRecord.getMeta();")
                 .setExceptionHandler("e.getMessage();")
                 .build();
         code.execute(storedRecord);
@@ -61,11 +61,11 @@ public class CodeTest {
     @Test
     public void testExecuteWithFinally() {
         OnReplicationCode code = new OnReplicationCode.Builder()
-                .setCode("storedRecord.getName();")
+                .setCode("storedRecord.getId();")
                 .setFinallyHandler("storedRecord.getId();")
                 .build();
         code.execute(storedRecord);
-        verify(storedRecord, times(1)).getId();
+        verify(storedRecord, times(2)).getId();
     }
 
     @Test
@@ -73,10 +73,10 @@ public class CodeTest {
         StoredRecord[] storedRecords = new StoredRecord[]{storedRecord, storedRecord};
         when(recordService.findAll()).thenReturn(Arrays.asList(storedRecords));
         AfterReplicationCode code = new AfterReplicationCode.Builder()
-                .setCode("recordService.findAll().stream().forEach(storedRecord -> System.out.println(storedRecord.getName()));")
+                .setCode("recordService.findAll().stream().forEach(storedRecord -> System.out.println(storedRecord.getMeta()));")
                 .build();
         code.execute(recordService);
-        verify(storedRecord, times(0)).getName();
+        verify(storedRecord, times(0)).getMeta();
     }
 
     @Test
@@ -89,7 +89,7 @@ public class CodeTest {
                         "        }")
                 .build();
         code.execute(recordService);
-        verify(storedRecord, times(0)).getName();
+        verify(storedRecord, times(0)).getMeta();
     }
 
     @Test
@@ -99,10 +99,10 @@ public class CodeTest {
         AfterReplicationCode code = new AfterReplicationCode.Builder()
                 .setCode("       io.github.t3r1jj.fcms.backend.model.StoredRecord[] storedRecords = (io.github.t3r1jj.fcms.backend.model.StoredRecord[]) recordService.findAll().toArray(new io.github.t3r1jj.fcms.backend.model.StoredRecord[0]);" +
                         "        for (int i = 0; i < storedRecords.length; i++) {\n" +
-                        "            System.out.println(storedRecords[i].getName());\n" +
+                        "            System.out.println(storedRecords[i].getMeta());\n" +
                         "        }")
                 .build();
         code.execute(recordService);
-        verify(storedRecord, times(2)).getName();
+        verify(storedRecord, times(2)).getMeta();
     }
 }

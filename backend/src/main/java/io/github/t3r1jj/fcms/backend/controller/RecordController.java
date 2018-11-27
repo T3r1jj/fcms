@@ -2,6 +2,7 @@ package io.github.t3r1jj.fcms.backend.controller;
 
 import io.github.t3r1jj.fcms.backend.controller.exception.UnprocessableException;
 import io.github.t3r1jj.fcms.backend.model.StoredRecord;
+import io.github.t3r1jj.fcms.backend.model.StoredRecordMeta;
 import io.github.t3r1jj.fcms.backend.service.RecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -31,8 +32,8 @@ public class RecordController {
     }
 
     @PutMapping
-    public void updateDescription(@RequestParam String id, @RequestBody String description) {
-        recordService.updateDescription(id, description);
+    public void updateMeta(@RequestBody StoredRecordMeta meta) {
+        recordService.updateMeta(meta);
     }
 
     @GetMapping

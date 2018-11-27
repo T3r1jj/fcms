@@ -9,6 +9,7 @@ import withStyles from "@material-ui/core/styles/withStyles";
 import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
 import TextField from "@material-ui/core/TextField/TextField";
+import RestartReplicationIcon from '@material-ui/icons/CallSplit';
 import SaveIcon from '@material-ui/icons/Save';
 import * as React from "react";
 import {ComponentState} from "react";
@@ -256,6 +257,11 @@ export class Configuration extends React.Component<IConfigurationProps, IConfigu
                             {this.state.error && <br/> && this.state.errorText}
                         </DialogContent>
                         <DialogActions>
+                            <Button onClick={this.props.restartReplication} variant={"contained"} color={"secondary"}
+                                    style={{marginRight: "auto"}}>
+                                <RestartReplicationIcon className={classes.rightSpace}/>
+                                Restart Replication
+                            </Button>
                             <Button onClick={this.sendSaveRequest} variant={"contained"} color={"primary"}
                                     disabled={this.state.loading || this.state.services.length === 0}>
                                 <SaveIcon className={classes.rightSpace}/>
@@ -463,6 +469,8 @@ export interface IConfigurationProps extends WithStyles<typeof styles> {
     onStatusChange(status: string): void;
 
     getHealth(): Promise<Health>;
+
+    restartReplication(): Promise<Response>;
 }
 
 interface IConfigurationState extends IConfiguration {

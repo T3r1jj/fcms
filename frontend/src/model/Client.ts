@@ -157,6 +157,12 @@ export default class Client {
             });
     };
 
+    public restartReplication = () => {
+        return fetch(this.getBackendPath() + "/api/replication", {
+            method: 'POST'
+        });
+    };
+
     public updateRecordDescription = (id: string, description: string) => {
         return fetch(this.getBackendPath() + "/api/records?id=" + id, {
             body: description,

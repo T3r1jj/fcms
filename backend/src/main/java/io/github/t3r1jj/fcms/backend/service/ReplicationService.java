@@ -53,8 +53,24 @@ public class ReplicationService {
 
     @AfterReplicationCode.Callback
     public void safelyReplicateAll() {
-        localProgressFactory.set(new ProgressListenerFactory(notificationService));
         addReplicationEvent("REPLICATION START", "Started replication for current records");
+        try {
+            safelyReplicateAllWithNotification();
+        } catch (Exception e) {
+            historyService.addAndNotify(new Event.Builder()
+                    .formatTitle("REPLICATION STOPPED")
+                    .formatDescription(e.getMessage())
+                    .setType(Event.Type.WARNING)
+                    .build());
+        } finally {
+            addReplicationEvent("REPLICATION END", "Ended replication. %s",
+                    localProgressFactory.get().getBandwidth());
+            localProgressFactory.remove();
+        }
+    }
+
+    private void safelyReplicateAllWithNotification() {
+        localProgressFactory.set(new ProgressListenerFactory(notificationService));
         Collection<StoredRecord> records = recordService.findAll();
         final long recordCount = records.size();
         final AtomicInteger progress = new AtomicInteger(0);
@@ -65,9 +81,6 @@ public class ReplicationService {
                     this.replicateSafely(r);
                     notifyAboutReplicationProgress(recordCount, progress.incrementAndGet());
                 });
-        addReplicationEvent("REPLICATION END", "Ended replication. %s",
-                localProgressFactory.get().getBandwidth());
-        localProgressFactory.remove();
     }
 
     private void addReplicationEvent(String title, String description, Object... descriptionFormatArgs) {

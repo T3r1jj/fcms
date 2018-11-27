@@ -182,7 +182,8 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                     updateConfiguration={this.props.client.updateConfiguration}
                     getConfiguration={this.props.client.getConfiguration}
                     getHealth={this.props.client.getHealth}
-                    records={this.state.records}/>
+                    records={this.state.records}
+                    restartReplication={this.props.client.restartReplication}/>
                 <Tooltip
                     placement="bottom"
                     title={this.state.expand ? "Expand records" : "Collapse records"}
@@ -240,6 +241,7 @@ export interface IMainPageProps {
     payload?: Payload;
 
     onSearchItemsUpdate(items?: SearchItem[]): void;
+
     onStatusChange(status: string): void;
 }
 

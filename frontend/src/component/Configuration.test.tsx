@@ -13,6 +13,7 @@ describe('component', () => {
     let getConfiguration: () => Promise<IConfiguration>;
     let getHealth: () => Promise<Health>;
     let updateConfiguration: (configuration: IConfiguration) => Promise<Response>;
+    let restartReplication: () => Promise<Response>;
     let onStatusChange: (status: string) => void;
     let props: IConfiguration;
     let records: IRecord[];
@@ -20,6 +21,11 @@ describe('component', () => {
 
     beforeEach(() => {
         onStatusChange = () => undefined;
+        restartReplication  = () => {
+            return new Promise<Response>((resolve, reject) => {
+                resolve(new Response())
+            });
+        };
         records = [];
         props = {
             primaryBackupLimit: 1,
@@ -47,13 +53,13 @@ describe('component', () => {
 
     describe('rendering', () => {
         it('renders without crashing', () => {
-            shallow(<Configuration classes={classes} getConfiguration={getConfiguration} onStatusChange={onStatusChange}
+            shallow(<Configuration classes={classes} getConfiguration={getConfiguration} onStatusChange={onStatusChange} restartReplication={restartReplication}
                                    updateConfiguration={updateConfiguration} getHealth={getHealth} records={records}/>);
         });
 
         it('renders at least limit fields', () => {
             const wrapper = shallow(<Configuration classes={classes} getConfiguration={getConfiguration}
-                                                   records={records}
+                                                   records={records} restartReplication={restartReplication}
                                                    updateConfiguration={updateConfiguration} getHealth={getHealth}
                                                    onStatusChange={onStatusChange}/>);
             expect(wrapper.find(TextField).length).toEqual(2);
@@ -65,14 +71,14 @@ describe('component', () => {
 
         it('renders loading', () => {
             const wrapper = shallow(<Configuration classes={classes} getConfiguration={getConfiguration}
-                                                   records={records} onStatusChange={onStatusChange}
+                                                   records={records} onStatusChange={onStatusChange} restartReplication={restartReplication}
                                                    updateConfiguration={updateConfiguration} getHealth={getHealth}/>);
             expect(wrapper.find(LinearProgress).exists()).toBeTruthy();
         });
 
         it('renders child Service', (done) => {
             const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration} records={records}
-                                                 onStatusChange={onStatusChange}
+                                                 onStatusChange={onStatusChange} restartReplication={restartReplication}
                                                  updateConfiguration={updateConfiguration} getHealth={getHealth}/>);
             wrapper.find(Button).first().simulate('click');
             setImmediate(() => {
@@ -88,7 +94,7 @@ describe('component', () => {
 
         it('does not render loading after load', (done) => {
             const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration} records={records}
-                                                 onStatusChange={onStatusChange}
+                                                 onStatusChange={onStatusChange} restartReplication={restartReplication}
                                                  updateConfiguration={updateConfiguration} getHealth={getHealth}/>);
             wrapper.find(Button).first().simulate('click');
             setImmediate(() => {
@@ -102,7 +108,7 @@ describe('component', () => {
     describe('updating', () => {
         it('updates child Service', (done) => {
             const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration} records={records}
-                                                 onStatusChange={onStatusChange}
+                                                 onStatusChange={onStatusChange} restartReplication={restartReplication}
                                                  updateConfiguration={updateConfiguration} getHealth={getHealth}/>);
             wrapper.find(Button).first().simulate('click');
             setImmediate(() => {
@@ -118,7 +124,7 @@ describe('component', () => {
 
         it('update request does not cause crash', (done) => {
             const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration} records={records}
-                                                 onStatusChange={onStatusChange}
+                                                 onStatusChange={onStatusChange} restartReplication={restartReplication}
                                                  updateConfiguration={updateConfiguration} getHealth={getHealth}/>);
             setImmediate(() => {
                 wrapper.update();
@@ -135,7 +141,7 @@ describe('component', () => {
                 });
             };
             const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration} records={records}
-                                                 onStatusChange={onStatusChange}
+                                                 onStatusChange={onStatusChange} restartReplication={restartReplication}
                                                  updateConfiguration={updateConfiguration} getHealth={getHealth}/>);
             wrapper.find(Button).first().simulate('click');
             setImmediate(() => {
@@ -157,7 +163,7 @@ describe('component', () => {
                 });
             };
             const wrapper = mount(<Configuration classes={classes} getConfiguration={getConfiguration} records={records}
-                                                 onStatusChange={onStatusChange}
+                                                 onStatusChange={onStatusChange} restartReplication={restartReplication}
                                                  updateConfiguration={updateConfiguration} getHealth={getHealth}/>);
             setImmediate(() => {
                 wrapper.update();

@@ -32,8 +32,8 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
     }
 
     public componentDidMount() {
-        // this.props.client.getRecords()
-        //     .then(records => this.setState({records}))
+        this.props.client.getRecords()
+            .then(records2 => this.setState({records:records2}))
         const records: IRecord[] = [];
         const backup = {size: Math.random() * 1024 * 1024} as IBackup;
         const backup2 = {size: Math.random() * 1024 * 1024} as IBackup;

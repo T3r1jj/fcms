@@ -1,11 +1,10 @@
 import IBackup from "./IBackup";
+import RecordMeta from "./RecordMeta";
 
 export default interface IRecord {
     id: string;
-    name: string;
-    description: string;
+    meta: RecordMeta;
     data?: Blob;
-    tag?: string;
 
     versions: IRecord[];
     backups: Map<string, IBackup>;

@@ -8,6 +8,7 @@ import Health from "./health/Health";
 import IConfiguration from "./IConfiguration";
 import {INotifications} from "./INotifiations";
 import Record from "./Record";
+import RecordMeta from "./RecordMeta";
 
 export default class Client {
 
@@ -163,9 +164,9 @@ export default class Client {
         });
     };
 
-    public updateRecordDescription = (id: string, description: string) => {
-        return fetch(this.getBackendPath() + "/api/records?id=" + id, {
-            body: description,
+    public updateRecordMeta = (meta: RecordMeta) => {
+        return fetch(this.getBackendPath() + "/api/records", {
+            body: JSON.stringify(meta),
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',

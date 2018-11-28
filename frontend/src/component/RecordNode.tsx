@@ -8,6 +8,7 @@ import DialogContentText from "@material-ui/core/DialogContentText/DialogContent
 import DialogTitle from "@material-ui/core/DialogTitle/DialogTitle";
 import IconButton from '@material-ui/core/IconButton';
 import withStyles from "@material-ui/core/styles/withStyles";
+import TextField from "@material-ui/core/TextField";
 import BackupIcon from '@material-ui/icons/Backup';
 import NewIcon from '@material-ui/icons/CreateNewFolder';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -15,10 +16,13 @@ import ForceDeleteIcon from '@material-ui/icons/DeleteForever';
 import FolderClosedIcon from '@material-ui/icons/Folder';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
 import SaveIcon from '@material-ui/icons/Save';
+import TitleIcon from '@material-ui/icons/TextFields';
 import TextIcon from '@material-ui/icons/TextFormat';
+import {ComponentState} from 'react';
 import * as React from 'react';
 import LazyLoad from "react-lazyload";
 import IRecord from '../model/IRecord';
+import RecordMeta from "../model/RecordMeta";
 import Formatter from "../utils/Formatter";
 import Description from "./Description";
 
@@ -42,10 +46,13 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
         super(props);
         this.state = {
             deletionOpen: false,
-            description: this.props.description,
+            description: this.props.meta.description,
             descriptionOpen: false,
             expand: props.expand,
-            selectedRecord: undefined
+            name: this.props.meta.name,
+            nameTagOpen: false,
+            selectedRecord: undefined,
+            tag: this.props.meta.tag
         };
         this.handleDescriptionClose = this.handleDescriptionClose.bind(this);
         this.handleDescriptionOpen = this.handleDescriptionOpen.bind(this);
@@ -96,7 +103,7 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
             <Tooltip
                 classes={{tooltip: this.props.classes.lightTooltip}}
                 placement="top-end"
-                title={this.props.tag ? this.props.tag : ""}
+                title={this.props.meta.tag ? this.props.meta.tag : ""}
                 onClick={this.handleExpand}>
                 <IconButton>
                     {(this.state.expand || this.props.versions.length === 0) ? (
@@ -106,17 +113,15 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
                     )}
                 </IconButton>
             </Tooltip>
-            {this.props.name} {this.getSizeText()} :: Records: {this.getRecordsCount(this.props)},
+            {this.props.meta.name} {this.getSizeText()} :: Records: {this.getRecordsCount(this.props)},
             Depth: {this.getVersionsDepth(this.props)}, Backups: {this.getBackupsCount(this.props)}
-            {Array.from(this.props.backups.entries()).map(([service, backup]) =>
-                <Tooltip key={service} title={"Backup " + service}>
-                    <IconButton aria-label="Backup"><BackupIcon/></IconButton>
-                </Tooltip>
-            )}
             <Tooltip
                 title={"Create new record"}
                 onClick={this.handleNewRecord}>
                 <IconButton aria-label="Create new record"><NewIcon/></IconButton>
+            </Tooltip>
+            <Tooltip title="Name and tag" onClick={this.handleNameTagOpen}>
+                <IconButton aria-label="Name and tag"><TitleIcon/></IconButton>
             </Tooltip>
             <Tooltip title="Description" onClick={this.handleDescriptionOpen}>
                 <IconButton aria-label="Description"><TextIcon/></IconButton>
@@ -124,6 +129,11 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
             <Tooltip title="Delete" onClick={this.handleDeletionOpen}>
                 <IconButton aria-label="Delete"><DeleteIcon/></IconButton>
             </Tooltip>
+            {Array.from(this.props.backups.entries()).map(([service, backup]) =>
+                <Tooltip key={service} title={"Backup " + service}>
+                    <IconButton aria-label="Backup"><BackupIcon/></IconButton>
+                </Tooltip>
+            )}
             {this.state.expand && this.props.versions.map(v =>
                 <RecordNode {...v} deleteRecords={this.props.deleteRecords}
                             key={v.id}
@@ -134,9 +144,44 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
                             expand={this.props.expand}
                             root={false}
                             updateParentId={this.props.updateParentId}
-                            updateRecordDescription={this.props.updateRecordDescription}
+                            updateRecordMeta={this.props.updateRecordMeta}
                 />
             )}
+            <Dialog
+                fullWidth={true}
+                open={this.state.nameTagOpen}
+                onClose={this.handleDeletionClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">{"Meta"}</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        label="Name"
+                        fullWidth={true}
+                        value={this.state.name}
+                        onChange={this.handleStateChange('name')}
+                        variant="outlined"
+                        margin="normal"
+                    />
+                    <br/>
+                    <TextField
+                        label="Tag"
+                        fullWidth={true}
+                        value={this.state.tag ? this.state.tag : ""}
+                        onChange={this.handleStateChange('tag')}
+                        variant="outlined"
+                        margin="normal"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={this.handleNameTagSave} variant={"contained"}>
+                        <SaveIcon className={this.props.classes.leftIcon}/>
+                        Save
+                    </Button>
+                    <Button onClick={this.handleTitleTagClose} color="primary" variant={"contained"}>Cancel</Button>
+                </DialogActions>
+            </Dialog>
             <Dialog onClose={this.handleDescriptionClose}
                     fullScreen={true}
                     aria-labelledby={"description-dialog-title" + this.props.id}
@@ -208,7 +253,11 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
     }
 
     private handleDescriptionClose() {
-        this.setState({description: this.props.description, descriptionOpen: false});
+        this.setState({description: this.props.meta.description, descriptionOpen: false});
+    }
+
+    private handleTitleTagClose = () => {
+        this.setState({name: this.props.meta.name, tag: this.props.meta.tag, nameTagOpen: false});
     }
 
     private handleDeletionClose() {
@@ -217,6 +266,10 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
 
     private handleDescriptionOpen() {
         this.setState({descriptionOpen: true});
+    }
+
+    private handleNameTagOpen = () =>  {
+        this.setState({nameTagOpen: true});
     }
 
     private handleDeletionOpen() {
@@ -228,8 +281,13 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
     }
 
     private handleDescriptionSave() {
-        this.props.updateRecordDescription(this.props.id, this.state.description)
+        this.props.updateRecordMeta({...this.props.meta, description: this.state.description})
             .then(r => this.setState({descriptionOpen: false}));
+    }
+
+    private handleNameTagSave = () => {
+        this.props.updateRecordMeta({...this.props.meta, name: this.state.name, tag: this.state.tag})
+            .then(r => this.setState({nameTagOpen: false}));
     }
 
     private handleDelete() {
@@ -268,21 +326,28 @@ export class RecordNode extends React.Component<IRecordProps, IRecordState> {
             count = 1;
         }
         return count * 48;
-    }
+    };
 
     private handleExpand = () => {
         this.setState({
             expand: !this.state.expand
         })
-    }
+    };
+
+    private handleStateChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+        this.setState({[field]: event.target.value} as ComponentState)
+    };
 }
 
 interface IRecordState {
     selectedRecord?: IRecordProps;
+    nameTagOpen: boolean;
     descriptionOpen: boolean;
     deletionOpen: boolean;
     description: string;
     expand: boolean;
+    name: string;
+    tag?: string;
 }
 
 export interface IRecordProps extends IRecord, WithStyles<typeof styles> {
@@ -291,7 +356,7 @@ export interface IRecordProps extends IRecord, WithStyles<typeof styles> {
     expand: boolean;
     lazyLoad: boolean;
 
-    updateRecordDescription(id: string, description: string): Promise<Response>;
+    updateRecordMeta(meta: RecordMeta): Promise<Response>;
 
     deleteRecords(id: string): Promise<Response>;
 

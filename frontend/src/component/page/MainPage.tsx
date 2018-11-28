@@ -15,6 +15,7 @@ import Progress from "../../model/event/Progress";
 import IBackup from "../../model/IBackup";
 import IRecord from "../../model/IRecord";
 import Record from "../../model/Record";
+import RecordMeta from "../../model/RecordMeta";
 import SearchItem from "../../model/SearchItem";
 import Configuration from "../Configuration";
 import RecordNode from "../RecordNode";
@@ -42,14 +43,16 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
             record.backups.set("Mega", backup);
             record.backups.set("Megaupload", backup2);
             record.id = i.toString();
-            record.name = i.toString() + " root  That way, it won't cause a rerender every end because ";
+            record.meta = new RecordMeta();
+            record.meta.name = i.toString() + " root  That way, it won't cause a rerender every end because ";
             record.versions = [];
             for (let v = 0; v < 3; v++) {
                 const vrecord = new Record();
                 vrecord.backups = new Map<string, IBackup>();
                 vrecord.backups.set("Mega", backup)
                 vrecord.id = i.toString() + "_" + v.toString();
-                vrecord.name = i.toString() + "_" + v.toString();
+                vrecord.meta = new RecordMeta();
+                vrecord.meta.name = i.toString() + "_" + v.toString();
                 vrecord.versions = [];
                 if (v === 1) {
                     for (let l = 0; l < 2; l++) {
@@ -57,7 +60,8 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                         lrecord.backups = new Map<string, IBackup>();
                         lrecord.backups.set("Mega", backup)
                         lrecord.id = i.toString() + "_" + v.toString() + "_" + l.toString();
-                        lrecord.name = i.toString() + "_" + v.toString() + "_" + l.toString();
+                        lrecord.meta = new RecordMeta();
+                        lrecord.meta.name = i.toString() + "_" + v.toString() + "_" + l.toString();
                         lrecord.versions = [];
                         vrecord.versions.push(lrecord);
                     }
@@ -72,14 +76,16 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
             record.backups = new Map<string, IBackup>();
             record.backups.set("Mega", backup)
             record.id = i.toString();
-            record.name = i.toString() + " root";
+            record.meta = new RecordMeta();
+            record.meta.name = i.toString() + " root";
             record.versions = [];
             for (let v = 0; v < 3; v++) {
                 const vrecord = new Record();
                 vrecord.backups = new Map<string, IBackup>();
                 vrecord.backups.set("Mega", backup)
                 vrecord.id = i.toString() + "_" + v.toString();
-                vrecord.name = i.toString() + "_" + v.toString();
+                vrecord.meta = new RecordMeta();
+                vrecord.meta.name = i.toString() + "_" + v.toString();
                 vrecord.versions = [];
                 if (v === 1) {
                     for (let l = 0; l < 2; l++) {
@@ -87,7 +93,8 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                         lrecord.backups = new Map<string, IBackup>();
                         lrecord.backups.set("Mega", backup)
                         lrecord.id = i.toString() + "_" + v.toString() + "_" + l.toString();
-                        lrecord.name = i.toString() + "_" + v.toString() + "_" + l.toString();
+                        lrecord.meta = new RecordMeta();
+                        lrecord.meta.name = i.toString() + "_" + v.toString() + "_" + l.toString();
                         lrecord.versions = [];
                         vrecord.versions.push(lrecord);
                     }
@@ -110,7 +117,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
             let clientPayloadType: ClientPayloadType | undefined;
             if (payload.type === PayloadType.SAVE) {
                 const record = payload.record!;
-                name = record.name;
+                name = record.meta.name;
                 const records = [...this.state.records];
                 const indexToUpdate = records.findIndex(r => r.id === record.id);
                 if (indexToUpdate >= 0) {
@@ -131,7 +138,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                 const records = [...this.state.records];
                 const indexToDelete = records.findIndex(r => r.id === record.id);
                 if (indexToDelete >= 0) {
-                    name = records[indexToDelete].name;
+                    name = records[indexToDelete].meta.name;
                     records.splice(indexToDelete, 1);
                     this.setState({records}, this.handleSearchItemsUpdate);
                 } else { // Should not happen
@@ -206,7 +213,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
                                         lazyLoad={true}
                                         updateParentId={this.updateParentId}
                                         hierarchyTooltipEnabled={this.state.records[0] === r}
-                                        updateRecordDescription={this.props.client.updateRecordDescription}
+                                        updateRecordMeta={this.props.client.updateRecordMeta}
                                         root={true}/>
                         </ListItem>
                     )}
@@ -216,7 +223,7 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
     }
 
     private getSearchItems(records: IRecord[], ids?: string[]): SearchItem[] {
-        const flatMap: SearchItem[] = records.map(r => new SearchItem(r.name, ids ? [...ids, r.id] : [r.id]));
+        const flatMap: SearchItem[] = records.map(r => new SearchItem(r.meta.name, ids ? [...ids, r.id] : [r.id]));
         for (const record of records) {
             flatMap.push(...this.getSearchItems(record.versions, ids ? [...ids, record.id] : [record.id]));
         }

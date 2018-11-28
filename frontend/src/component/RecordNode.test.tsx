@@ -5,27 +5,32 @@ import * as React from 'react';
 import * as sinon from "sinon";
 import IBackup from "../model/IBackup";
 
+import RecordMeta from "../model/RecordMeta";
 import Description from "./Description";
 import {IRecordProps, RecordNode} from './RecordNode';
 
 describe('component', () => {
     let props: IRecordProps;
+    let meta: RecordMeta;
     beforeEach(() => {
+        meta = new RecordMeta();
+        meta.id = "2";
+        meta.description = "some description";
+        meta.name = "RecordNode name";
+        meta.tag = "some tag";
         props = {
             backups: new Map<string, IBackup>(),
             classes: {},
-            description: "some description",
             expand: false,
             hierarchyTooltipEnabled: true,
             id: "1",
             lazyLoad: false,
-            name: "RecordNode name",
+            meta,
             root: true,
-            tag: "some tag",
             updateParentId: (parentId: string) => {
                 ;
             },
-            updateRecordDescription: () => new Promise<Response>((resolve => resolve(new Response()))),
+            updateRecordMeta: () => new Promise<Response>((resolve => resolve(new Response()))),
 
             deleteRecords: () => new Promise<Response>((resolve => resolve(new Response()))),
 
@@ -42,7 +47,7 @@ describe('component', () => {
 
         it("renders name", () => {
             const wrapper = shallow(<RecordNode {...props} />);
-            expect(wrapper.text()).toContain(props.name);
+            expect(wrapper.text()).toContain(props.meta.name);
         });
 
         it("renders records count", () => {
@@ -67,7 +72,7 @@ describe('component', () => {
 
         it("renders hierarchy expand option", () => {
             const wrapper = mount(<RecordNode {...props} />);
-            expect(wrapper.find('Tooltip').at(0).props().title).toEqual(props.tag);
+            expect(wrapper.find('Tooltip').at(0).props().title).toEqual(props.meta.tag);
         });
 
         it("does not render hierarchy tooltip", () => {
@@ -111,7 +116,7 @@ describe('component', () => {
             const propsWithVersions: IRecordProps = {
                 ...props,
                 expand: false,
-                versions: [{...props, id: "V1", tag: "Version tag 1"}, {...props, id: "V2", tag: "Version tag 2"}]
+                versions: [{...props, id: "V1", meta: {...props.meta, tag: "Version tag 1"}}, {...props, id: "V2", meta: {...props.meta, tag: "Version tag 2"}}]
             };
             const wrapper = mount(<RecordNode {...propsWithVersions} />);
             expect(wrapper.find(RecordNode).length).toEqual(1);
@@ -121,10 +126,10 @@ describe('component', () => {
             const propsWithVersions: IRecordProps = {
                 ...props,
                 expand: true,
-                versions: [{...props, id: "V1", tag: "Version tag 1", versions: []}, {
+                versions: [{...props, id: "V1", meta: {...props.meta, tag: "Version tag 1"}, versions: []}, {
                     ...props,
                     id: "V2",
-                    tag: "Version tag 2",
+                    meta: {...props.meta, tag: "Version tag 2"},
                     versions: []
                 }]
             };
@@ -135,10 +140,10 @@ describe('component', () => {
         it("renders one record if selected twice", () => {
             const propsWithVersions: IRecordProps = {
                 ...props,
-                versions: [{...props, id: "V1", tag: "Version tag 1", versions: []}, {
+                versions: [{...props, id: "V1", meta: {...props.meta, tag: "Version tag 1"}, versions: []}, {
                     ...props,
                     id: "V2",
-                    tag: "Version tag 2",
+                    meta: {...props.meta, tag: "Version tag 2"},
                     versions: []
                 }]
             };
@@ -173,10 +178,10 @@ describe('component', () => {
             const wrapper = mount(<RecordNode {...props} />);
             const button = wrapper.findWhere(w => w.prop("title") === "Description").first();
             button.simulate('click');
-            expect(wrapper.findWhere(c => c.prop("rawText") === props.description).length).toEqual(1);
+            expect(wrapper.findWhere(c => c.prop("rawText") === props.meta.description).length).toEqual(1);
             const updatedText = "new text";
             wrapper.find('textarea').last().simulate('change', {target: {value: updatedText}});
-            expect(wrapper.findWhere(c => c.prop("rawText") === props.description).length).toEqual(0);
+            expect(wrapper.findWhere(c => c.prop("rawText") === props.meta.description).length).toEqual(0);
             expect(wrapper.findWhere(c => c.prop("rawText") === updatedText).length).toEqual(1);
         });
 
@@ -189,15 +194,15 @@ describe('component', () => {
             const closeButton = wrapper.find('Button').last();
             closeButton.simulate('click');
             openButton.simulate('click');
-            expect(wrapper.findWhere(c => c.prop("rawText") === props.description).length).toEqual(1);
+            expect(wrapper.findWhere(c => c.prop("rawText") === props.meta.description).length).toEqual(1);
         });
 
         it("state update callback", () => {
-            const spyOnSave = sinon.spy(props, 'updateRecordDescription');
+            const spyOnSave = sinon.spy(props, 'updateRecordMeta');
             const wrapper = mount(<RecordNode {...props} />);
             const button = wrapper.findWhere(w => w.prop("title") === "Description").first();
             button.simulate('click');
-            expect(wrapper.findWhere(c => c.prop("rawText") === props.description).length).toEqual(1);
+            expect(wrapper.findWhere(c => c.prop("rawText") === props.meta.description).length).toEqual(1);
             const updatedText = "new text";
             wrapper.find('textarea').last().simulate('change', {target: {value: updatedText}});
             const allButtons = wrapper.find('Button');
@@ -205,7 +210,7 @@ describe('component', () => {
             saveButton.simulate('click');
             expect(spyOnSave.callCount).toEqual(1);
             expect(spyOnSave.args[0][0]).toEqual(props.id);
-            expect(spyOnSave.args[0][1]).not.toEqual(props.description);
+            expect(spyOnSave.args[0][1]).not.toEqual(props.meta.description);
             expect(spyOnSave.args[0][1]).toEqual(updatedText);
         });
     });
@@ -221,7 +226,7 @@ describe('component', () => {
         });
 
         it("calls description update on save click", () => {
-            const updateDescriptionSpy = sinon.spy(props, "updateRecordDescription");
+            const updateDescriptionSpy = sinon.spy(props, "updateRecordMeta");
             const wrapper = shallow(<RecordNode {...props} />);
             const button = wrapper.findWhere(w => w.prop("title") === "Description").first();
             button.simulate('click');
@@ -232,7 +237,7 @@ describe('component', () => {
         });
 
         it("does not call description update on cancel click", () => {
-            const updateDescriptionSpy = sinon.spy(props, "updateRecordDescription");
+            const updateDescriptionSpy = sinon.spy(props, "updateRecordMeta");
             const wrapper = shallow(<RecordNode {...props} />);
             const button = wrapper.findWhere(w => w.prop("title") === "Description").first();
             button.simulate('click');

@@ -10,11 +10,12 @@ import UpdateIcon from '@material-ui/icons/Update';
 import WarningIcon from '@material-ui/icons/Warning';
 import {SnackbarProvider} from "notistack";
 import * as React from 'react';
-import {Route} from "react-router";
-import {BrowserRouter} from "react-router-dom";
+import {Redirect, Route, Switch} from "react-router";
+import {BrowserRouter, Link} from "react-router-dom";
 import './App.css';
 import CodeCallbackPage from "./component/page/CodeCallbackPage";
 import HistoryPage from "./component/page/HistoryPage";
+import LoginPage from "./component/page/LoginPage";
 import MainPage from "./component/page/MainPage";
 import PrimarySearchAppBar from "./component/PrimarySearchAppBar";
 import Client from "./model/Client";
@@ -57,8 +58,6 @@ class App extends React.Component<{}, IAppState> {
         },
     });
 
-    private client = new Client();
-
     constructor(props: any) {
         super(props);
         this.state = {
@@ -71,68 +70,95 @@ class App extends React.Component<{}, IAppState> {
         this.onEventDismiss = this.onEventDismiss.bind(this);
     }
 
-    public componentDidMount(): void {
-        this.client.countUnreadEvents()
-            .then(r => r.ok ? r.text() : new Promise((resolve => resolve("-1"))))
-            .then(countText => this.setState({unreadEventsCount: +countText}))
-    }
-
     public render() {
         return (
             <BrowserRouter>
                 <SnackbarProvider maxSnack={100} anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
                                   iconVariant={iconVariants as any}
                                   autoHideDuration={1000 * 60 * 15}>
-                    <MuiThemeProvider theme={this.theme}>
-                        <Notifications {...this.client} eventToDismiss={this.state.readEvent}
-                                       onEventReceived={this.onEventReceived}
-                                       onEventDismiss={this.onEventDismiss}/>
-                        <div className="App">
-                            <PrimarySearchAppBar
-                                status={this.state.status}
-                                unreadCount={this.state.unreadEventsCount}
-                                searchItems={this.state.searchItems}/>
-                            {this.state.replicationProgress && this.state.replicationProgress.done !== this.state.replicationProgress.total &&
-                            <Tooltip
-                                title={`REPLICATING ${this.state.replicationProgress.done} of ${this.state.replicationProgress.total}`}>
-                                <LinearProgress variant="determinate" color="secondary"
-                                                value={100 * this.state.replicationProgress.done / this.state.replicationProgress.total}/>
-                            </Tooltip>
-                            }
-
-                            <Route path="/" exact={true} render={this.renderMainPage}/>
-                            <Route path="/history" render={this.renderHistoryPage}/>
-                            <Route path="/code" render={this.renderCodeCallbackPage}/>
-                        </div>
-                    </MuiThemeProvider>
+                    {this.state.client ? (<MuiThemeProvider theme={this.theme}>
+                            <Notifications {...this.state.client!!} eventToDismiss={this.state.readEvent}
+                                           onEventReceived={this.onEventReceived}
+                                           onEventDismiss={this.onEventDismiss}/>
+                            <div className="App">
+                                <PrimarySearchAppBar
+                                    onLogout={this.onAuthenticated}
+                                    status={this.state.status}
+                                    unreadCount={this.state.unreadEventsCount}
+                                    searchItems={this.state.searchItems}/>
+                                {this.state.replicationProgress && this.state.replicationProgress.done !== this.state.replicationProgress.total &&
+                                <Tooltip
+                                    title={`REPLICATING ${this.state.replicationProgress.done} of ${this.state.replicationProgress.total}`}>
+                                    <LinearProgress variant="determinate" color="secondary"
+                                                    value={100 * this.state.replicationProgress.done / this.state.replicationProgress.total}/>
+                                </Tooltip>
+                                }
+                                <Switch>
+                                    <Route path="/" exact={true} render={this.renderMainPage}/>
+                                    <Route path="/history" exact={true} render={this.renderHistoryPage}/>
+                                    <Route path="/code" exact={true} render={this.renderCodeCallbackPage}/>
+                                    <Route component={this.NoMatch}/>
+                                </Switch>
+                            </div>
+                        </MuiThemeProvider>) :
+                        (<MuiThemeProvider theme={this.theme}>
+                            <Switch>
+                                <Redirect exact={true} from={"/"} to={{pathname: "/login", state: {referrer: "/"}}}/>
+                                <Redirect exact={true} from={"/history"}
+                                          to={{pathname: "/login", state: {referrer: "/history"}}}/>
+                                <Redirect exact={true} from={"/code"}
+                                          to={{pathname: "/login", state: {referrer: "/code"}}}/>
+                                <Route path="/login" exact={true} render={this.renderLoginPage}/>
+                                <Route component={this.NoMatch}/>
+                            </Switch>
+                        </MuiThemeProvider>)
+                    }
                 </SnackbarProvider>
             </BrowserRouter>
         );
     }
+
+    private NoMatch = () => {
+        return (
+            <div className={"centerScreen"}>
+                <h3>
+                    404
+                    <br/>
+                    Not Found
+                    <br/>
+                    <Link to={"/"}>Go Home, You Are Drunk :]</Link>
+                </h3>
+            </div>
+        );
+    }
+
+    private renderLoginPage = () => {
+        return <LoginPage onAuthenticated={this.onAuthenticated}/>
+    };
 
     private renderMainPage() {
         return <MainPage
             payload={this.state.payload}
             onSearchItemsUpdate={this.onSearchItemsUpdate}
             onStatusChange={this.onStatusChange}
-            client={this.client}/>
+            client={this.state.client!!}/>
     }
 
     private renderHistoryPage() {
         return <HistoryPage
-            setHistoryAsRead={this.client.setHistoryAsRead}
-            deleteHistory={this.client.deleteHistory}
+            setHistoryAsRead={this.state.client!!.setHistoryAsRead}
+            deleteHistory={this.state.client!!.deleteHistory}
             onEventRead={this.onEventRead}
-            setEventAsRead={this.client.setEventAsRead}
-            getHistoryPage={this.client.getHistoryPage}
-            getHistory={this.client.getHistory}
+            setEventAsRead={this.state.client!!.setEventAsRead}
+            getHistoryPage={this.state.client!!.getHistoryPage}
+            getHistory={this.state.client!!.getHistory}
             newEvent={this.state.newOrDismissedEvent}/>;
     }
 
     private renderCodeCallbackPage() {
-        return <CodeCallbackPage getCodeCallback={this.client.getCodeCallback}
-                                 checkCodeCallback={this.client.checkCodeCallback}
-                                 updateCodeCallback={this.client.updateCodeCallback}/>;
+        return <CodeCallbackPage getCodeCallback={this.state.client!!.getCodeCallback}
+                                 checkCodeCallback={this.state.client!!.checkCodeCallback}
+                                 updateCodeCallback={this.state.client!!.updateCodeCallback}/>;
     }
 
     private onEventReceived(event: Event) {
@@ -154,7 +180,7 @@ class App extends React.Component<{}, IAppState> {
 
     private onEventDismiss(event: Event) {
         if (!event.read) {
-            this.client.setEventAsRead(event)
+            this.state.client!!.setEventAsRead(event)
                 .then(r => this.setState({
                     newOrDismissedEvent: event,
                     unreadEventsCount: this.state.unreadEventsCount - 1
@@ -176,7 +202,20 @@ class App extends React.Component<{}, IAppState> {
 
     private onStatusChange = (status: string) => {
         this.setState({status});
-    }
+    };
+
+    private onAuthenticated = (client?: Client, redirectCallback?: () => void) => {
+        if (client !== undefined) {
+            client.countUnreadEvents()
+                .then(r => r.ok ? r.text() : new Promise((resolve => resolve("-1"))))
+                .then(countText => this.setState({client, unreadEventsCount: +countText}, redirectCallback))
+        } else {
+            if (this.state.client) {
+                this.state.client.logout();
+            }
+            this.setState({client});
+        }
+    };
 }
 
 interface IAppState {
@@ -186,7 +225,8 @@ interface IAppState {
     payload?: Payload;
     replicationProgress?: Progress;
     unreadEventsCount: number;
-    status?: string
+    status?: string;
+    client?: Client;
 }
 
 export default App;

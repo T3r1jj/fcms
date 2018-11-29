@@ -11,6 +11,7 @@ import CallbackIcon from '@material-ui/icons/CallMissed';
 import HomeIcon from '@material-ui/icons/Home';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import NotificationsIcon from '@material-ui/icons/Notifications';
+import LogoutIcon from '@material-ui/icons/PowerSettingsNew';
 import SearchIcon from '@material-ui/icons/Search';
 import React from 'react';
 import {Link} from "react-router-dom";
@@ -196,6 +197,12 @@ class PrimarySearchAppBar extends React.PureComponent<IAppBarProps, IAppBarState
                     </IconButton>
                     <p>Notifications</p>
                 </MenuItem>
+                <MenuItem onClick={this.logout}>
+                    <IconButton color="inherit">
+                        <LogoutIcon/>
+                    </IconButton>
+                    <p>Logout</p>
+                </MenuItem>
             </Menu>
         );
 
@@ -246,6 +253,9 @@ class PrimarySearchAppBar extends React.PureComponent<IAppBarProps, IAppBarState
                                     {notificationIcon}
                                 </Link>
                             </IconButton>
+                            <IconButton color={"inherit"} onClick={this.logout}>
+                                <LogoutIcon/>
+                            </IconButton>
                         </div>
                         <div className={getClasses().sectionMobile}>
                             <IconButton aria-haspopup="true" onClick={this.handleMobileMenuOpen} color="inherit">
@@ -258,6 +268,10 @@ class PrimarySearchAppBar extends React.PureComponent<IAppBarProps, IAppBarState
             </div>
         );
     }
+
+    private logout = () => {
+        this.props.onLogout();
+    };
 
     private handleChange = (selectedOption: SearchItem) => {
         this.setState({selectedOption});
@@ -302,6 +316,8 @@ interface IAppBarProps extends AppBarProps {
     searchItems?: SearchItem[];
     unreadCount: number;
     status?: string;
+
+    onLogout(): void;
 }
 
 interface IAppBarState {

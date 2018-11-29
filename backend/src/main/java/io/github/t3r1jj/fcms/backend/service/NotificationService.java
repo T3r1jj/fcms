@@ -4,19 +4,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.t3r1jj.fcms.backend.model.Event;
 import org.atmosphere.config.managed.Encoder;
 import org.atmosphere.cpr.AtmosphereResource;
+import org.atmosphere.cpr.AtmosphereResourceEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * This service is only for notifications. Use {@link HistoryService} for logging events together with notification.
  */
 @Service
 public class NotificationService {
-    public final List<AtmosphereResource> resources = new ArrayList<>();
+    private final List<AtmosphereResource> resources = new CopyOnWriteArrayList<>();
     private final JacksonEncoder jacksonEncoder;
 
     @Autowired
@@ -29,6 +30,14 @@ public class NotificationService {
         resources.stream()
                 .flatMap(r -> r.broadcasters().stream())
                 .forEach(b -> b.broadcast(json));
+    }
+
+    public void add(AtmosphereResource resource) {
+        resources.add(resource);
+    }
+
+    public void cleanUp(AtmosphereResourceEvent event) {
+        resources.removeIf(r -> r.isCancelled() || event.isCancelled() && event.getResource().uuid().equals(r.uuid()));
     }
 
     public static class JacksonEncoder implements Encoder<Event, String> {

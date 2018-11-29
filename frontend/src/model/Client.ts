@@ -12,13 +12,33 @@ import RecordMeta from "./RecordMeta";
 
 export default class Client {
 
+    private readonly request: Atmosphere.Request = new (Atmosphere as any).AtmosphereRequest();
+    private readonly socket: any = Atmosphere;
     private headers = new Headers();
-    private username = "admin";
-    private password = "admin";
+    private readonly username: string;
+    private readonly password: string;
 
-    constructor() {
+    constructor(username: string, password: string) {
+        this.username = username;
+        this.password = password;
         this.headers.set('Authorization', 'Basic ' + new Buffer(this.username + ":" + this.password).toString('base64'));
     }
+
+    public isValidUser = () => {
+        return this.countUnreadEvents();
+    };
+
+    public logout = () => {
+        window.console.log("unsub")
+        this.request.onOpen = undefined;
+        this.request.onReconnect = undefined;
+        this.request.onMessage = undefined;
+        this.request.onError = undefined;
+        this.request.onClose = undefined;
+        this.request.onReopen = undefined;
+        this.request.onClientTimeout = undefined;
+        this.socket.unsubscribe();
+    };
 
     public getConfiguration = () => {
 
@@ -226,17 +246,16 @@ export default class Client {
     // 2. The framework doesn't seem to support two different urls - wrong ws auth causes exception, switching url on transportFailure creates duplicate connection (messages x2)
     // 3. Different param combinations for header filters cause some callbacks to not fire. attachHeadersAsQueryString=false and readResponsesHeaders=false are required for long-pooling with basic auth, but then onOpen does not get called (use streaming which seems to work fine
     // 4. attachHeadersAsQueryString=true is required for websocket, otherwise onOpen is not called
+    // 5. cannot unsubscribe on websocket with auth url because its not supported cors protocol (?) 'streaming; event is sent to the backend which causes reconnection // fixed b y filtering isDestroyable
     // Workaround: Initially use web socket with below parameters, if it fails on a) invalid auth - catch exception and resubscribe with streaming and long-pooling fallback; on b) standard error - resubscribe likewise
     // TODO: refactor
     public subscribeToNotifications = (notifications: INotifications) => {
-        window.console.log("IS DOUBLE?")
-        const socket: any = Atmosphere;
-        const request: Atmosphere.Request = new (Atmosphere as any).AtmosphereRequest();
-        request.url = `ws://localhost:8080/api/notification`
+        const request = this.request;
+        request.url = `ws://${this.username}:${this.password}@localhost:8080/api/notification`
         request.contentType = "application/json";
         request.transport = 'websocket';
         request.fallbackTransport = request.transport;
-        request.reconnectInterval = 1000 * 1;
+        request.reconnectInterval = 1000 * 10;
         request.shared = false;
         request.maxReconnectOnClose = 5;
         const headers: any = {};
@@ -245,7 +264,7 @@ export default class Client {
         request.headers = {Authorization: headers.authorization};
         request.enableXDR = true;
         request.enableProtocol = true;
-        request.readResponsesHeaders = false;
+        request.readResponsesHeaders = true;
         request.dropHeaders = true;
         request.withCredentials = false;
         request.attachHeadersAsQueryString = true;
@@ -263,7 +282,7 @@ export default class Client {
                 request.dropHeaders = false;
                 request.withCredentials = false;
                 request.attachHeadersAsQueryString = false;
-                socket.subscribe(request);
+                this.socket.subscribe(request);
             } else {
                 notifications.onError();
             }
@@ -272,7 +291,7 @@ export default class Client {
         request.onReopen = (_, response: Atmosphere.Response) => notifications.onReopen(response.transport!);
         request.onClientTimeout = notifications.onClientTimeout;
         try {
-            socket.subscribe(request);
+            this.socket.subscribe(request);
         } catch (e) {
             request.transport = 'streaming';
             request.fallbackTransport = 'long-polling';
@@ -283,7 +302,7 @@ export default class Client {
             request.dropHeaders = false;
             request.withCredentials = false;
             request.attachHeadersAsQueryString = false;
-            socket.subscribe(request);
+            this.socket.subscribe(request);
         }
     };
 

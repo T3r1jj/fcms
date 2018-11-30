@@ -173,7 +173,6 @@ export class Configuration extends React.Component<IConfigurationProps, IConfigu
                             if (label) {
                                 label += ': ';
                             }
-                            window.console.log(tooltipItem.yLabel);
                             label += Formatter.formatBytes(tooltipItem.yLabel);
                             return label;
                         }

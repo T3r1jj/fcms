@@ -29,7 +29,6 @@ export default class Client {
     };
 
     public logout = () => {
-        window.console.log("unsub")
         this.request.onOpen = undefined;
         this.request.onReconnect = undefined;
         this.request.onMessage = undefined;

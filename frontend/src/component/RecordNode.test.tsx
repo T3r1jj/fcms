@@ -67,7 +67,7 @@ describe('component', () => {
 
         it("renders description option", () => {
             const wrapper = mount(<RecordNode {...props} />);
-            expect(wrapper.find('Tooltip').at(2).props().title).toEqual("Description");
+            expect(wrapper.find('Tooltip').at(3).props().title).toEqual("Description");
         });
 
         it("renders hierarchy expand option", () => {
@@ -81,9 +81,9 @@ describe('component', () => {
             expect(wrapper.text()).not.toContain("Select child record");
         });
 
-        it("does not render more or less than 4 option (expand,add,update,delete)", () => {
+        it("does not render more or less than 5 options (expand,add,update,delete)", () => {
             const wrapper = mount(<RecordNode {...props} />);
-            expect(wrapper.find('Tooltip').length).toEqual(4);
+            expect(wrapper.find('Tooltip').length).toEqual(5);
         });
 
         it("renders backups if there are any", () => {
@@ -158,18 +158,18 @@ describe('component', () => {
             const wrapper = shallow(<RecordNode {...props} />);
             const button = wrapper.findWhere(w => w.prop("title") === "Description").first();
             expect(wrapper.find(Description).length).toEqual(1);
-            expect(wrapper.find(Dialog).first().prop('open')).toEqual(false);
+            expect(wrapper.find(Dialog).at(1).prop('open')).toEqual(false);
             button.simulate('click');
-            expect(wrapper.find(Dialog).first().prop('open')).toEqual(true);
+            expect(wrapper.find(Dialog).at(1).prop('open')).toEqual(true);
         });
 
         it("renders deletion on click", () => {
             const wrapper = shallow(<RecordNode {...props} />);
             const button = wrapper.findWhere(w => w.prop("title") === "Delete").first();
             expect(wrapper.find(Description).length).toEqual(1);
-            expect(wrapper.find(Dialog).at(1).prop('open')).toEqual(false);
+            expect(wrapper.find(Dialog).at(2).prop('open')).toEqual(false);
             button.simulate('click');
-            expect(wrapper.find(Dialog).at(1).prop('open')).toEqual(true);
+            expect(wrapper.find(Dialog).at(2).prop('open')).toEqual(true);
         });
     });
 
@@ -209,9 +209,7 @@ describe('component', () => {
             const saveButton = allButtons.at(allButtons.length - 2);
             saveButton.simulate('click');
             expect(spyOnSave.callCount).toEqual(1);
-            expect(spyOnSave.args[0][0]).toEqual(props.id);
-            expect(spyOnSave.args[0][1]).not.toEqual(props.meta.description);
-            expect(spyOnSave.args[0][1]).toEqual(updatedText);
+            expect(spyOnSave.args[0][0]).toEqual({...props.meta, description: updatedText});
         });
     });
 
@@ -233,7 +231,7 @@ describe('component', () => {
             const saveButton = wrapper.find(Dialog).first().find(Button).first();
             saveButton.simulate('click');
             expect(updateDescriptionSpy.calledOnce).toBeTruthy();
-            expect(updateDescriptionSpy.args[0][0]).toEqual(props.id);
+            expect(updateDescriptionSpy.args[0][0]).toEqual(props.meta);
         });
 
         it("does not call description update on cancel click", () => {
@@ -251,7 +249,7 @@ describe('component', () => {
             const wrapper = shallow(<RecordNode {...props} />);
             const button = wrapper.findWhere(w => w.prop("title") === "Delete").first();
             button.simulate('click');
-            const deleteButton = wrapper.find(Dialog).at(1).find(Button).first();
+            const deleteButton = wrapper.find(Dialog).at(2).find(Button).first();
             deleteButton.simulate('click');
             expect(deleteSpy.calledOnce).toBeTruthy();
             expect(deleteSpy.args[0][0]).toEqual(props.id);
@@ -262,7 +260,7 @@ describe('component', () => {
             const wrapper = shallow(<RecordNode {...props} />);
             const button = wrapper.findWhere(w => w.prop("title") === "Delete").first();
             button.simulate('click');
-            const deleteButton = wrapper.find(Dialog).at(1).find(Button).at(1);
+            const deleteButton = wrapper.find(Dialog).at(2).find(Button).at(1);
             deleteButton.simulate('click');
             expect(forceDeleteSpy.calledOnce).toBeTruthy();
             expect(forceDeleteSpy.args[0][0]).toEqual(props.id);
@@ -274,7 +272,7 @@ describe('component', () => {
             const wrapper = shallow(<RecordNode {...props} />);
             const button = wrapper.findWhere(w => w.prop("title") === "Delete").first();
             button.simulate('click');
-            const deleteButton = wrapper.find(Dialog).at(1).find(Button).at(2);
+            const deleteButton = wrapper.find(Dialog).at(2).find(Button).at(2);
             deleteButton.simulate('click');
             expect(deleteSpy.calledOnce).toBeFalsy();
             expect(forceDeleteSpy.calledOnce).toBeFalsy();

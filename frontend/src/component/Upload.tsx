@@ -1,5 +1,5 @@
 import {Button, Checkbox, FormControlLabel, TextField} from '@material-ui/core';
-import FormLabel from "@material-ui/core/es/FormLabel";
+import FormLabel from "@material-ui/core/FormLabel";
 import LinearProgress from "@material-ui/core/LinearProgress/LinearProgress";
 import * as React from "react";
 import Dropzone from 'react-dropzone';

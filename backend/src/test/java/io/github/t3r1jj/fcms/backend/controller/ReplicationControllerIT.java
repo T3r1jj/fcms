@@ -37,6 +37,7 @@ public class ReplicationControllerIT extends AbstractTestNGSpringContextTests {
         verify(replicationService, times(1)).safelyReplicateAll();
         RestAssured
                 .given()
+                .auth().basic("admin","admin")
                 .when()
                 .post("/api/replication")
                 .then()

@@ -4,6 +4,7 @@ import LinearProgress from "@material-ui/core/LinearProgress/LinearProgress";
 import TextField from "@material-ui/core/TextField/TextField";
 import {mount, shallow} from 'enzyme';
 import * as React from 'react';
+import 'reflect-metadata';
 import Health from "../model/health/Health";
 import IConfiguration from '../model/IConfiguration';
 import IRecord from "../model/IRecord";
@@ -21,7 +22,7 @@ describe('component', () => {
 
     beforeEach(() => {
         onStatusChange = () => undefined;
-        restartReplication  = () => {
+        restartReplication = () => {
             return new Promise<Response>((resolve, reject) => {
                 resolve(new Response())
             });
@@ -53,7 +54,8 @@ describe('component', () => {
 
     describe('rendering', () => {
         it('renders without crashing', () => {
-            shallow(<Configuration classes={classes} getConfiguration={getConfiguration} onStatusChange={onStatusChange} restartReplication={restartReplication}
+            shallow(<Configuration classes={classes} getConfiguration={getConfiguration} onStatusChange={onStatusChange}
+                                   restartReplication={restartReplication}
                                    updateConfiguration={updateConfiguration} getHealth={getHealth} records={records}/>);
         });
 
@@ -71,7 +73,8 @@ describe('component', () => {
 
         it('renders loading', () => {
             const wrapper = shallow(<Configuration classes={classes} getConfiguration={getConfiguration}
-                                                   records={records} onStatusChange={onStatusChange} restartReplication={restartReplication}
+                                                   records={records} onStatusChange={onStatusChange}
+                                                   restartReplication={restartReplication}
                                                    updateConfiguration={updateConfiguration} getHealth={getHealth}/>);
             expect(wrapper.find(LinearProgress).exists()).toBeTruthy();
         });
@@ -146,7 +149,7 @@ describe('component', () => {
             wrapper.find(Button).first().simulate('click');
             setImmediate(() => {
                 wrapper.update();
-                wrapper.find(Button).at(1).simulate('click');
+                wrapper.find(Button).at(wrapper.find(Button).length - 2).simulate('click');
                 setImmediate(() => {
                     wrapper.update();
                     expect(wrapper.find(Dialog).html()).toContain(someError);

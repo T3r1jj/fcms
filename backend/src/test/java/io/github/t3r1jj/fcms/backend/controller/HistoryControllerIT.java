@@ -48,6 +48,7 @@ public class HistoryControllerIT extends AbstractTestNGSpringContextTests {
         wholeHistory.forEach(eventRepository::save);
         RestAssured
                 .given()
+                .auth().basic("admin","admin")
                 .when()
                 .get("/api/history")
                 .then()

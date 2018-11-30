@@ -35,6 +35,7 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
     @Test
     public void testGetConfigurationShouldReturnMockedConfiguration() {
         RestAssured.given()
+                .auth().basic("admin","admin")
                 .when()
                 .get("/api/configuration")
                 .then()
@@ -48,6 +49,7 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
     @Test
     public void testPostConfigurationShouldBe200() {
         RestAssured.given()
+                .auth().basic("admin","admin")
                 .contentType(ContentType.JSON)
                 .body(defaultConfig)
                 .when()
@@ -60,6 +62,7 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
     @Test
     public void testPostConfigurationShouldUpdateGetConfiguration() {
         RestAssured.given()
+                .auth().basic("admin","admin")
                 .contentType(ContentType.JSON)
                 .body(defaultConfig)
                 .when()
@@ -69,6 +72,7 @@ public class ConfigurationControllerIT extends AbstractTestNGSpringContextTests 
                 .statusCode(200);
 
         RestAssured.given()
+                .auth().basic("admin","admin")
                 .when()
                 .get("/api/configuration")
                 .then()

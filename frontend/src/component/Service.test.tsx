@@ -10,6 +10,10 @@ describe('component', () => {
     beforeEach(() => {
         props = {
             apiKeys: [{label: "value name", value: "value name"}],
+            classes: {
+                primaryService: "primaryService",
+                secondaryService: "secondaryService"
+            },
             enabled: true,
             name: "api name",
             onServiceChange: (service: IService) => undefined,

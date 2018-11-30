@@ -8,13 +8,18 @@ import io.github.t3r1jj.fcms.external.upstream.api.MegauploadErrorResponse
 import org.apache.commons.io.FileUtils
 import org.jsoup.Jsoup
 import java.net.URL
+import java.util.function.Consumer
 
 
 open class Megaupload(baseUrl: String) : StorageInfoClient<MegauploadApi>(baseUrl, MegauploadApi::class.java), UpstreamStorage {
     constructor() : this("https://megaupload.nz")
 
     override fun upload(record: Record): RecordMeta {
-        val (size, body) = createFileForm(record)
+        return upload(record, null)
+    }
+
+    override fun upload(record: Record, bytesWrittenConsumer: Consumer<Long>?): RecordMeta {
+        val (size, body) = createFileForm(record, bytesWrittenConsumer)
         val response = client.upload(body).execute()
         if (response.isSuccessful) {
             return RecordMeta(record.name, response.body()!!.data.file.url.full, size)

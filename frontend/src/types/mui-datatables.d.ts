@@ -28,7 +28,7 @@ declare module "mui-datatables" {
         selectableRows?: boolean
         resizableColumns?: boolean
         customToolbar?: () => ReactNode
-        customToolbarSelect?: () => ReactNode
+        customToolbarSelect?: (selectedRows: any, displayData: any, setSelectedRows: any) => ReactNode
         customFooter?: () => ReactNode
         caseSensitive?: boolean
         responsive?: string

@@ -8,12 +8,17 @@ import io.github.t3r1jj.fcms.external.upstream.api.PutApi
 import org.apache.commons.io.FileUtils
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.function.Consumer
 
 open class Put(baseUrl: String) : StorageClient<PutApi>(baseUrl, PutApi::class.java), UpstreamStorage, CleanableStorage {
     constructor() : this("https://api.put.re")
 
     override fun upload(record: Record): RecordMeta {
-        val (size, body) = createFileForm(record)
+        return this.upload(record, null)
+    }
+
+    override fun upload(record: Record, bytesWrittenConsumer: Consumer<Long>?): RecordMeta {
+        val (size, body) = createFileForm(record, bytesWrittenConsumer)
         val response = client.upload(body).execute()
         if (response.isSuccessful) {
             return RecordMeta(record.name, response.body()!!.data.link, size)

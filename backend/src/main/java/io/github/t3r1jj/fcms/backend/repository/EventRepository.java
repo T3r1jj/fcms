@@ -14,4 +14,6 @@ public interface EventRepository extends MongoRepository<Event, ObjectId> {
     List<Event> findAllByOrderByTimeDesc();
 
     Page<Event> findAllByOrderByTimeDesc(Pageable pageable);
+
+    long countAllByReadFalse();
 }

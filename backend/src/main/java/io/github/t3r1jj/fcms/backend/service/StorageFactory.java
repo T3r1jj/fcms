@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class StorageFactory {
+public class StorageFactory {
     private static Log logger = LogFactory.getLog(StorageFactory.class);
     private Configuration configuration;
 
@@ -53,7 +53,7 @@ class StorageFactory {
      * @return AuthenticatedStorage which requires login
      */
     @NotNull
-    AuthenticatedStorage createAuthenticatedStorage(String primaryService) {
+    public AuthenticatedStorage createAuthenticatedStorage(String primaryService) {
         return instantiate(primaryService, new StorageClassFilter<>(AuthenticatedStorage.class));
     }
 

@@ -11,6 +11,7 @@ import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.verify
 import org.mockito.Spy
 import org.mockito.junit.jupiter.MockitoExtension
+import java.util.function.Consumer
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -78,10 +79,26 @@ class AuthenticatedStorageTemplateTest {
     }
 
     @Test
+    fun testUploadProgress() {
+        doReturn(true).`when`(storage).isLogged()
+        val progressListener = Consumer<Long> { }
+        storage.upload(record, progressListener)
+        verify(storage).doAuthenticatedUpload(record, progressListener)
+    }
+
+    @Test
     fun testDownload() {
         doReturn(true).`when`(storage).isLogged()
         storage.download(filePath)
         verify(storage).doAuthenticatedDownload(filePath)
+    }
+
+    @Test
+    fun testDownloadProgress() {
+        doReturn(true).`when`(storage).isLogged()
+        val progressListener = Consumer<Long> { }
+        storage.download(filePath, progressListener)
+        verify(storage).doAuthenticatedDownload(filePath, progressListener)
     }
 
     @Test

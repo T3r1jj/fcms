@@ -22,7 +22,12 @@ public class EventTestIT extends AbstractTestNGSpringContextTests {
     @Test
     public void getTimeShouldReturnFormattedJson() throws JsonProcessingException {
 
-        Event event = new Event("ignore", "ignore", Event.EventType.INFO, Instant.ofEpochMilli(1540486296971L));
+        Event event = new Event.Builder()
+                .formatTitle("ignore")
+                .formatDescription("ignore")
+                .setType(Event.Type.INFO)
+                .setTime(Instant.ofEpochMilli(1540486296971L))
+                .build();
         String formattedTime = "2018-10-25T16:51:36.971Z";
         String json = objectMapper.writeValueAsString(event);
         logger.info("Event parsed to json: " + json);

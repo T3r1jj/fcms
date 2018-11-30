@@ -31,7 +31,7 @@ public class ConfigurationService {
         configurationRepository.save(configuration);
     }
 
-    StorageFactory createStorageFactory() {
+    public StorageFactory createStorageFactory() {
         return new StorageFactory(getConfiguration());
     }
 

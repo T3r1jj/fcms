@@ -33,6 +33,7 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
     @Test
     public void testCheck404() {
         RestAssured.given()
+                .auth().basic("admin","admin")
                 .param("type", Code.Type.AfterReplicationCode)
                 .post("/api/code")
                 .then()
@@ -45,6 +46,7 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
         codeRepository.save(new OnReplicationCode.Builder().setCode("SIODJAS").build());
 
         RestAssured.given()
+                .auth().basic("admin","admin")
                 .param("type", Code.Type.OnReplicationCode)
                 .post("/api/code")
                 .then()
@@ -57,6 +59,7 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
         codeRepository.save(new OnReplicationCode.Builder().build());
 
         RestAssured.given()
+                .auth().basic("admin","admin")
                 .param("type", Code.Type.OnReplicationCode)
                 .get("/api/code")
                 .then()
@@ -69,6 +72,7 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
         OnReplicationCode code = new OnReplicationCode.Builder().setCode("test").build();
 
         RestAssured.given()
+                .auth().basic("admin","admin")
                 .contentType(ContentType.JSON)
                 .body(code)
                 .patch("/api/code")
@@ -85,6 +89,7 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
         codeRepository.save(code);
 
         RestAssured.given()
+                .auth().basic("admin","admin")
                 .contentType(ContentType.JSON)
                 .body(code)
                 .patch("/api/code")

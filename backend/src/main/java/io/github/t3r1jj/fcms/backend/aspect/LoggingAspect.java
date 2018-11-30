@@ -21,9 +21,9 @@ public class LoggingAspect {
     public Object around(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         Signature signature = proceedingJoinPoint.getSignature();
         Object[] arguments = proceedingJoinPoint.getArgs();
-        logger.debug("Entered {} with args: {}", signature.toString(), Arrays.toString(arguments));
+        logger.info("Entered {} with args: {}", signature.toString(), Arrays.toString(arguments));
         Object proceed = proceedingJoinPoint.proceed();
-        logger.debug("Successfully exited {} with args: {}", signature.toString(), Arrays.toString(arguments));
+        logger.info("Successfully exited {} with args: {}", signature.toString(), Arrays.toString(arguments));
         return proceed;
     }
 }

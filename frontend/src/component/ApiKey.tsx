@@ -5,6 +5,7 @@ import IApiKey from "../model/IApiKey";
 export const ApiKey: React.StatelessComponent<IApiKeyProps> = props => {
     return (
         <TextField
+            style={{margin: "0 0 1em 1em", width: "160px"}}
             key={props.index}
             inputProps={{'data-index': props.index}}
             label={props.label}

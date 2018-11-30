@@ -15,13 +15,15 @@ describe("component", () => {
             isUploadValid: (file, name1, parent1, tag) => true,
             upload(file: File, name: string, parent: string, tag: string): Promise<Response> {
                 return new Promise<Response>((resolve => resolve(new Response())))
-            }
+            },
+            progresses: []
         };
         invalidProps = {
             isUploadValid: (file, name1, parent1, tag) => false,
             upload(file: File, name: string, parent: string, tag: string): Promise<Response> {
                 return new Promise<Response>((resolve => resolve(new Response())))
-            }
+            },
+            progresses: []
         }
     });
 

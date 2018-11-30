@@ -1,10 +1,7 @@
 package io.github.t3r1jj.fcms.backend.service;
 
 import io.github.t3r1jj.fcms.backend.controller.exception.ResourceNotFoundException;
-import io.github.t3r1jj.fcms.backend.model.Configuration;
-import io.github.t3r1jj.fcms.backend.model.Event;
-import io.github.t3r1jj.fcms.backend.model.ExternalService;
-import io.github.t3r1jj.fcms.backend.model.StoredRecord;
+import io.github.t3r1jj.fcms.backend.model.*;
 import io.github.t3r1jj.fcms.backend.model.code.AfterReplicationCode;
 import io.github.t3r1jj.fcms.backend.model.code.OnReplicationCode;
 import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorage;
@@ -15,25 +12,29 @@ import io.github.t3r1jj.fcms.external.data.exception.StorageUnauthenticatedExcep
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
 import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class ReplicationService {
     private final ConfigurationService configurationService;
     private final RecordService recordService;
     private final HistoryService historyService;
+    private final NotificationService notificationService;
+    private final ThreadLocal<ProgressListenerFactory> localProgressFactory = new ThreadLocal<>(); // TODO: Refactor this into Replicator
 
-    public ReplicationService(ConfigurationService configurationService, RecordService recordService, HistoryService historyService) {
+    @Autowired
+    public ReplicationService(ConfigurationService configurationService, RecordService recordService, HistoryService historyService, NotificationService notificationService) {
         this.configurationService = configurationService;
         this.recordService = recordService;
         this.historyService = historyService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -52,10 +53,51 @@ public class ReplicationService {
 
     @AfterReplicationCode.Callback
     public void safelyReplicateAll() {
-        recordService.findAll()
-                .parallelStream()
+        addReplicationEvent("REPLICATION START", "Started replication for current records");
+        try {
+            safelyReplicateAllWithNotification();
+        } catch (Exception e) {
+            historyService.addAndNotify(new Event.Builder()
+                    .formatTitle("REPLICATION STOPPED")
+                    .formatDescription(e.getMessage())
+                    .setType(Event.Type.WARNING)
+                    .build());
+        } finally {
+            addReplicationEvent("REPLICATION END", "Ended replication. %s",
+                    localProgressFactory.get().getBandwidth());
+            localProgressFactory.remove();
+        }
+    }
+
+    private void safelyReplicateAllWithNotification() {
+        localProgressFactory.set(new ProgressListenerFactory(notificationService));
+        Collection<StoredRecord> records = recordService.findAll();
+        final long recordCount = records.size();
+        final AtomicInteger progress = new AtomicInteger(0);
+        notifyAboutReplicationProgress(recordCount, progress.get());
+        records.parallelStream()
                 .sorted(Collections.reverseOrder())
-                .forEach(this::replicateSafely);
+                .forEach(r -> {
+                    this.replicateSafely(r);
+                    notifyAboutReplicationProgress(recordCount, progress.incrementAndGet());
+                });
+    }
+
+    private void addReplicationEvent(String title, String description, Object... descriptionFormatArgs) {
+        historyService.addAndNotify(new Event.Builder()
+                .formatTitle(title)
+                .formatDescription(description, descriptionFormatArgs)
+                .setType(Event.Type.INFO)
+                .build());
+    }
+
+    private void notifyAboutReplicationProgress(long recordCount, long done) {
+        notificationService.broadcast(new Event.Builder()
+                .formatTitle("REPLICATION")
+                .formatDescription("PROGRESS")
+                .setType(Event.Type.PAYLOAD)
+                .setPayload(new Payload(new Progress(recordCount, done)))
+                .build());
     }
 
     private void replicateSafely(StoredRecord storedRecord) {
@@ -63,8 +105,9 @@ public class ReplicationService {
             replicate(storedRecord);
         } catch (Exception e) {
             historyService.addAndNotify(new Event.Builder()
-                    .formatTitle("REPLICATE [%s]", storedRecord.getName())
-                    .formatTitle("Error during replication of record with %s id:\n %s", storedRecord.getId().toString(), e.getMessage())
+                    .formatTitle("REPLICATE [%s]", storedRecord.getMeta().getName())
+                    .formatDescription("Error during replication of record with %s id:\n %s", storedRecord.getId().toString(), e.getMessage())
+                    .setType(Event.Type.ERROR)
                     .build()
             );
         }
@@ -168,9 +211,12 @@ public class ReplicationService {
     }
 
     private Record download(RecordMeta meta, AuthenticatedStorage storage) {
+        ProgressListener progressListener = new ProgressListener(new Progress(meta.getSize(), meta.getName(), storage.toString()),
+                notificationService, false);
         storage.login();
-        Record record = storage.download(meta.getPath());
+        Record record = storage.download(meta.getPath(), progressListener);
         storage.logout();
+        progressListener.accept(meta.getSize());
         return record;
     }
 
@@ -186,15 +232,18 @@ public class ReplicationService {
 
     private void upload(StoredRecord recordToStore, UpstreamStorage storage) {
         Record recordToUpload = recordToStore.prepareRecord();
+        ProgressListener progressListener = new ProgressListener(new Progress(recordToStore.getData().length, recordToStore.getMeta().getName(), storage.toString()),
+                notificationService, true);
         RecordMeta meta;
         try {
-            meta = storage.upload(recordToUpload);
+            meta = storage.upload(recordToUpload, progressListener);
         } catch (StorageUnauthenticatedException sue) {
             AuthenticatedStorage authenticatedStorage = sue.getStorage();
             authenticatedStorage.login();
-            meta = authenticatedStorage.upload(recordToUpload);
+            meta = authenticatedStorage.upload(recordToUpload, progressListener);
             authenticatedStorage.logout();
         }
+        progressListener.accept((long) recordToStore.getData().length);
         recordToStore.getBackups().put(storage.toString(), meta);
     }
 
@@ -239,7 +288,7 @@ public class ReplicationService {
                     .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage. Though, the storage might be ephemeral.", externalService,
                             meta.getName(), meta.getPath(), meta.getId())
-                    .setType(Event.EventType.DEBUG)
+                    .setType(Event.Type.DEBUG)
                     .build());
         }
     }
@@ -271,7 +320,7 @@ public class ReplicationService {
                     .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage due to an exception:\n", storage.toString(),
                             meta.getName(), meta.getPath(), meta.getId(), se.getMessage())
-                    .setType(Event.EventType.WARNING)
+                    .setType(Event.Type.WARNING)
                     .build());
         } catch (RuntimeException e) {
             historyService.addAndNotify(new Event.Builder()
@@ -279,7 +328,7 @@ public class ReplicationService {
                     .formatDescription("[%s] Backup of file %s with %s path and id of %s has been removed from " +
                                     "tracking but not storage due to an unknown exception:\n", storage.toString(),
                             meta.getName(), meta.getPath(), meta.getId(), e.getMessage())
-                    .setType(Event.EventType.WARNING)
+                    .setType(Event.Type.WARNING)
                     .build());
         }
     }

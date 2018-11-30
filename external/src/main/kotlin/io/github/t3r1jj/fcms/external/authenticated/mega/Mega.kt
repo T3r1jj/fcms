@@ -5,6 +5,7 @@ import com.github.eliux.mega.MegaUtils
 import com.github.eliux.mega.auth.MegaAuthCredentials
 import com.github.eliux.mega.cmd.AbstractMegaCmdPathHandler
 import com.github.eliux.mega.error.*
+import io.github.t3r1jj.fcms.external.Loggable
 import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorageTemplate
 import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
@@ -16,10 +17,12 @@ import net.bytebuddy.dynamic.loading.ClassReloadingStrategy
 import net.bytebuddy.implementation.MethodDelegation
 import net.bytebuddy.matcher.ElementMatchers
 import java.io.FileInputStream
+import java.lang.Exception
 import java.nio.file.Paths
+import java.util.function.Consumer
 
 open class Mega(private val userName: String, private val password: String) : AuthenticatedStorageTemplate() {
-    companion object {
+    companion object : Loggable {
         init {
             ByteBuddyAgent.install()
             ByteBuddy()
@@ -50,6 +53,9 @@ open class Mega(private val userName: String, private val password: String) : Au
                 else -> throw MegaUnexpectedFailureException()
             }
         }
+
+        val logger = logger();
+        const val progressRateMS: Long = 1000
     }
 
     private var session: MegaSession? = null
@@ -76,21 +82,54 @@ open class Mega(private val userName: String, private val password: String) : Au
     }
 
     override fun doAuthenticatedUpload(record: Record): RecordMeta {
+        return doAuthenticatedUpload(record, null)
+    }
+
+    override fun doAuthenticatedUpload(record: Record,  bytesWrittenConsumer: Consumer<Long>?): RecordMeta {
         val file = stream2file(record.data)
+        val size = file.length()
+        if (bytesWrittenConsumer != null) {
+            startProgressListener(record.path.split("/").last(), bytesWrittenConsumer)
+        }
         session!!.uploadFile(file.absolutePath, record.path)
                 .createRemoteIfNotPresent<AbstractMegaCmdPathHandler>()
                 .run()
-        return RecordMeta(record.name, record.path, file.length())
+        return RecordMeta(record.name, record.path, size)
     }
 
     override fun doAuthenticatedDownload(filePath: String): Record {
+        return doAuthenticatedDownload(filePath, null)
+    }
+
+    override fun doAuthenticatedDownload(filePath: String, bytesWrittenConsumer: Consumer<Long>?): Record {
         val tempFile = java.io.File.createTempFile(System.currentTimeMillis().toString(), null)
         tempFile.delete()
+        if (bytesWrittenConsumer != null) {
+            startProgressListener(filePath, bytesWrittenConsumer)
+        }
         session!!.get(filePath)
                 .setLocalPath(tempFile.absolutePath)
                 .run()
         val path = Paths.get(filePath)
         return Record(path.fileName.toString(), filePath, FileInputStream(tempFile.absolutePath))
+    }
+
+    private fun startProgressListener(transferName: String, bytesWrittenConsumer: Consumer<Long>) {
+        Thread {
+            var bytesTotal = 0L
+            try {
+                do {
+                    Thread.sleep(progressRateMS)
+                    val transfer = MegaCmdTransfers().call().find { t -> java.lang.String(t.sourcePath).contains(transferName) }
+                    transfer!!
+                    bytesWrittenConsumer.accept(transfer.bytesWritten)
+                    bytesTotal = transfer.bytesTotal
+                } while (transfer!!.progress <= 0.9999)
+            } catch (e: Exception) {
+                logger.error("Progress listener finished listening", e)
+                bytesWrittenConsumer.accept(bytesTotal)
+            }
+        }.start()
     }
 
     override fun doAuthenticatedFindAll(filePath: String): List<RecordMeta> {

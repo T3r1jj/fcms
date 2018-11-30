@@ -14,6 +14,7 @@ describe('notifications', () => {
     beforeEach(() => {
         props = {
             enqueueSnackbar: (message, options?) => undefined,
+            onEventDismiss: (event) => undefined,
             onEventReceived: (event) => undefined,
             onPresentSnackbar: variant => undefined,
             subscribeToNotifications: (notifications: INotifications) => undefined,
@@ -54,6 +55,7 @@ describe('notifications', () => {
                 autoHideDuration={defaultAutoHideTime}>
                 <div><Notifications enqueueSnackbar={props.enqueueSnackbar}
                                     onEventReceived={props.onEventReceived}
+                                    onEventDismiss={props.onEventDismiss}
                                     subscribeToNotifications={props.subscribeToNotifications}
                                     onPresentSnackbar={props.onPresentSnackbar}/></div>
             </SnackbarProvider>)
@@ -119,6 +121,8 @@ describe('notifications', () => {
         it('notifies about event from the backend', () => {
             mountWrapperWithProps();
             const event = new Event();
+            event.id = "some id";
+            event.read = false;
             event.title = "end of the world";
             event.description = "end of the description";
             const preMessage: any = JSON.parse(JSON.stringify(event));

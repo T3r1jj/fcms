@@ -15,8 +15,7 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 
@@ -30,9 +29,9 @@ public class HistoryControllerTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         wholeHistory = Arrays.asList(
-                new Event("event1", "description1", Event.EventType.INFO),
-                new Event("event22", "description22", Event.EventType.WARNING),
-                new Event("event333", "description333", Event.EventType.ERROR));
+                new Event("event1", "description1", Event.Type.INFO),
+                new Event("event22", "description22", Event.Type.WARNING),
+                new Event("event333", "description333", Event.Type.ERROR));
     }
 
     @Test
@@ -93,6 +92,43 @@ public class HistoryControllerTest {
                 .statusCode(200);
     }
 
+    @Test
+    public void readAllShouldReturnStatus200() {
+        RestAssuredMockMvc
+                .given()
+                .standaloneSetup(new HistoryController(historyService))
+                .when()
+                .patch("/api/history")
+                .then()
+                .assertThat()
+                .statusCode(200);
+    }
+
+    @Test
+    public void readOneShouldReturnStatus200() {
+        RestAssuredMockMvc
+                .given()
+                .standaloneSetup(new HistoryController(historyService))
+                .param("eventId","")
+                .when()
+                .post("/api/history")
+                .then()
+                .assertThat()
+                .statusCode(200);
+    }
+
+    @Test
+    public void countAllUnreadShouldReturnCountAnd200Status() {
+        RestAssuredMockMvc
+                .given()
+                .standaloneSetup(new HistoryController(historyService))
+                .when()
+                .get("/api/history/unread")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body(is(equalTo("0")));
+    }
 
 }
 

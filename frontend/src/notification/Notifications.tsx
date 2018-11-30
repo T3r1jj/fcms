@@ -5,13 +5,15 @@ import {InjectedNotistackProps, withSnackbar} from "notistack";
 import * as React from "react";
 import Event from "../model/event/Event";
 import {EventType} from "../model/event/EventType";
+import {ClientPayloadType} from "../model/event/PayloadType";
 import {INotifications} from "../model/INotifiations";
 
+// TODO: Enforce VariantType from App
 export class Notifications extends React.Component<INotificationsProps, {}> implements INotifications {
 
-    private static readonly DISMISS_BUTTON = <Button size="small" color={"inherit"}>Dismiss</Button>;
     private static readonly ONE_MINUTE = 1000 * 60;
-    private static readonly FOREVER = Number.MAX_VALUE;
+    private static readonly SEC_5 = 1000 * 5;
+    private static readonly FOREVER = 2000000000;
 
     public componentDidMount(): void {
         this.props.subscribeToNotifications(this);
@@ -21,9 +23,18 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
         return (null);
     }
 
+    public componentWillReceiveProps(nextProps: Readonly<INotificationsProps>, nextContext: any): void {
+        if (nextProps.eventToDismiss !== undefined && nextProps.eventToDismiss.id !== (this.props.eventToDismiss ? this.props.eventToDismiss.id : undefined)) {
+            const element: any = document.getElementById(nextProps.eventToDismiss.id);
+            if (element) {
+                element.click();
+            }
+        }
+    }
+
     public onOpen = () => {
         this.props.enqueueSnackbar("Connected to the server", {
-            action: Notifications.DISMISS_BUTTON,
+            action: this.createDismissButton(),
             autoHideDuration: Notifications.ONE_MINUTE,
             variant: 'success'
         })
@@ -31,7 +42,7 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
 
     public onReconnect = () => {
         this.props.enqueueSnackbar("Reconnecting to the server", {
-            action: Notifications.DISMISS_BUTTON,
+            action: this.createDismissButton(),
             autoHideDuration: Notifications.ONE_MINUTE,
             variant: 'warning',
         })
@@ -47,14 +58,24 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
                 errors = [e];
             } finally {
                 if (errors.length === 0) {
-                    this.props.enqueueSnackbar(event.title, {
-                        action: Notifications.DISMISS_BUTTON,
-                        variant: EventType.toNotificationType(event.type) as any,
-                    });
+                    if (event.type === EventType.PAYLOAD) {
+                        event.payload!.onConsume = (info, variant) => {
+                            this.props.enqueueSnackbar(info, {
+                                action: this.createDismissButton(event),
+                                autoHideDuration: Notifications.SEC_5,
+                                variant: ClientPayloadType.toNotificationType(variant) as any
+                            });
+                        }
+                    } else {
+                        this.props.enqueueSnackbar(event.title, {
+                            action: this.createDismissButton(event),
+                            variant: EventType.toNotificationType(event.type) as any
+                        });
+                    }
                     this.props.onEventReceived(event);
                 } else {
                     this.props.enqueueSnackbar('Invalid json', {
-                        action: Notifications.DISMISS_BUTTON,
+                        action: this.createDismissButton(),
                         autoHideDuration: Notifications.FOREVER,
                         variant: 'error',
                     });
@@ -63,7 +84,7 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
             }
         } else {
             this.props.enqueueSnackbar('Invalid response status' + status + "\n" + message, {
-                action: Notifications.DISMISS_BUTTON,
+                action: this.createDismissButton(),
                 autoHideDuration: Notifications.FOREVER,
                 variant: 'error',
             });
@@ -73,7 +94,7 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
 
     public onError = () => {
         this.props.enqueueSnackbar('No connection with socket or the server is down', {
-            action: Notifications.DISMISS_BUTTON,
+            action: this.createDismissButton(),
             autoHideDuration: Notifications.FOREVER,
             variant: 'error',
         });
@@ -81,7 +102,7 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
 
     public onClose = () => {
         this.props.enqueueSnackbar('Server closed the connection after a timeout', {
-            action: Notifications.DISMISS_BUTTON,
+            action: this.createDismissButton(),
             autoHideDuration: Notifications.ONE_MINUTE,
             variant: 'warning',
         });
@@ -89,7 +110,7 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
 
     public onReopen = (protocol: string) => {
         this.props.enqueueSnackbar("Reconnecting to the server using " + protocol, {
-            action: Notifications.DISMISS_BUTTON,
+            action: this.createDismissButton(),
             autoHideDuration: Notifications.ONE_MINUTE,
             variant: 'warning',
         })
@@ -97,16 +118,34 @@ export class Notifications extends React.Component<INotificationsProps, {}> impl
 
     public onClientTimeout = () => {
         this.props.enqueueSnackbar("Connection timeout", {
-            action: Notifications.DISMISS_BUTTON,
+            action: this.createDismissButton(),
             autoHideDuration: Notifications.FOREVER,
             variant: 'warning',
         })
     };
+
+    private createDismissButton = (event?: Event) => {
+        if (event && event.type !== EventType.PAYLOAD) {
+            const onClick = (e: any) => {
+                if (e.isTrusted) {
+                    this.props.onEventDismiss({...event} as Event);
+                }
+            };
+            return <Button id={event.id} size="small" color={"inherit"} onClick={onClick}>Mark as read</Button>
+        } else {
+            return <Button size="small" color={"inherit"}>Dismiss</Button>
+        }
+    };
 }
 
 export interface INotificationsProps extends InjectedNotistackProps {
+    eventToDismiss?: Event
+
     subscribeToNotifications(notifications: INotifications): void
+
     onEventReceived(event: Event): void
+
+    onEventDismiss(event: Event): void
 }
 
 export default withSnackbar(Notifications);

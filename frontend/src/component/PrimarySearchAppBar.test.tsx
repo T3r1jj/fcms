@@ -5,9 +5,10 @@ import 'reflect-metadata';
 import PrimarySearchAppBar from "./PrimarySearchAppBar";
 
 describe("component", () => {
+    const onLogout = () => undefined;
     describe("rendering", () => {
         it('renders without crashing', () => {
-            shallow(<BrowserRouter><PrimarySearchAppBar/></BrowserRouter>)
+            shallow(<BrowserRouter><PrimarySearchAppBar onLogout={onLogout} unreadCount={0}/></BrowserRouter>)
         });
     });
 });

@@ -1,7 +1,8 @@
 export enum EventType {
-    INFO = 'INFO', WARNING = 'WARNING', ERROR = 'ERROR', DEBUG = 'DEBUG'
+    INFO = 'INFO', WARNING = 'WARNING', ERROR = 'ERROR', DEBUG = 'DEBUG', PAYLOAD = 'PAYLOAD'
 }
 
+// TODO: Refactor
 // tslint:disable-next-line:no-namespace
 export namespace EventType {
     export function toNotificationType(eventType: EventType): string {

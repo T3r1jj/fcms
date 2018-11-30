@@ -36,7 +36,7 @@ public class NotificationControllerIT extends AbstractTestNGSpringContextTests {
 
     @BeforeMethod
     public void setUp() throws JsonProcessingException {
-        event = new Event("evenTitle", "eventDescription", Event.EventType.ERROR);
+        event = new Event("evenTitle", "eventDescription", Event.Type.ERROR);
         broadcastingThread = new Thread(() -> {
             try {
                 while (!Thread.interrupted()) {

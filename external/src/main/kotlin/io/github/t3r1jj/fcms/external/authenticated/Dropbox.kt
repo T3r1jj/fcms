@@ -2,6 +2,7 @@ package io.github.t3r1jj.fcms.external.authenticated
 
 import com.dropbox.core.BadRequestException
 import com.dropbox.core.DbxRequestConfig
+import com.dropbox.core.util.ProgressOutputStream
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.FileMetadata
 import com.dropbox.core.v2.files.GetMetadataErrorException
@@ -15,6 +16,7 @@ import io.github.t3r1jj.fcms.external.data.StorageInfo
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.math.BigInteger
+import java.util.function.Consumer
 
 
 open class Dropbox(private val accessToken: String) : AuthenticatedStorageTemplate() {
@@ -40,10 +42,18 @@ open class Dropbox(private val accessToken: String) : AuthenticatedStorageTempla
     }
 
     override fun doAuthenticatedUpload(record: Record): RecordMeta {
-        val result = client!!.files()
+        return doAuthenticatedUpload(record, null)
+    }
+
+    override fun doAuthenticatedUpload(record: Record, bytesWrittenConsumer: Consumer<Long>?): RecordMeta {
+        val uploadBuilder = client!!.files()
                 .uploadBuilder(record.path)
                 .withMode(WriteMode.OVERWRITE)
-                .uploadAndFinish(record.data)
+        val result = if (bytesWrittenConsumer != null) {
+            uploadBuilder.uploadAndFinish(record.data) { bytesWritten ->  bytesWrittenConsumer.accept(bytesWritten)}
+        } else {
+            uploadBuilder.uploadAndFinish(record.data)
+        }
         return RecordMeta(record.name, record.path, result.size)
                 .apply { id = result.id }
     }
@@ -52,6 +62,17 @@ open class Dropbox(private val accessToken: String) : AuthenticatedStorageTempla
         val os = ByteArrayOutputStream()
         val meta = client!!.files().downloadBuilder(filePath)
                 .download(os)
+        return Record(meta.name, meta.pathLower, ByteArrayInputStream(os.toByteArray()))
+    }
+
+    override fun doAuthenticatedDownload(filePath: String, bytesWrittenConsumer: Consumer<Long>?): Record {
+        val os = ByteArrayOutputStream()
+        val downloadBuilder = client!!.files().downloadBuilder(filePath)
+        val meta = if (bytesWrittenConsumer != null) {
+            downloadBuilder.download(ProgressOutputStream(os) { bytesWritten ->  bytesWrittenConsumer.accept(bytesWritten)})
+        } else {
+            downloadBuilder.download(os)
+        }
         return Record(meta.name, meta.pathLower, ByteArrayInputStream(os.toByteArray()))
     }
 

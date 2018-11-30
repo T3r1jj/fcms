@@ -11,10 +11,13 @@ import CallbackIcon from '@material-ui/icons/CallMissed';
 import HomeIcon from '@material-ui/icons/Home';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import NotificationsIcon from '@material-ui/icons/Notifications';
+import LogoutIcon from '@material-ui/icons/PowerSettingsNew';
 import SearchIcon from '@material-ui/icons/Search';
 import React from 'react';
 import {Link} from "react-router-dom";
+import {createFilter} from "react-select";
 import Select from "react-select/lib/Select";
+import {CellMeasurer, CellMeasurerCache, List, ListRowRenderer} from 'react-virtualized';
 import SearchItem from "../model/SearchItem";
 
 const styles: StyleRulesCallback = theme => ({
@@ -90,8 +93,56 @@ const styles: StyleRulesCallback = theme => ({
         },
     },
 });
+const MenuList = (props: any) => {
+    const rows = props.children;
+    let rowCount: number;
+    let height = 300;
+    if (rows === undefined || rows.length === undefined) {
+        rowCount = 0;
+    } else {
+        rowCount = rows.length;
+    }
+    if (rowCount < 10) {
+        height = 0;
+        for (let i = 0; i < rowCount; i++) {
+            height += cache.rowHeight({index: i});
+        }
+    }
 
-class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
+    const rowRenderer: ListRowRenderer = ({key, parent, index, isScrolling, isVisible, style}) => (
+        <CellMeasurer
+            cache={cache}
+            columnIndex={0}
+            key={key}
+            parent={parent}
+            rowIndex={index}
+        >
+            {({measure}) => (
+                <div style={style}>
+                    <div onLoad={measure}>{rows[index]}</div>
+                </div>
+            )}
+        </CellMeasurer>
+    );
+
+    return (
+        <List
+            style={{width: '100%'}}
+            width={250}
+            height={height}
+            rowCount={rowCount}
+            rowRenderer={rowRenderer}
+            deferredMeasurementCache={cache}
+            rowHeight={cache.rowHeight}
+        />
+    )
+};
+const cache = new CellMeasurerCache({
+    fixedHeight: false,
+    fixedWidth: true,
+});
+
+class PrimarySearchAppBar extends React.PureComponent<IAppBarProps, IAppBarState> {
 
     constructor(props: IAppBarProps) {
         super(props);
@@ -117,6 +168,10 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
         const getClasses = () => {
             return classes as any
         };
+        const notificationIcon = this.props.unreadCount === 0 ? <NotificationsIcon/> :
+            <Badge badgeContent={this.props.unreadCount} color="secondary">
+                <NotificationsIcon/>
+            </Badge>
 
         const renderMobileMenu = (
             <Menu
@@ -137,12 +192,16 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
                 <MenuItem>
                     <IconButton color="inherit">
                         <Link to={"/history"} className={getClasses().linkWrapper}>
-                            <Badge badgeContent={11} color="secondary">
-                                <NotificationsIcon/>
-                            </Badge>
+                            {notificationIcon}
                         </Link>
                     </IconButton>
                     <p>Notifications</p>
+                </MenuItem>
+                <MenuItem onClick={this.logout}>
+                    <IconButton color="inherit">
+                        <LogoutIcon/>
+                    </IconButton>
+                    <p>Logout</p>
                 </MenuItem>
             </Menu>
         );
@@ -165,6 +224,8 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
                                 <SearchIcon/>
                             </div>
                             <Select
+                                filterOption={createFilter({ignoreAccents: false})}
+                                components={{MenuList}}
                                 className={"react-select"}
                                 classNamePrefix="react-select"
                                 placeholder={"Search record name..."}
@@ -181,6 +242,7 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
                         }
                         <div className={getClasses().grow}/>
                         <div className={getClasses().sectionDesktop}>
+                            {this.props.status && <span>{this.props.status}</span>}
                             <IconButton color={"inherit"}>
                                 <Link to={"/code"} className={getClasses().linkWrapper}>
                                     <CallbackIcon/>
@@ -188,10 +250,11 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
                             </IconButton>
                             <IconButton color={"inherit"}>
                                 <Link to={"/history"} className={getClasses().linkWrapper}>
-                                    <Badge badgeContent={0} color="secondary">
-                                        <NotificationsIcon/>
-                                    </Badge>
+                                    {notificationIcon}
                                 </Link>
+                            </IconButton>
+                            <IconButton color={"inherit"} onClick={this.logout}>
+                                <LogoutIcon/>
                             </IconButton>
                         </div>
                         <div className={getClasses().sectionMobile}>
@@ -206,17 +269,39 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
         );
     }
 
+    private logout = () => {
+        this.props.onLogout();
+    };
+
     private handleChange = (selectedOption: SearchItem) => {
         this.setState({selectedOption});
-        const element = document.getElementById(selectedOption.value);
-        if (element) {
-            setTimeout(() => {
-                element.scrollIntoView(true);
-                element.focus();
-            }, 0);
+        const ids = selectedOption.value;
+        if (ids === undefined) {
+            return;
         }
+        this.chainFocus(ids, 0)
     };
+
+    private chainFocus(ids: string[], index: number, searchDuration = 0) {
+        if (index < ids.length && searchDuration < 1000) {
+            const element = document.getElementById(ids[index]);
+            if (element === null) {
+                const delay = 10;
+                setTimeout(() => {
+                    this.chainFocus(ids, index, searchDuration + delay);
+                }, delay)
+            } else {
+                element.scrollIntoView();
+                element.focus();
+                setTimeout(() => {
+                    this.chainFocus(ids, index + 1);
+                });
+            }
+        }
+    }
+
     private onInputChange = (inputValue: string) => {
+        cache.clearAll();
         this.setState({inputValue});
     };
     private onMenuOpen = () => {
@@ -228,14 +313,18 @@ class PrimarySearchAppBar extends React.Component<IAppBarProps, IAppBarState> {
 }
 
 interface IAppBarProps extends AppBarProps {
-    searchItems?: SearchItem[]
+    searchItems?: SearchItem[];
+    unreadCount: number;
+    status?: string;
+
+    onLogout(): void;
 }
 
 interface IAppBarState {
-    mobileMoreAnchorEl: any
-    selectedOption?: any
-    inputValue: string
-    menuOpen: boolean
+    mobileMoreAnchorEl: any;
+    selectedOption?: any;
+    inputValue: string;
+    menuOpen: boolean;
 }
 
 export default withStyles(styles)(PrimarySearchAppBar);

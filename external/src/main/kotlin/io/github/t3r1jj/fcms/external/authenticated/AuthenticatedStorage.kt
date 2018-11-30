@@ -1,9 +1,11 @@
 package io.github.t3r1jj.fcms.external.authenticated
 
+import io.github.t3r1jj.fcms.external.data.Record
 import io.github.t3r1jj.fcms.external.data.RecordMeta
 import io.github.t3r1jj.fcms.external.data.StorageInfo
 import io.github.t3r1jj.fcms.external.upstream.CleanableStorage
 import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage
+import java.util.function.Consumer
 
 interface AuthenticatedStorage : UpstreamStorage, CleanableStorage {
     /**
@@ -20,6 +22,11 @@ interface AuthenticatedStorage : UpstreamStorage, CleanableStorage {
      * Returns [List] of [RecordMeta] representing result of recursive search for [io.github.t3r1jj.fcms.external.data.Record] starting from [filePath].
      */
     fun findAll(filePath: String): List<RecordMeta>
+
+    /**
+     * Returns [Record] for [filePath] from received [RecordMeta] from upload.
+     */
+    fun download(filePath: String, bytesWrittenConsumer: Consumer<Long>?): Record
 
     /**
      * Returns [StorageInfo]. Not all values may be correct, as some storage APIs do not provide whole info. In that case standard values for given storage may be returned.

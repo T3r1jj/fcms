@@ -1,9 +1,30 @@
 .flex-wrapper {
     display: flex;
 }
+
 .flex-left {
     flex: 0 0 50%;
 }
+
 .flex-right {
     flex: 1;
+}
+
+.description .flex-left textarea {
+    overflow: hidden;
+}
+
+.description > div:first-child {
+    margin-right: 8px;
+}
+
+.description {
+    height: 100%;
+}
+
+.description > div:last-child {
+    margin-top: -9px;
+    padding-left: 8px;
+    border-left: 1px solid #7f7f7f;
+    height: 100%;
 }

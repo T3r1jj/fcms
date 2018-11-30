@@ -1,9 +1,13 @@
 export default class SearchItem {
     public label: string;
-    public value: string;
+    public value: string[];
 
-    constructor(label: string, id: string) {
+    constructor(label: string, ids: string | string[]) {
         this.label = label;
-        this.value = id;
+        if (typeof ids === "string") {
+            this.value = [ids];
+        } else {
+            this.value = ids;
+        }
     }
 }

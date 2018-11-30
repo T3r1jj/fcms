@@ -43,6 +43,8 @@ public class ReplicationServiceTest {
     private UpstreamStorage upstreamStorage;
     @Mock
     private StorageFactory storageFactory;
+    @Mock
+    private NotificationService notificationService;
     private ReplicationService replicationService;
 
     private Configuration configuration;
@@ -51,7 +53,7 @@ public class ReplicationServiceTest {
     @BeforeMethod
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        replicationService = new ReplicationService(configurationService, recordService, historyService);
+        replicationService = new ReplicationService(configurationService, recordService, historyService, notificationService);
     }
 
     private void setUpDefaultConfig(String serviceName, boolean enabled) {
@@ -70,14 +72,14 @@ public class ReplicationServiceTest {
         doReturn(unauthenticatedStorage).when(storageFactory).createAuthenticatedStorage(serviceName);
         doReturn(storageFactory).when(configurationService).createStorageFactory();
         when(storageFactory.getConfiguration()).thenReturn(configuration);
-        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any());
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any(), any());
 
         byte[] data = "some text".getBytes();
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
         replicationService.uploadToPrimary(recordToStore);
 
         verify(authenticatedStorage).login();
-        verify(authenticatedStorage).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+        verify(authenticatedStorage).upload(eq(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data))), any());
         verify(authenticatedStorage).logout();
     }
 
@@ -93,7 +95,7 @@ public class ReplicationServiceTest {
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
         boolean replicated = replicationService.replicateRecordTo(recordToStore, true);
         assertTrue(replicated);
-        verify(authenticatedStorage).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+        verify(authenticatedStorage).upload(eq(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data))), any());
     }
 
     @Test(expectedExceptions = {RuntimeException.class})
@@ -151,7 +153,7 @@ public class ReplicationServiceTest {
         StoredRecord recordToStore = new StoredRecord("1", "1", data, null);
         boolean replicated = replicationService.replicateRecordTo(recordToStore, false);
         assertTrue(replicated);
-        verify(authenticatedStorage).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+        verify(authenticatedStorage).upload(eq(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data))), any());
     }
 
     @Test(expectedExceptions = {RuntimeException.class})
@@ -367,18 +369,18 @@ public class ReplicationServiceTest {
         doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(service.getName());
         doReturn(storageFactory).when(configurationService).createStorageFactory();
         when(storageFactory.getConfiguration()).thenReturn(configuration);
-        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any());
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any(), any());
         StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
         byte[] data = "some text".getBytes();
-        RecordMeta meta = new RecordMeta(recordToStore.getName(), "", data.length);
+        RecordMeta meta = new RecordMeta(recordToStore.getMeta().getName(), "", data.length);
         recordToStore.getBackups().put(serviceName, meta);
-        when(authenticatedStorage.download(any())).thenReturn(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+        when(authenticatedStorage.download(any(), any())).thenReturn(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
 
         doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).isPresent(any());
         doReturn(true).when(authenticatedStorage).isPresent(meta.getPath());
 
         replicationService.replicate(recordToStore);
-        verify(upstreamStorage, times(1)).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+        verify(upstreamStorage, times(1)).upload(eq(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data))), any());
     }
 
     @Test
@@ -395,18 +397,18 @@ public class ReplicationServiceTest {
         doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(service.getName());
         doReturn(storageFactory).when(configurationService).createStorageFactory();
         when(storageFactory.getConfiguration()).thenReturn(configuration);
-        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any());
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any(), any());
         StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
         byte[] data = "some text".getBytes();
-        RecordMeta meta = new RecordMeta(recordToStore.getName(), "", data.length);
+        RecordMeta meta = new RecordMeta(recordToStore.getMeta().getName(), "", data.length);
         recordToStore.getBackups().put(serviceName, meta);
-        when(authenticatedStorage.download(any())).thenReturn(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+        when(authenticatedStorage.download(any(), any())).thenReturn(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
 
         doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).isPresent(any());
         doReturn(true).when(authenticatedStorage).isPresent(meta.getPath());
 
         replicationService.replicate(recordToStore);
-        verify(authenticatedStorage, times(1)).upload(new Record(recordToStore.getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+        verify(authenticatedStorage, times(1)).upload(eq(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data))), any());
     }
 
 }

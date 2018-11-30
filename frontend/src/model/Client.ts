@@ -4,14 +4,46 @@ import Code from "./code/Code";
 import {CodeCallbackType} from "./code/CodeCallbackType";
 import Event from "./event/Event";
 import EventPage from "./event/EventPage";
+import Health from "./health/Health";
 import IConfiguration from "./IConfiguration";
 import {INotifications} from "./INotifiations";
 import Record from "./Record";
+import RecordMeta from "./RecordMeta";
 
 export default class Client {
 
+    private readonly request: Atmosphere.Request = new (Atmosphere as any).AtmosphereRequest();
+    private readonly socket: any = Atmosphere;
+    private headers = new Headers();
+    private readonly username: string;
+    private readonly password: string;
+
+    constructor(username: string, password: string) {
+        this.username = username;
+        this.password = password;
+        this.headers.set('Authorization', 'Basic ' + new Buffer(this.username + ":" + this.password).toString('base64'));
+    }
+
+    public isValidUser = () => {
+        return this.countUnreadEvents();
+    };
+
+    public logout = () => {
+        this.request.onOpen = undefined;
+        this.request.onReconnect = undefined;
+        this.request.onMessage = undefined;
+        this.request.onError = undefined;
+        this.request.onClose = undefined;
+        this.request.onReopen = undefined;
+        this.request.onClientTimeout = undefined;
+        this.socket.unsubscribe();
+    };
+
     public getConfiguration = () => {
-        return fetch(this.getBackendPath() + "/api/configuration")
+
+        return fetch(this.getBackendPath() + "/api/configuration", {
+            headers: this.headers
+        })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(response.statusText)
@@ -24,11 +56,27 @@ export default class Client {
         return fetch(this.getBackendPath() + '/api/configuration', {
             body: JSON.stringify(configuration),
             headers: {
+                ...this.headers,
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
             method: 'POST'
         });
+    };
+
+    public getHealth = () => {
+        return fetch(this.getBackendPath() + "/api/health", {
+            headers: this.headers
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText)
+                }
+                return response.json()
+            })
+            .then(json => {
+                return plainToClass(Health, json as Health);
+            })
     };
 
     public getHistoryPage = (size: number, page: number) => {
@@ -37,7 +85,9 @@ export default class Client {
             `page=${page}`,
         ].join('&');
 
-        return fetch(this.getBackendPath() + "/api/history" + queryString)
+        return fetch(this.getBackendPath() + "/api/history" + queryString, {
+            headers: this.headers
+        })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(response.statusText)
@@ -48,7 +98,9 @@ export default class Client {
     };
 
     public getHistory = () => {
-        return fetch(this.getBackendPath() + "/api/history")
+        return fetch(this.getBackendPath() + "/api/history", {
+            headers: this.headers
+        })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(response.statusText)
@@ -60,8 +112,39 @@ export default class Client {
             })
     };
 
+    public deleteHistory = () => {
+        return fetch(this.getBackendPath() + "/api/history", {
+            headers: this.headers,
+            method: 'DELETE'
+        });
+    };
+
+    public setEventAsRead = (event: Event) => {
+        event.read = true;
+        return fetch(this.getBackendPath() + "/api/history?eventId=" + event.id, {
+            headers: this.headers,
+            method: 'POST'
+        });
+    };
+
+    public setHistoryAsRead = () => {
+        return fetch(this.getBackendPath() + "/api/history", {
+            headers: this.headers,
+            method: 'PATCH'
+        });
+    };
+
+    public countUnreadEvents = () => {
+        return fetch(this.getBackendPath() + "/api/history/unread", {
+            headers: this.headers,
+            method: 'GET'
+        });
+    };
+
     public getCodeCallback = (type: CodeCallbackType) => {
-        return fetch(this.getBackendPath() + "/api/code?type=" + CodeCallbackType[type])
+        return fetch(this.getBackendPath() + "/api/code?type=" + CodeCallbackType[type], {
+            headers: this.headers
+        })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(response.statusText)
@@ -74,13 +157,17 @@ export default class Client {
     };
 
     public checkCodeCallback = (type: CodeCallbackType) => {
-        return fetch(this.getBackendPath() + "/api/code?type=" + CodeCallbackType[type], {method: 'POST'})
+        return fetch(this.getBackendPath() + "/api/code?type=" + CodeCallbackType[type], {
+            headers: this.headers,
+            method: 'POST'
+        })
     };
 
     public updateCodeCallback = (code: Code) => {
         return fetch(this.getBackendPath() + "/api/code", {
             body: JSON.stringify(code),
             headers: {
+                ...this.headers,
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
@@ -106,7 +193,9 @@ export default class Client {
     };
 
     public getRecords = () => {
-        return fetch(this.getBackendPath() + "/api/records")
+        return fetch(this.getBackendPath() + "/api/records", {
+            headers: this.headers
+        })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(response.statusText)
@@ -118,10 +207,18 @@ export default class Client {
             });
     };
 
-    public updateRecordDescription = (id: string, description: string) => {
-        return fetch(this.getBackendPath() + "/api/records?id=" + id, {
-            body: description,
+    public restartReplication = () => {
+        return fetch(this.getBackendPath() + "/api/replication", {
+            headers: this.headers,
+            method: 'POST'
+        });
+    };
+
+    public updateRecordMeta = (meta: RecordMeta) => {
+        return fetch(this.getBackendPath() + "/api/records", {
+            body: JSON.stringify(meta),
             headers: {
+                ...this.headers,
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
@@ -131,40 +228,87 @@ export default class Client {
 
     public deleteRecords = (id: string) => {
         return fetch(this.getBackendPath() + "/api/records?id=" + id, {
+            headers: this.headers,
             method: 'DELETE'
         });
     };
 
     public forceDeleteRecords = (id: string) => {
         return fetch(this.getBackendPath() + "/api/records?id=" + id, {
+            headers: this.headers,
             method: 'PATCH'
         });
     };
 
+    // Encountered problems:
+    // 1. Have to use 2 different urls for web socket (auth through url) and http (auth through header) and successfully deliver header to the backend.
+    // 2. The framework doesn't seem to support two different urls - wrong ws auth causes exception, switching url on transportFailure creates duplicate connection (messages x2)
+    // 3. Different param combinations for header filters cause some callbacks to not fire. attachHeadersAsQueryString=false and readResponsesHeaders=false are required for long-pooling with basic auth, but then onOpen does not get called (use streaming which seems to work fine
+    // 4. attachHeadersAsQueryString=true is required for websocket, otherwise onOpen is not called
+    // 5. cannot unsubscribe on websocket with auth url because its not supported cors protocol (?) 'streaming; event is sent to the backend which causes reconnection // fixed b y filtering isDestroyable
+    // Workaround: Initially use web socket with below parameters, if it fails on a) invalid auth - catch exception and resubscribe with streaming and long-pooling fallback; on b) standard error - resubscribe likewise
+    // TODO: refactor
     public subscribeToNotifications = (notifications: INotifications) => {
-        const socket: any = Atmosphere;
-        const request: Atmosphere.Request = new (Atmosphere as any).AtmosphereRequest();
-        request.url = this.getBackendPath() + '/api/notification';
+        const request = this.request;
+        request.url = `ws://${this.username}:${this.password}@localhost:8080/api/notification`
         request.contentType = "application/json";
         request.transport = 'websocket';
-        request.fallbackTransport = 'long-polling';
-        request.reconnectInterval = 1000 * 15;
-        request.shared = true;
-
+        request.fallbackTransport = request.transport;
+        request.reconnectInterval = 1000 * 10;
+        request.shared = false;
+        request.maxReconnectOnClose = 5;
+        const headers: any = {};
+        this.headers.forEach((value, key) => headers[key] = value);
+        request.logLevel = 'debug';
+        request.headers = {Authorization: headers.authorization};
+        request.enableXDR = true;
+        request.enableProtocol = true;
+        request.readResponsesHeaders = true;
+        request.dropHeaders = true;
+        request.withCredentials = false;
+        request.attachHeadersAsQueryString = true;
         request.onOpen = notifications.onOpen;
         request.onReconnect = notifications.onReconnect;
         request.onMessage = response => notifications.onMessage(response.status!, (response.status === 200) ? response.responseBody! : response.error!);
-        request.onError = notifications.onError;
-        request.onClose = notifications.onClose;
+        request.onError = () => {
+            if (request.transport === 'websocket') {
+                request.transport = 'streaming';
+                request.fallbackTransport = 'long-polling';
+                request.url = this.getBackendPath() + '/api/notification';
+                request.enableXDR = true;
+                request.enableProtocol = true;
+                request.readResponsesHeaders = false;
+                request.dropHeaders = false;
+                request.withCredentials = false;
+                request.attachHeadersAsQueryString = false;
+                this.socket.subscribe(request);
+            } else {
+                notifications.onError();
+            }
+        };
+        request.onClose = () => notifications.onClose;
         request.onReopen = (_, response: Atmosphere.Response) => notifications.onReopen(response.transport!);
         request.onClientTimeout = notifications.onClientTimeout;
-        socket.subscribe(request);
+        try {
+            this.socket.subscribe(request);
+        } catch (e) {
+            request.transport = 'streaming';
+            request.fallbackTransport = 'long-polling';
+            request.url = this.getBackendPath() + '/api/notification';
+            request.enableXDR = true;
+            request.enableProtocol = true;
+            request.readResponsesHeaders = false;
+            request.dropHeaders = false;
+            request.withCredentials = false;
+            request.attachHeadersAsQueryString = false;
+            this.socket.subscribe(request);
+        }
     };
 
     private futch(url: string, formData: FormData, onProgress?: (event: ProgressEvent) => void) {
         return new Promise<Response>((resolve, reject) => {
             const xhr: XMLHttpRequest = new XMLHttpRequest();
-
+            this.headers.forEach((value, key) => xhr.setRequestHeader(key, value));
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4) {
                     const body = (xhr.response !== undefined && xhr.response !== null) ? xhr.response : xhr.responseText;

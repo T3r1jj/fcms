@@ -2,10 +2,10 @@ package io.github.t3r1jj.fcms.backend.service;
 
 import io.github.t3r1jj.fcms.backend.model.Configuration;
 import io.github.t3r1jj.fcms.backend.model.ExternalService;
-import io.github.t3r1jj.fcms.external.Storage;
-import io.github.t3r1jj.fcms.external.authenticated.AuthenticatedStorage;
-import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
-import io.github.t3r1jj.fcms.external.upstream.UpstreamStorage;
+import io.github.t3r1jj.storapi.Storage;
+import io.github.t3r1jj.storapi.authenticated.AuthenticatedStorage;
+import io.github.t3r1jj.storapi.upstream.CleanableStorage;
+import io.github.t3r1jj.storapi.upstream.UpstreamStorage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.clapper.util.classutil.*;

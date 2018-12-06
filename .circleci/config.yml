@@ -7,8 +7,8 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: t3r1jj/fcms:0.0.2
-      
+      - image: circleci/openjdk:8-jdk-node-browsers
+
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
@@ -27,40 +27,21 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - gradle-cache2-{{ checksum "external/build.gradle" }}
-            - gradle-cache2-{{ checksum "backend/build.gradle" }}
-            - gradle-cache2-{{ checksum "frontend/build.gradle" }}
-            - dependency-cache2-{{ checksum "frontend/package.json" }}
-            - dependency-cache2-{{ checksum "frontend/yarn.lock" }}
+            - gradle-cache3-{{ checksum "backend/build.gradle" }}-{{ checksum "frontend/build.gradle" }}
+            - node-cache3-{{ checksum "frontend/package.json" }}-{{ checksum "frontend/yarn.lock" }}
 
       - run: ./gradlew build
 
       - save_cache:
           paths:
             - ~/.gradle
-          key: gradle-cache2-{{ checksum "external/build.gradle" }}
-
-      - save_cache:
-          paths:
-            - ~/.gradle
-          key: gradle-cache2-{{ checksum "backend/build.gradle" }}
-
-      - save_cache:
-          paths:
-            - ~/.gradle
-          key: gradle-cache2-{{ checksum "frontend/build.gradle" }}
+          key: gradle-cache3-{{ checksum "backend/build.gradle" }}-{{ checksum "frontend/build.gradle" }}
 
       - save_cache:
           paths:
             - ~/usr/local/lib/node_modules
             - frontend/node_modules
-          key: dependency-cache2-{{ checksum "frontend/package.json" }}
-
-      - save_cache:
-          paths:
-            - ~/usr/local/lib/node_modules
-            - frontend/node_modules
-          key: dependency-cache2-{{ checksum "frontend/yarn.lock" }}
+          key: node-cache3-{{ checksum "frontend/package.json" }}-{{ checksum "frontend/yarn.lock" }}
 
       - run: bash <(curl -s https://codecov.io/bash)
 

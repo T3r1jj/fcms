@@ -2,8 +2,8 @@ package io.github.t3r1jj.fcms.backend.service;
 
 import io.github.t3r1jj.fcms.backend.model.Configuration;
 import io.github.t3r1jj.fcms.backend.model.ExternalService;
-import io.github.t3r1jj.fcms.external.Storage;
-import io.github.t3r1jj.fcms.external.upstream.CleanableStorage;
+import io.github.t3r1jj.storapi.Storage;
+import io.github.t3r1jj.storapi.upstream.CleanableStorage;
 import org.testng.annotations.Test;
 
 import java.util.Optional;

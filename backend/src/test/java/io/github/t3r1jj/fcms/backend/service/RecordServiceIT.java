@@ -4,7 +4,7 @@ import io.github.t3r1jj.fcms.backend.model.StoredRecord;
 import io.github.t3r1jj.fcms.backend.model.StoredRecordMeta;
 import io.github.t3r1jj.fcms.backend.repository.StoredRecordMetaRepository;
 import io.github.t3r1jj.fcms.backend.repository.StoredRecordRepository;
-import io.github.t3r1jj.fcms.external.data.RecordMeta;
+import io.github.t3r1jj.storapi.data.RecordMeta;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,6 +1,6 @@
 package io.github.t3r1jj.fcms.backend.service;
 
-import io.github.t3r1jj.fcms.external.Storage;
+import io.github.t3r1jj.storapi.Storage;
 import org.jetbrains.annotations.Nullable;
 
 class StorageClassFilter<I extends Storage> {

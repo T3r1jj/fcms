@@ -1,6 +1,6 @@
 package io.github.t3r1jj.fcms.backend.model;
 
-import io.github.t3r1jj.fcms.external.data.StorageInfo;
+import io.github.t3r1jj.storapi.data.StorageInfo;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.springframework.boot.convert.DurationFormat;
 import org.springframework.boot.convert.DurationStyle;

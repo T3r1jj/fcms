@@ -13,7 +13,7 @@ import {EventType} from "../../model/event/EventType";
 
 export default class HistoryPage extends React.PureComponent<IHistoryPageProps, IHistoryPageState> {
 
-    private columns = new Event().getKeys().map(k => this.keyToColumn(k))
+    private columns = new Event().getKeys().map(k => this.keyToColumn(k));
 
     constructor(props: IHistoryPageProps) {
         super(props);
@@ -23,6 +23,7 @@ export default class HistoryPage extends React.PureComponent<IHistoryPageProps, 
     }
 
     public componentDidMount() {
+        window.document.title = "FCMS - History";
         this.fetchHistoryPage(this.state);
     }
 
@@ -195,6 +196,9 @@ export default class HistoryPage extends React.PureComponent<IHistoryPageProps, 
                 this.setState({events});
                 this.props.onEventRead(event);
             })
+            .catch(error => {
+                this.showErrorInTable(error);
+            });
     };
 
     private readAll = () => {
@@ -208,6 +212,9 @@ export default class HistoryPage extends React.PureComponent<IHistoryPageProps, 
                 });
                 this.setState({events})
             })
+            .catch(error => {
+                this.showErrorInTable(error);
+            });
     };
 
     private deleteAll = () => {
@@ -220,6 +227,9 @@ export default class HistoryPage extends React.PureComponent<IHistoryPageProps, 
                 });
                 this.setState({events: []})
             })
+            .catch(error => {
+                this.showErrorInTable(error);
+            });
     };
 }
 

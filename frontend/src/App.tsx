@@ -130,7 +130,7 @@ class App extends React.Component<{}, IAppState> {
                 </h3>
             </div>
         );
-    }
+    };
 
     private renderLoginPage = () => {
         return <LoginPage onAuthenticated={this.onAuthenticated}/>
@@ -184,7 +184,7 @@ class App extends React.Component<{}, IAppState> {
                 .then(r => this.setState({
                     newOrDismissedEvent: event,
                     unreadEventsCount: this.state.unreadEventsCount - 1
-                }));
+                }))
         }
     }
 

@@ -9,6 +9,7 @@ import org.bson.types.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -28,7 +29,8 @@ public class StoredRecord {
     private ObjectId rootId;
     @DBRef
     private StoredRecordMeta meta;
-    transient private byte[] data;
+    @Transient
+    private byte[] data;
 
     private List<StoredRecord> versions = new ArrayList<>();
     private Map<String, RecordMeta> backups = new HashMap<>();

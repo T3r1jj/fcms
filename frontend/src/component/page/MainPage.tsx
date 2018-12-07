@@ -32,8 +32,15 @@ export default class MainPage extends React.Component<IMainPageProps, IMainPageS
     }
 
     public componentDidMount() {
+        window.document.title = "FCMS - Replication";
         this.props.client.getRecords()
-            .then(records2 => this.setState({records:records2}))
+            .then(records2 => this.setState({records: records2}))
+            .catch(e => {
+                const response = window.confirm("Fatal error: " + e.toString() + ". Do you want to reload?");
+                if (response) {
+                    window.location.reload(true);
+                }
+            });
         const records: IRecord[] = [];
         const backup = {size: Math.random() * 1024 * 1024} as IBackup;
         const backup2 = {size: Math.random() * 1024 * 1024} as IBackup;

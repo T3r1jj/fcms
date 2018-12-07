@@ -5,7 +5,6 @@ import App from './App';
 import './index.css';
 import registerServiceWorker from './registerServiceWorker';
 
-(window.console as any).ignoredYellowBox = ['Warning:'];
 ReactDOM.render(
   <App />,
   document.getElementById('root') as HTMLElement

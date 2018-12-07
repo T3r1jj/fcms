@@ -51,6 +51,7 @@ export class CodeCallbackPage extends React.PureComponent<ICodeCallbackPageProps
     }
 
     public componentDidMount() {
+        window.document.title = "FCMS - Code";
         this.fetchCode(this.state.value);
     }
 
@@ -122,7 +123,7 @@ export class CodeCallbackPage extends React.PureComponent<ICodeCallbackPageProps
         this.setCurrentError(undefined);
         this.props.updateCodeCallback(this.getCurrentCode())
             .then(this.checkCodeStatus)
-            .catch(r => this.setCurrentError(r.toString()))
+            .catch(e => this.setCurrentError(e.toString()))
     };
 
     private getCurrentCode() {
@@ -140,22 +141,12 @@ export class CodeCallbackPage extends React.PureComponent<ICodeCallbackPageProps
                 })
             })
             .then(this.checkCodeStatus)
-            .catch(r => this.setCurrentError(r.toString()))
+            .catch(e => this.setCurrentError(e.toString()))
     }
 
     private checkCodeStatus() {
         this.props.checkCodeCallback(this.state.value)
-            .then(r => {
-                if (!r.ok) {
-                    return r.json()
-                } else {
-                    return new Promise<any>((resolve) => {
-                        resolve({})
-                    })
-                }
-            })
-            .then(r => this.setCurrentError(r.message))
-            .catch(r => this.setCurrentError(r.toString()))
+            .catch(e => this.setCurrentError(e.toString()))
     }
 
     private getValues() {

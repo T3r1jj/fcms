@@ -37,11 +37,16 @@ abstract public class Code {
         return (param == null) ? "" : param;
     }
 
-    private transient String tryHeader = "try {\n";
-    private transient String catchHeader = "\n} catch (Exception e) {\n";
-    private transient String finallyHeader = "} finally {\n";
-    private transient String finallyFooter = "}\n";
-    private transient String methodFooter = "}\n";
+    @Transient
+    private String tryHeader = "try {\n";
+    @Transient
+    private String catchHeader = "\n} catch (Exception e) {\n";
+    @Transient
+    private String finallyHeader = "} finally {\n";
+    @Transient
+    private String finallyFooter = "}\n";
+    @Transient
+    private String methodFooter = "}\n";
 
     public final ScriptEvaluator compile() throws CompileException {
         ScriptEvaluator scriptEvaluator = new ScriptEvaluator();

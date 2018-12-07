@@ -12,9 +12,14 @@ export class LoginPage extends React.Component<ILoginPageProps, ILoginPageState>
     constructor(props: ILoginPageProps) {
         super(props);
         this.state = {
-            password: "",
-            username: "",
+            password: "admin",
+            serverUri: "//localhost:8080",
+            username: "admin",
         }
+    }
+
+    public componentDidMount(): void {
+        window.document.title = "FCMS - Login";
     }
 
     public render(): React.ReactNode {
@@ -34,20 +39,33 @@ export class LoginPage extends React.Component<ILoginPageProps, ILoginPageState>
                         </Typography>
                         <TextField
                             label="Username"
+                            value={this.state.username}
                             onChange={this.onStateChange("username")}
+                            onKeyDown={this.onKeyPress}
                             variant={"outlined"}
                             margin={"normal"}
                         />
                         <br/>
                         <TextField
-                            // type="password"
+                            type="password"
                             label="Password"
+                            value={this.state.password}
                             onChange={this.onStateChange("password")}
+                            onKeyDown={this.onKeyPress}
+                            variant={"outlined"}
+                            margin={"normal"}
+                        />
+                        <br/>
+                        <TextField
+                            label="Server URI"
+                            value={this.state.serverUri}
+                            onChange={this.onStateChange("serverUri")}
+                            onKeyDown={this.onKeyPress}
                             variant={"outlined"}
                             margin={"normal"}
                         />
                     </div>
-                    {this.state.error && <div style={{color: "red"}}>{this.state.error}</div>}
+                    {this.state.error && <div style={{color: "red"}}><br/>{this.state.error}<br/></div>}
                     <Button style={{margin: "1em"}}
                             color={"primary"} variant={"contained"} onClick={this.handleAuthentication}>Login</Button>
                 </div>
@@ -59,25 +77,32 @@ export class LoginPage extends React.Component<ILoginPageProps, ILoginPageState>
         this.setState({[field]: event.target.value} as ComponentState)
     };
 
+    private onKeyPress = (event: React.KeyboardEvent) => {
+        if (event.keyCode === 13) {
+            this.handleAuthentication();
+        }
+    };
+
     private handleAuthentication = () => {
         this.setState({error: undefined});
-        const client = new Client(this.state.username, this.state.password);
+        const client = new Client(this.state.username, this.state.password, this.state.serverUri);
         client.isValidUser()
             .then(r => {
-                if (r.ok) {
-                    this.props.onAuthenticated(client, () => {
-                        if (this.props.location.state && this.props.location.state.referrer) {
-                            this.props.history.push(this.props.location.state.referrer);
-                        } else {
-                            this.props.history.push("/");
-                        }
-                    });
+                this.props.onAuthenticated(client, () => {
+                    if (this.props.location.state && this.props.location.state.referrer) {
+                        this.props.history.push(this.props.location.state.referrer);
+                    } else {
+                        this.props.history.push("/");
+                    }
+                });
+            })
+            .catch(e => {
+                if (e.toString().indexOf("fetch") >=0) {
+                    this.setState({error: "Could not reach the server or wrong credentials"})
                 } else {
-                    this.setState({error: "Could not authenticate"})
+                    this.setState({error: e.toString()})
                 }
             })
-            .catch(e => this.setState({error: e.toString()}))
-
     };
 }
 
@@ -88,6 +113,7 @@ interface ILoginPageProps extends RouteComponentProps {
 interface ILoginPageState {
     username: string,
     password: string,
+    serverUri: string,
     error?: string,
 }
 

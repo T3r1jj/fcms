@@ -155,18 +155,8 @@ export default class Upload extends React.Component<IUploadProps, IUploadState> 
         });
         if (valid) {
             this.props.upload(this.state.files[0], this.state.name, this.state.parentId, this.state.tag, this.onProgress)
-                .then(r => {
-                    if (!r.ok) {
-                        return r.json()
-                    } else {
-                        return new Promise<any>((resolve) => {
-                            this.setState({ok: true});
-                            resolve({})
-                        })
-                    }
-                })
-                .then(r => this.setState({error: r.message}))
-                .catch(r => this.setState({error: r}))
+                .then(_ => this.setState({ok: true}))
+                .catch(e => this.setState({error: e}))
         }
     }
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -21,13 +22,18 @@ public class Event {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     private final Instant time;
     private boolean read;
-    private transient Payload payload;
+    @Transient
+    private Payload payload;
 
     public Event(String title, String description, Type type) {
-        this(title, description, type, null, false, null);
+        this(title, description, type, null, false);
     }
 
     @PersistenceConstructor
+    public Event(String title, String description, Type type, Instant time, boolean read) {
+        this(title, description, type, time, read, null);
+    }
+
     public Event(String title, String description, Type type, Instant time, boolean read, Payload payload) {
         this.title = title;
         this.description = description;

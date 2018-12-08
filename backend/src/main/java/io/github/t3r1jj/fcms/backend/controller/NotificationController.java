@@ -19,8 +19,13 @@ public class NotificationController extends SpringBeanAutowiringSupport {
 
     private final Logger logger = LoggerFactory.getLogger(NotificationController.class);
 
+    private final NotificationService notificationService;
+
     @Autowired
-    private NotificationService notificationService;
+    public NotificationController(NotificationService notificationService) {
+        this.notificationService = notificationService;
+    }
+
 
     @Ready
     public void onReady(final AtmosphereResource resource) {

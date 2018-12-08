@@ -86,7 +86,6 @@ public class FcmsApplication {
                     .csrf()
                     .disable()
                     .authorizeRequests()
-//                    .antMatchers(HttpMethod.GET, "/api/notification**").permitAll()
                     .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .anyRequest().authenticated()
                     .and()

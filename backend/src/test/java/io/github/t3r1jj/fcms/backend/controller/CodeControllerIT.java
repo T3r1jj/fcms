@@ -61,6 +61,19 @@ public class CodeControllerIT extends AbstractTestNGSpringContextTests {
         RestAssured.given()
                 .auth().basic("admin","admin")
                 .param("type", Code.Type.OnReplicationCode)
+                .post("/api/code")
+                .then()
+                .assertThat()
+                .statusCode(200);
+    }
+
+    @Test
+    public void testGet200() {
+        codeRepository.save(new OnReplicationCode.Builder().build());
+
+        RestAssured.given()
+                .auth().basic("admin","admin")
+                .param("type", Code.Type.OnReplicationCode)
                 .get("/api/code")
                 .then()
                 .assertThat()

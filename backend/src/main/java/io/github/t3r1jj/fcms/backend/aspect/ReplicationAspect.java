@@ -30,11 +30,9 @@ public class ReplicationAspect {
             argNames = "proceedingJoinPoint,recordToReplicate,primary")
     Object onReplication(ProceedingJoinPoint proceedingJoinPoint, StoredRecord recordToReplicate, boolean primary) throws Throwable {
         Object proceed = proceedingJoinPoint.proceed();
-        if (!primary) {
-            codeRepository.findById(Code.Type.OnReplicationCode.getId())
-                    .map(c -> (OnReplicationCode) c)
-                    .ifPresent(c -> c.execute(recordToReplicate));
-        }
+        codeRepository.findById(Code.Type.OnReplicationCode.getId())
+                .map(c -> (OnReplicationCode) c)
+                .ifPresent(c -> c.execute(recordToReplicate));
         return proceed;
     }
 

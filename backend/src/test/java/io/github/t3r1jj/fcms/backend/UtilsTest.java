@@ -16,7 +16,7 @@ public class UtilsTest {
         Predicate negatedPredicateMock = Mockito.mock(Predicate.class);
         when(predicateMock.negate()).thenReturn(negatedPredicateMock);
         Predicate negatedPredicate = Utils.not(predicateMock);
-        verify(predicateMock.negate());
+        verify(predicateMock, times(1)).negate();
         assertEquals(negatedPredicate, negatedPredicateMock);
     }
 
@@ -26,17 +26,14 @@ public class UtilsTest {
         Predicate negatedPredicateMock = Mockito.mock(Predicate.class);
         when(predicateMock.negate()).thenReturn(negatedPredicateMock);
         Predicate negatedPredicate = Utils.notIf(predicateMock, true);
-        verify(predicateMock.negate());
+        verify(predicateMock, times(1)).negate();
         assertEquals(negatedPredicate, negatedPredicateMock);
     }
 
     @Test
     public void testNotIfFalse() {
-        Predicate predicateMock = Mockito.mock(Predicate.class);
-        Predicate negatedPredicateMock = Mockito.mock(Predicate.class);
-        when(predicateMock.negate()).thenReturn(negatedPredicateMock);
+        Predicate predicateMock = o -> false;
         Predicate notNegatedPredicate = Utils.notIf(predicateMock, false);
-        verify(predicateMock, times(0)).negate();
         assertEquals(notNegatedPredicate, predicateMock);
     }
 

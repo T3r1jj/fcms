@@ -13,8 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.ListIterator;
-
-import static io.github.t3r1jj.fcms.backend.model.StoredRecord.stringToObjectId;
+import java.util.Objects;
 
 @Service
 public class RecordService {
@@ -45,23 +44,16 @@ public class RecordService {
         return recordRepository.findAll();
     }
 
-    public void delete(String id) {
-        StoredRecord storedRecord = getOneRecord(id);
-        replicationService.deleteCascading(storedRecord, false, getRoot(storedRecord));
+    public void delete(String id, boolean force) {
+        StoredRecord storedRecord = recordRepository.findAll()
+                .stream()
+                .map(r -> r.findInTree(StoredRecord.stringToObjectId(id)))
+                .filter(Objects::nonNull)
+                .findAny()
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("RecordMeta with %s id not found", id)));
+        replicationService.deleteCascading(storedRecord, force, getRoot(storedRecord));
         recordRepository.deleteById(storedRecord.getId());
         metaRepository.deleteById(storedRecord.getMeta().getId());
-    }
-
-    public void forceDelete(String id) {
-        StoredRecord storedRecord = getOneRecord(id);
-        replicationService.deleteCascading(storedRecord, true, getRoot(storedRecord));
-        recordRepository.deleteById(storedRecord.getId());
-        metaRepository.deleteById(storedRecord.getMeta().getId());
-    }
-
-    @NotNull
-    private StoredRecord getOneRecord(String id) {
-        return getOneRecord(stringToObjectId(id));
     }
 
     @NotNull

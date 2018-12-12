@@ -17,7 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.util.*;
 
 @Document
-public class StoredRecord {
+public class StoredRecord implements Comparable<StoredRecord> {
     public static ObjectId stringToObjectId(String id) {
         return new ObjectId(id);
     }
@@ -89,14 +89,26 @@ public class StoredRecord {
         this.data = data;
     }
 
-    public Optional<StoredRecord> findParent(ObjectId id) {
+    public Optional<StoredRecord> findParentOf(ObjectId id) {
         if (getVersions().stream().anyMatch(c -> c.getId().equals(id))) {
             return Optional.of(this);
         } else {
             return getVersions().stream()
-                    .map(c -> c.findParent(id))
+                    .map(c -> c.findParentOf(id))
                     .map(Optional::get)
                     .findAny();
+        }
+    }
+
+    public StoredRecord findInTree(ObjectId id) {
+        if (this.id.equals(id)) {
+            return this;
+        } else {
+            return getVersions().stream()
+                    .map(c -> c.findInTree(id))
+                    .filter(Objects::nonNull)
+                    .findAny()
+                    .orElse(null);
         }
     }
 
@@ -143,5 +155,10 @@ public class StoredRecord {
                 ", versions=" + versions +
                 ", backups=" + backups +
                 '}';
+    }
+
+    @Override
+    public int compareTo(@NotNull StoredRecord o) {
+        return this.id.compareTo(o.id);
     }
 }

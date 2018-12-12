@@ -19,6 +19,7 @@ import java.util.List;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 public class HistoryServiceTest {
 
@@ -33,6 +34,7 @@ public class HistoryServiceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         inMemoryEventRepository = new InMemoryEventRepository();
+        when(repository.findAll()).thenReturn(inMemoryEventRepository.findAll());
         when(repository.findAllByOrderByTimeDesc()).thenReturn(inMemoryEventRepository.findAllInverted());
         when(repository.findAllByOrderByTimeDesc(any(Pageable.class))).thenAnswer((invocation -> inMemoryEventRepository.findAllInverted(invocation.getArgument(0))));
         when(repository.save(any(Event.class))).thenAnswer((invocation -> inMemoryEventRepository.save(invocation.getArgument(0))));
@@ -137,8 +139,26 @@ public class HistoryServiceTest {
         assertTrue(repository.findAllByOrderByTimeDesc().isEmpty());
     }
 
+    @Test
+    public void testGetBandwidthFromEvents() {
+        ProgressListenerFactory progressListenerFactory = new ProgressListenerFactory(notificationService);
+        repository.save(new Event.Builder()
+                .formatDescription(progressListenerFactory.getBandwidth())
+                .build());
+        assertFalse(service.getBandwidthFromEvents().isEmpty());
+    }
+
+    @Test
+    public void testGetNoBandwidthFromEvents() {
+        assertTrue(service.getBandwidthFromEvents().isEmpty());
+    }
+
     public class InMemoryEventRepository {
         private List<Event> data = new ArrayList<>();
+
+        List<Event> findAll() {
+            return Collections.unmodifiableList(data);
+        }
 
         List<Event> findAllInverted() {
             return Collections.unmodifiableList(Lists.reverse(data));

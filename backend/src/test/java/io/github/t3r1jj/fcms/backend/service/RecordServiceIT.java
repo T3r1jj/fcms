@@ -1,5 +1,6 @@
 package io.github.t3r1jj.fcms.backend.service;
 
+import io.github.t3r1jj.fcms.backend.controller.exception.ResourceNotFoundException;
 import io.github.t3r1jj.fcms.backend.model.StoredRecord;
 import io.github.t3r1jj.fcms.backend.model.StoredRecordMeta;
 import io.github.t3r1jj.fcms.backend.repository.StoredRecordMetaRepository;
@@ -16,8 +17,7 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.testng.Assert.*;
 
 @SpringBootTest
 public class RecordServiceIT extends AbstractTestNGSpringContextTests {
@@ -59,7 +59,7 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
         storedRecord.getBackups().put("new backup", null);
         recordService.update(storedRecord);
         storedRecord = recordRepository.findById(storedRecord.getId()).get();
-        assertEquals(recordRepository.count(), 1 );
+        assertEquals(recordRepository.count(), 1);
         assertEquals(storedRecord.getBackups().size(), 1);
     }
 
@@ -69,7 +69,7 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
         StoredRecord childRecord = new StoredRecord("2", "2", null, storedRecord.getId().toString());
         recordService.store(storedRecord);
         recordService.store(childRecord);
-        childRecord.getBackups().put("new backup", new RecordMeta("x","y",0));
+        childRecord.getBackups().put("new backup", new RecordMeta("x", "y", 0));
         recordService.update(childRecord);
         storedRecord = recordRepository.findById(storedRecord.getId()).get();
         assertEquals(recordRepository.count(), 1);
@@ -105,4 +105,54 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
         recordService.store(storedRecord);
         verify(replicationService, times(1)).uploadToPrimary(storedRecord);
     }
+
+    @Test(expectedExceptions = {ResourceNotFoundException.class})
+    public void delete404() {
+        StoredRecord storedRecord = new StoredRecord("a", "a");
+        recordService.delete(storedRecord.getId().toString(), false);
+    }
+
+    @Test(expectedExceptions = {ResourceNotFoundException.class})
+    public void forceDelete404() {
+        StoredRecord storedRecord = new StoredRecord("a", "a");
+        recordService.delete(storedRecord.getId().toString(), true);
+    }
+
+    @Test
+    public void delete() {
+        StoredRecord storedRecord = new StoredRecord("a", "a");
+        recordRepository.save(storedRecord);
+        metaRepository.save(storedRecord.getMeta());
+        StoredRecord dbRecord = recordRepository.findById(storedRecord.getId()).get();
+        recordService.delete(storedRecord.getId().toString(), false);
+        verify(replicationService, times(1)).deleteCascading(dbRecord, false, dbRecord);
+        assertFalse(recordRepository.findById(storedRecord.getId()).isPresent());
+    }
+
+    @Test
+    public void forceDelete() {
+        StoredRecord storedRecord = new StoredRecord("a", "a");
+        recordRepository.save(storedRecord);
+        metaRepository.save(storedRecord.getMeta());
+        StoredRecord dbRecord = recordRepository.findById(storedRecord.getId()).get();
+        recordService.delete(storedRecord.getId().toString(), false);
+        verify(replicationService, times(1)).deleteCascading(dbRecord, false, dbRecord);
+        assertFalse(recordRepository.findById(storedRecord.getId()).isPresent());
+    }
+
+    @Test
+    public void deleteChild() {
+        StoredRecord storedRecord = new StoredRecord("a", "a");
+        recordService.store(storedRecord);
+        StoredRecord childRecord = new StoredRecord("a", "a");
+        childRecord.setRootId(storedRecord.getId());
+        recordService.store(childRecord);
+        StoredRecord dbRecord = recordRepository.findById(storedRecord.getId()).get();
+        StoredRecord childDbRecord = dbRecord.getVersions().get(0);
+        recordService.delete(childDbRecord.getId().toString(), false);
+        verify(replicationService, times(1)).deleteCascading(childDbRecord, false, dbRecord);
+        assertTrue(recordRepository.findById(storedRecord.getId()).isPresent());
+        assertFalse(recordRepository.findById(childRecord.getId()).isPresent());
+    }
+
 }

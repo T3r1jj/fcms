@@ -43,12 +43,12 @@ public class RecordController {
 
     @DeleteMapping
     public void deleteStoredRecords(@RequestParam String id) {
-        recordService.delete(id);
+        recordService.delete(id, false);
     }
 
     @PatchMapping
     public void forceDeleteStoredRecords(@RequestParam String id) {
-        recordService.forceDelete(id);
+        recordService.delete(id, true);
     }
 
 }

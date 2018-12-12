@@ -12,7 +12,6 @@ import io.github.t3r1jj.storapi.data.exception.StorageUnauthenticatedException;
 import io.github.t3r1jj.storapi.upstream.CleanableStorage;
 import io.github.t3r1jj.storapi.upstream.UpstreamStorage;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -64,7 +63,7 @@ public class ReplicationService {
                     .build());
         } finally {
             addReplicationEvent("REPLICATION END", "Ended replication. %s",
-                    localProgressFactory.get().getBandwidth());
+                    getProgressFactory().getBandwidth());
             localProgressFactory.remove();
         }
     }
@@ -211,13 +210,16 @@ public class ReplicationService {
     }
 
     private Record download(RecordMeta meta, AuthenticatedStorage storage) {
-        ProgressListener progressListener = new ProgressListener(new Progress(meta.getSize(), meta.getName(), storage.toString()),
-                notificationService, false);
+        ProgressListener progressListener = getProgressFactory().create(new Progress(meta.getSize(), meta.getName(), storage.toString()), false);
         storage.login();
         Record record = storage.download(meta.getPath(), progressListener);
         storage.logout();
         progressListener.accept(meta.getSize());
         return record;
+    }
+
+    private ProgressListenerFactory getProgressFactory() {
+        return localProgressFactory.get() == null ? new ProgressListenerFactory(notificationService) : localProgressFactory.get();
     }
 
     private byte[] toByteArrayOrNull(InputStream inputStream) {
@@ -232,8 +234,7 @@ public class ReplicationService {
 
     private void upload(StoredRecord recordToStore, UpstreamStorage storage) {
         Record recordToUpload = recordToStore.prepareRecord();
-        ProgressListener progressListener = new ProgressListener(new Progress(recordToStore.getData().length, recordToStore.getMeta().getName(), storage.toString()),
-                notificationService, true);
+        ProgressListener progressListener = getProgressFactory().create(new Progress(recordToStore.getData().length, recordToStore.getMeta().getName(), storage.toString()), true);
         RecordMeta meta;
         try {
             meta = storage.upload(recordToUpload, progressListener);
@@ -249,7 +250,7 @@ public class ReplicationService {
 
     void deleteCascading(StoredRecord storedRecord, boolean force, StoredRecord root) {
         deleteVersionsBackups(storedRecord, force, root);
-        root.findParent(storedRecord.getId()).ifPresent(p -> p.getVersions().remove(storedRecord));
+        root.findParentOf(storedRecord.getId()).ifPresent(p -> p.getVersions().remove(storedRecord));
     }
 
     private void deleteVersionsBackups(StoredRecord storedRecord, boolean force, StoredRecord root) {

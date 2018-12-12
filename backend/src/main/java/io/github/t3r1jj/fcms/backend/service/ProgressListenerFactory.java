@@ -17,14 +17,17 @@ class ProgressListenerFactory {
 
     ProgressListener create(Progress progress, boolean upload) {
         return new ProgressListener(progress, notificationService, upload) {
+            private Long prevBytesWritten = 0L;
+
             @Override
             public void accept(Long bytesWritten) {
                 super.accept(bytesWritten);
                 if (upload) {
-                    bandwidthSize.upload = bandwidthSize.upload.add(BigInteger.valueOf(bytesWritten));
+                    bandwidthSize.upload = bandwidthSize.upload.add(BigInteger.valueOf(bytesWritten - prevBytesWritten));
                 } else {
-                    bandwidthSize.download = bandwidthSize.download.add(BigInteger.valueOf(bytesWritten));
+                    bandwidthSize.download = bandwidthSize.download.add(BigInteger.valueOf(bytesWritten - prevBytesWritten));
                 }
+                prevBytesWritten = bytesWritten;
             }
         };
     }

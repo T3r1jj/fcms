@@ -29,7 +29,6 @@ public class StorageFactoryTest {
 
     @Test
     public void createWithDefaultConfigHasMegaWithNamedParameter() {
-        StorageFactory factory = new StorageFactory();
         Configuration configuration = factory.getConfiguration();
         ExternalService service = Stream.of(configuration.getServices()).filter(s -> s.getName().equals("Mega")).findAny().orElseThrow(() -> new RuntimeException("Service not found"));
         assertThat(service.getApiKeys(), hasItemInArray(hasProperty("label", is("password"))));
@@ -37,7 +36,6 @@ public class StorageFactoryTest {
 
     @Test
     public void createAuthenticatedStorage() {
-        StorageFactory factory = new StorageFactory();
         Storage storage = factory.createAuthenticatedStorage("Mega");
         assertThat(storage, is(notNullValue()));
         assertThat(storage.toString(), is("Mega"));
@@ -45,19 +43,16 @@ public class StorageFactoryTest {
 
     @Test(expectedExceptions = {RuntimeException.class})
     public void createUnknownAuthenticatedStorage() {
-        StorageFactory factory = new StorageFactory();
         factory.createAuthenticatedStorage("DAKSJIKA)@(!");
     }
 
     @Test(expectedExceptions = {RuntimeException.class})
     public void createKnownUnAuthenticatedStorage() {
-        StorageFactory factory = new StorageFactory();
         factory.createAuthenticatedStorage("Put");
     }
 
     @Test
     public void createCleanableStorageMega() {
-        StorageFactory factory = new StorageFactory();
         Optional<CleanableStorage> storage = factory.createCleanableStorage("Mega");
         assertThat(storage.isPresent(), is(true));
         assertThat(storage.get().toString(), is("Mega"));
@@ -65,7 +60,6 @@ public class StorageFactoryTest {
 
     @Test
     public void createCleanableStoragePut() {
-        StorageFactory factory = new StorageFactory();
         Optional<CleanableStorage> storage = factory.createCleanableStorage("Put");
         assertThat(storage.isPresent(), is(true));
         assertThat(storage.get().toString(), is("Put"));
@@ -73,28 +67,44 @@ public class StorageFactoryTest {
 
     @Test
     public void createNotCleanableStorageMegaupload() {
-        StorageFactory factory = new StorageFactory();
         Optional<CleanableStorage> storage = factory.createCleanableStorage("Megaupload");
         assertThat(storage.isPresent(), is(false));
     }
 
     @Test
     public void createNotCleanableStorageUnknown() {
-        StorageFactory factory = new StorageFactory();
         Optional<CleanableStorage> storage = factory.createCleanableStorage("DAKSJIKA)@(!");
         assertThat(storage.isPresent(), is(false));
     }
 
     @Test(expectedExceptions = {RuntimeException.class})
     public void createUpstreamStorageIgnoreAuthenticatedStorageMega() {
-        StorageFactory factory = new StorageFactory();
         factory.createUpstreamOnlyStorage("Mega");
     }
 
     @Test(expectedExceptions = {RuntimeException.class})
     public void createUpstreamStorageIgnoreAuthenticatedStorageGoogleDrive() {
-        StorageFactory factory = new StorageFactory();
         factory.createUpstreamOnlyStorage("GoogleDrive");
+    }
+
+    @Test(expectedExceptions = {RuntimeException.class})
+    public void createUpstreamOnlyMegaNot() {
+        factory.createUpstreamStorage(new ExternalService("Mega", false, false, new ExternalService.ApiKey("login", "a"), new ExternalService.ApiKey("password", "a")));
+    }
+
+    @Test
+    public void createUpstreamMega() {
+        factory.createUpstreamStorage(new ExternalService("Mega", true, false, new ExternalService.ApiKey("login", "a"), new ExternalService.ApiKey("password", "a")));
+    }
+
+    @Test
+    public void createUpstreamOnlyPut() {
+        factory.createUpstreamStorage(new ExternalService("Put", false, false));
+    }
+
+    @Test(expectedExceptions = {RuntimeException.class})
+    public void createUpstreamPutPrimaryNotAuthenticated() {
+        factory.createUpstreamStorage(new ExternalService("Put", true, false));
     }
 
 }

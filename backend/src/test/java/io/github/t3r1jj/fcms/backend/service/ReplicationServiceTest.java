@@ -18,12 +18,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 public class ReplicationServiceTest {
 
@@ -251,6 +252,33 @@ public class ReplicationServiceTest {
         verify(historyService).addAndNotify(isA(Event.class));
     }
 
+    @Test
+    public void testForceDeleteCascadingWithBackups() {
+        when(configurationService.createStorageFactory()).thenReturn(new StorageFactory(null));
+
+        StoredRecord parentRecord = new StoredRecord("1", "1");
+        StoredRecord childRecord = new StoredRecord("22", "22", null, parentRecord.getId().toString());
+        parentRecord.getVersions().add(childRecord);
+        childRecord.getBackups().put("service", new RecordMeta("a", "b", 4));
+
+        replicationService.deleteCascading(childRecord, true, parentRecord);
+        assertTrue(childRecord.getBackups().isEmpty(), "Backups removed");
+        verify(historyService).addAndNotify(isA(Event.class));
+    }
+
+    @Test
+    public void testForceDeleteCascadingRoot() {
+        when(configurationService.createStorageFactory()).thenReturn(new StorageFactory(null));
+
+        StoredRecord parentRecord = new StoredRecord("1", "1");
+        StoredRecord childRecord = new StoredRecord("22", "22", null, parentRecord.getId().toString());
+        parentRecord.getVersions().add(childRecord);
+        childRecord.getBackups().put("service", new RecordMeta("a", "b", 4));
+
+        replicationService.deleteCascading(parentRecord, true, parentRecord);
+        assertTrue(parentRecord.getVersions().isEmpty(), "Versions removed");
+    }
+
     @Test(expectedExceptions = {StorageException.class})
     public void testDeleteCascadingWithBackupsWithStorageException() {
         doThrow(new StorageException("Mocked authenticatedStorage exception")).when(cleanableStorage).delete(any());
@@ -411,4 +439,109 @@ public class ReplicationServiceTest {
         verify(authenticatedStorage, times(1)).upload(eq(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data))), any());
     }
 
+    @Test
+    public void testReplicateSuccessfullyUpdateStatus_BackupNotReachable() {
+        String serviceName = "service name";
+        String secondServiceName = "service name 2";
+        service = new ExternalService(serviceName, true, true, new ExternalService.ApiKey("label123", "key123"));
+        ExternalService secondaryService = new ExternalService(secondServiceName, false, true, new ExternalService.ApiKey("label123", "key123"));
+        configuration = new Configuration(new ExternalService[]{service, secondaryService});
+        configuration.setPrimaryBackupLimit(2);
+
+        doReturn(upstreamStorage).when(storageFactory).createUpstreamStorage(secondaryService);
+        doReturn(unauthenticatedStorage).when(storageFactory).createUpstreamStorage(service);
+        doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(service.getName());
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any(), any());
+        StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
+        byte[] data = "some text".getBytes();
+        RecordMeta meta = new RecordMeta(recordToStore.getMeta().getName(), "", data.length);
+        recordToStore.getBackups().put(serviceName, meta);
+        recordToStore.getBackups().put(serviceName + "2", meta);
+        when(authenticatedStorage.download(any(), any())).thenReturn(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).isPresent(any());
+        doReturn(true).when(authenticatedStorage).isPresent(meta.getPath());
+        doReturn(false).when(upstreamStorage).isPresent(meta.getPath() + "2");
+
+        replicationService.replicate(recordToStore);
+        verify(authenticatedStorage, times(0)).upload(eq(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data))), any());
+        assertEquals(recordToStore.getBackups().size(), 1);
+    }
+
+    @Test
+    public void testReplicateToOnePrimaryBlockedByConfig() {
+        String serviceName = "service name";
+        String secondServiceName = "service name 2";
+        service = new ExternalService(serviceName, true, true, new ExternalService.ApiKey("label123", "key123"));
+        ExternalService anotherPrimaryService = new ExternalService(secondServiceName, true, true, new ExternalService.ApiKey("label123", "key123"));
+        configuration = new Configuration(new ExternalService[]{service, anotherPrimaryService});
+        configuration.setPrimaryBackupLimit(0);
+
+        doReturn(unauthenticatedStorage).when(storageFactory).createUpstreamStorage(anotherPrimaryService);
+        doReturn(unauthenticatedStorage).when(storageFactory).createUpstreamStorage(service);
+        doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(service.getName());
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any(), any());
+        StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
+        byte[] data = "some text".getBytes();
+        RecordMeta meta = new RecordMeta(recordToStore.getMeta().getName(), "", data.length);
+        recordToStore.getBackups().put(serviceName, meta);
+        when(authenticatedStorage.download(any(), any())).thenReturn(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).isPresent(any());
+        doReturn(true).when(authenticatedStorage).isPresent(meta.getPath());
+
+        replicationService.replicate(recordToStore);
+        verify(authenticatedStorage, times(0)).upload(eq(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data))), any());
+    }
+
+    @Test
+    public void testSafelyReplicateAll_SuccessfullyToOnePrimary() {
+        String serviceName = "service name";
+        String secondServiceName = "service name 2";
+        service = new ExternalService(serviceName, true, true, new ExternalService.ApiKey("label123", "key123"));
+        ExternalService anotherPrimaryService = new ExternalService(secondServiceName, true, true, new ExternalService.ApiKey("label123", "key123"));
+        configuration = new Configuration(new ExternalService[]{service, anotherPrimaryService});
+        configuration.setPrimaryBackupLimit(2);
+
+        doReturn(unauthenticatedStorage).when(storageFactory).createUpstreamStorage(anotherPrimaryService);
+        doReturn(unauthenticatedStorage).when(storageFactory).createUpstreamStorage(service);
+        doReturn(authenticatedStorage).when(storageFactory).createAuthenticatedStorage(service.getName());
+        doReturn(storageFactory).when(configurationService).createStorageFactory();
+        when(storageFactory.getConfiguration()).thenReturn(configuration);
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).upload(any(), any());
+        StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
+        byte[] data = "some text".getBytes();
+        RecordMeta meta = new RecordMeta(recordToStore.getMeta().getName(), "", data.length);
+        recordToStore.getBackups().put(serviceName, meta);
+        when(authenticatedStorage.download(any(), any())).thenReturn(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data)));
+
+        doThrow(new StorageUnauthenticatedException("Mocked sue exception", authenticatedStorage)).when(unauthenticatedStorage).isPresent(any());
+        doReturn(true).when(authenticatedStorage).isPresent(meta.getPath());
+        when(recordService.findAll()).thenReturn(Collections.singleton(recordToStore));
+
+        replicationService.safelyReplicateAll();
+        verify(authenticatedStorage, times(1)).upload(eq(new Record(recordToStore.getMeta().getName(), recordToStore.getId().toString(), new ByteArrayInputStream(data))), any());
+        verify(notificationService, times(2 + 2)).broadcast(any());
+    }
+
+    @Test
+    public void testSafelyReplicateAll_WithErrorNotifications_Start3xErrorEnd() {
+        ReplicationService replicationService = spy(this.replicationService);
+        StoredRecord recordToStore = new StoredRecord("1", "1", null, null);
+        when(recordService.findAll()).thenReturn(Arrays.asList(recordToStore, recordToStore, recordToStore));
+        doThrow(new RuntimeException("Mocked")).when(replicationService).replicate(any());
+        replicationService.safelyReplicateAll();
+        verify(historyService, times(1 + 3 + 1)).addAndNotify(any());
+    }
+
+    @Test
+    public void testReplicationStopped_3Events_StartStopEnd() {
+        when(recordService.findAll()).thenThrow(new RuntimeException("Mocked"));
+        replicationService.safelyReplicateAll();
+        verify(historyService, times(3)).addAndNotify(any());
+    }
 }

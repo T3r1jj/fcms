@@ -86,7 +86,7 @@ public class RecordControllerTest {
                 .then()
                 .assertThat()
                 .statusCode(200);
-        verify(recordService, times(1)).delete(id);
+        verify(recordService, times(1)).delete(id, false);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class RecordControllerTest {
                 .then()
                 .assertThat()
                 .statusCode(200);
-        verify(recordService, times(1)).forceDelete(id);
+        verify(recordService, times(1)).delete(id, true);
     }
 
     @Test

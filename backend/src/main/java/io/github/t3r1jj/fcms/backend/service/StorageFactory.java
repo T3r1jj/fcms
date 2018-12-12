@@ -36,7 +36,7 @@ public class StorageFactory {
 
     private Configuration createEmptyExternalConfiguration() {
         ParameterNameDiscoverer nameDiscoverer = new DefaultParameterNameDiscoverer();
-        Collection<Class<UpstreamStorage>> foundClasses = findStorageClasses(new StorageClassFilter<UpstreamStorage>(UpstreamStorage.class));
+        Collection<Class<UpstreamStorage>> foundClasses = findStorageClasses(new StorageClassFilter<>(UpstreamStorage.class));
         ExternalService[] externalServices = foundClasses.stream().map(aClass -> {
             Constructor constructor = getDefaultOrMaxConstructor(aClass);
             String[] parameterNames = Objects.requireNonNull(nameDiscoverer.getParameterNames(constructor));
@@ -72,7 +72,7 @@ public class StorageFactory {
     }
 
     UpstreamStorage createUpstreamOnlyStorage(String service) {
-        return instantiate(service, new StorageClassFilter<>(UpstreamStorage.class, Storage.class));
+        return instantiate(service, new StorageClassFilter<>(UpstreamStorage.class, AuthenticatedStorage.class));
     }
 
     UpstreamStorage createUpstreamStorage(ExternalService service) {

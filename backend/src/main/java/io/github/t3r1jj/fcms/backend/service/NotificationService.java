@@ -1,5 +1,6 @@
 package io.github.t3r1jj.fcms.backend.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.t3r1jj.fcms.backend.model.Event;
 import org.atmosphere.config.managed.Encoder;
@@ -37,7 +38,7 @@ public class NotificationService {
     }
 
     public void cleanUp(AtmosphereResourceEvent event) {
-        resources.removeIf(r -> r.isCancelled() || event.isCancelled() && event.getResource().uuid().equals(r.uuid()));
+        resources.removeIf(r -> r.isCancelled() || (event.isCancelled() && event.getResource().uuid().equals(r.uuid())));
     }
 
     public static class JacksonEncoder implements Encoder<Event, String> {
@@ -52,7 +53,7 @@ public class NotificationService {
         public String encode(Event e) {
             try {
                 return this.mapper.writeValueAsString(e);
-            } catch (IOException ex) {
+            } catch (JsonProcessingException ex) {
                 throw new IllegalStateException(ex);
             }
         }

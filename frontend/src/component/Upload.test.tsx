@@ -56,11 +56,7 @@ describe("component", () => {
         it("renders error on server not ok response", (done) => {
             const errorMessage = "Not found parentId id";
             validProps.upload = (file: File, name: string, parent: string, tag: string) => {
-                const response = new Response(null, {
-                    status: 404
-                });
-                response.json = () => new Promise((resolve => resolve({message: errorMessage})));
-                return new Promise<Response>((resolve => resolve(response)))
+                return new Promise<Response>((resolve, reject) => reject(errorMessage));
             };
             const wrapper = mount(<Upload {...validProps}/>);
             wrapper.find(Button).simulate('click');

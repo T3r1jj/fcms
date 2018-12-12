@@ -107,16 +107,8 @@ describe('component', () => {
         it('renders error on uncompilable code', (done) => {
             const errorMsg = "sikrit msg";
             checkCodeCallback = () => {
-                return new Promise<Response>((resolve) => {
-                    const response = new Response(null, {
-                        status: 422,
-                    });
-                    response.json = () => {
-                        return new Promise((r) => {
-                            r({message: errorMsg})
-                        })
-                    };
-                    resolve(response);
+                return new Promise<Response>((resolve, reject) => {
+                    reject(new TypeError(errorMsg));
                 })
             };
             const wrapper = mount(<BrowserRouter><CodeCallbackPage getCodeCallback={getCodeCallback}

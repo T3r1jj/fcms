@@ -10,8 +10,8 @@ import java.lang.annotation.Target;
 
 public class OnReplicationCode extends Code {
 
-    public OnReplicationCode(String name, String code, String exceptionHandler, String finallyHandler) {
-        super(name, code, exceptionHandler, finallyHandler);
+    public OnReplicationCode(String code, String exceptionHandler, String finallyHandler) {
+        super(code, exceptionHandler, finallyHandler);
     }
 
     public void execute(StoredRecord storedRecord) {
@@ -37,7 +37,7 @@ public class OnReplicationCode extends Code {
     public static class Builder extends Code.Builder<Builder> {
         @Override
         public OnReplicationCode build() {
-            return new OnReplicationCode(name, code, exceptionHandler, finallyHandler);
+            return new OnReplicationCode(code, exceptionHandler, finallyHandler);
         }
     }
 

@@ -18,16 +18,14 @@ import static one.util.streamex.EntryStream.zip;
         @JsonSubTypes.Type(value = AfterReplicationCode.class, name = "AfterReplicationCode")
 })
 abstract public class Code {
-    private String name;
     private String code;
     private String exceptionHandler;
     private String finallyHandler;
 
     @Id
-    private final String id = getClass().getSimpleName();
+    private String id = getClass().getSimpleName();
 
-    public Code(String name, String code, String exceptionHandler, String finallyHandler) {
-        this.name = emptyIfNull(name);
+    public Code(String code, String exceptionHandler, String finallyHandler) {
         this.code = emptyIfNull(code);
         this.exceptionHandler = emptyIfNull(exceptionHandler);
         this.finallyHandler = emptyIfNull(finallyHandler);
@@ -63,18 +61,10 @@ abstract public class Code {
     }
 
     @NotNull
-    public Class<?>[] getParamClasses() {
-        return new Class<?>[]{StoredRecord.class};
-    }
+    public abstract Class<?>[] getParamClasses();
 
     @NotNull
-    public String[] getParamNames() {
-        return new String[]{"storedRecord"};
-    }
-
-    public String getName() {
-        return name;
-    }
+    public abstract String[] getParamNames();
 
     public String getCode() {
         return code;
@@ -128,15 +118,9 @@ abstract public class Code {
     }
 
     public static abstract class Builder<B extends Builder> {
-        String name;
         String code;
         String exceptionHandler;
         String finallyHandler;
-
-        public B setName(String name) {
-            this.name = name;
-            return self();
-        }
 
         public B setCode(String code) {
             this.code = code;

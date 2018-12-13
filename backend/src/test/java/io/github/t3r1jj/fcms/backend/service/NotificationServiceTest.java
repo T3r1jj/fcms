@@ -76,6 +76,29 @@ public class NotificationServiceTest {
         verify(resource, times(0)).broadcasters();
     }
 
+    @Test
+    public void testCleanUpNotCancelledByEvent() {
+        NotificationService notificationService = new NotificationService(new ObjectMapper());
+        AtmosphereResource resource = mock(AtmosphereResource.class);
+        AtmosphereResource resource2 = mock(AtmosphereResource.class);
+        AtmosphereRequest request = mock(AtmosphereRequest.class);
+        AtmosphereResourceEvent event = mock(AtmosphereResourceEvent.class);
+        when(resource.isCancelled()).thenReturn(false);
+        when(resource.getRequest()).thenReturn(request);
+        when(resource.uuid()).thenReturn("a");
+        when(resource2.uuid()).thenReturn("b");
+        when(event.getResource()).thenReturn(resource2);
+        when(resource.broadcasters()).thenReturn(Collections.emptyList());
+
+        when(event.isCancelled()).thenReturn(true);
+
+        notificationService.add(resource);
+        notificationService.cleanUp(event);
+        notificationService.broadcast(new Event.Builder().build());
+
+        verify(resource, times(1)).broadcasters();
+    }
+
     @Test(expectedExceptions = {IllegalStateException.class})
     public void testUnexpectedJsonGenerationException() throws JsonProcessingException {
         ObjectMapper objectMapper = spy(new ObjectMapper());

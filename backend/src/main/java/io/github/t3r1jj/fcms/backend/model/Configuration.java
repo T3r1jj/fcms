@@ -15,7 +15,7 @@ import static io.github.t3r1jj.fcms.backend.Utils.notIf;
 public class Configuration {
 
     @Id
-    private final String id = Configuration.class.getSimpleName();
+    private String id = Configuration.class.getSimpleName();
     private ExternalService[] services;
     private int primaryBackupLimit = 1;
     private int secondaryBackupLimit = 0;
@@ -26,15 +26,6 @@ public class Configuration {
 
     public ExternalService[] getServices() {
         return this.services;
-    }
-
-    public void setServices(ExternalService[] services) {
-        this.services = services;
-    }
-
-    public Configuration withServices(ExternalService[] apiKeys) {
-        this.services = apiKeys;
-        return this;
     }
 
     public int getPrimaryBackupLimit() {
@@ -54,19 +45,19 @@ public class Configuration {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == this)
-            return true;
-        if (!(o instanceof Configuration)) {
-            return false;
-        }
-        Configuration configuration = (Configuration) o;
-        return Arrays.equals(services, configuration.services);
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Configuration)) return false;
+        Configuration that = (Configuration) o;
+        return id.equals(that.id) &&
+                primaryBackupLimit == that.primaryBackupLimit &&
+                secondaryBackupLimit == that.secondaryBackupLimit &&
+                Arrays.equals(services, that.services);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(services);
+    public final int hashCode() {
+        return Objects.hashCode(id);
     }
 
     @Override

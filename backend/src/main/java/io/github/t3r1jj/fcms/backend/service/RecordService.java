@@ -28,16 +28,32 @@ public class RecordService {
         this.replicationService = replicationService;
     }
 
+    /**
+     * @param recordToStore with rootId pointing to the parent (after store it will be associated with root)
+     */
     public void store(StoredRecord recordToStore) {
-        StoredRecord rootRecord = recordToStore.getRootId().map(parentId -> {
-            StoredRecord parent = getOneRecord(parentId);
+        StoredRecord parentRecord = recordToStore.getRootId().map(parentId -> {
+            StoredRecord parent = getRootOrNode(parentId);
             parent.getVersions().add(recordToStore);
             parent.getRootId().ifPresent(recordToStore::setRootId);
             return parent;
         }).orElse(recordToStore);
         replicationService.uploadToPrimary(recordToStore);
         metaRepository.save(recordToStore.getMeta());
-        recordRepository.save(rootRecord);
+        if (!recordToStore.getRootId().isPresent() || parentRecord.getId().equals(recordToStore.getRootId().get())) {
+            recordRepository.save(parentRecord);
+        } else {
+            update(parentRecord);
+        }
+    }
+
+    @NotNull
+    private StoredRecord getRootOrNode(ObjectId parentId) {
+        try {
+            return getNode(parentId.toString());
+        } catch (ResourceNotFoundException notFoundEx) {
+            return getRoot(parentId);
+        }
     }
 
     public Collection<StoredRecord> findAll() {
@@ -45,19 +61,24 @@ public class RecordService {
     }
 
     public void delete(String id, boolean force) {
-        StoredRecord storedRecord = recordRepository.findAll()
-                .stream()
-                .map(r -> r.findInTree(StoredRecord.stringToObjectId(id)))
-                .filter(Objects::nonNull)
-                .findAny()
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("RecordMeta with %s id not found", id)));
+        StoredRecord storedRecord = getNode(id);
         replicationService.deleteCascading(storedRecord, force, getRoot(storedRecord));
         recordRepository.deleteById(storedRecord.getId());
         metaRepository.deleteById(storedRecord.getMeta().getId());
     }
 
     @NotNull
-    private StoredRecord getOneRecord(ObjectId id) {
+    private StoredRecord getNode(String id) {
+        return recordRepository.findAll()
+                .stream()
+                .map(r -> r.findInTree(StoredRecord.stringToObjectId(id)))
+                .filter(Objects::nonNull)
+                .findAny()
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("RecordMeta with %s id not found", id)));
+    }
+
+    @NotNull
+    private StoredRecord getRoot(ObjectId id) {
         return recordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("RecordMeta with %s id not found", id)));
     }
@@ -73,7 +94,7 @@ public class RecordService {
      */
     void update(StoredRecord storedRecord) {
         if (storedRecord.getRootId().isPresent()) {
-            StoredRecord root = getOneRecord(storedRecord.getRootId().get());
+            StoredRecord root = getRoot(storedRecord.getRootId().get());
             swapVersions(root, storedRecord);
             recordRepository.save(root);
         } else {
@@ -95,7 +116,7 @@ public class RecordService {
     }
 
     private StoredRecord getRoot(StoredRecord storedRecord) {
-        return storedRecord.getRootId().map(this::getOneRecord).orElse(storedRecord);
+        return storedRecord.getRootId().map(this::getRoot).orElse(storedRecord);
     }
 
     public void updateMeta(StoredRecordMeta recordMeta) {

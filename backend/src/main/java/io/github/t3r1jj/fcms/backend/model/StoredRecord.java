@@ -129,9 +129,9 @@ public class StoredRecord implements Comparable<StoredRecord> {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof StoredRecord)) return false;
         StoredRecord that = (StoredRecord) o;
         return id.equals(that.id) &&
                 Objects.equals(rootId, that.rootId) &&
@@ -141,20 +141,8 @@ public class StoredRecord implements Comparable<StoredRecord> {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "StoredRecord{" +
-                "id=" + id +
-                ", rootId=" + rootId +
-                ", meta=" + meta +
-                ", data=" + Arrays.toString(data) +
-                ", versions=" + versions +
-                ", backups=" + backups +
-                '}';
     }
 
     @Override

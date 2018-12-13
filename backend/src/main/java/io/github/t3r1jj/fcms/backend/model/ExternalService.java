@@ -7,10 +7,10 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public class ExternalService {
-    private String name;
-    private boolean primary;
-    private boolean enabled;
-    private ApiKey[] apiKeys;
+    private final String name;
+    private final boolean primary;
+    private final boolean enabled;
+    private final ApiKey[] apiKeys;
 
     @PersistenceConstructor
     public ExternalService(@JsonProperty("name") String name,
@@ -52,7 +52,7 @@ public class ExternalService {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         if (o == this)
             return true;
         if (!(o instanceof ExternalService)) {
@@ -66,18 +66,8 @@ public class ExternalService {
     }
 
     @Override
-    public String toString() {
-        return "ExternalService{" +
-                "name='" + name + '\'' +
-                ", primary=" + primary +
-                ", enabled=" + enabled +
-                ", apiKeys=" + Arrays.toString(apiKeys) +
-                '}';
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(name) + Arrays.hashCode(apiKeys);
+    public final int hashCode() {
+        return Objects.hash(name, primary) + Arrays.hashCode(apiKeys);
     }
 
     public static class ApiKey {
@@ -96,14 +86,6 @@ public class ExternalService {
 
         public String getValue() {
             return value;
-        }
-
-        @Override
-        public String toString() {
-            return "ApiKey{" +
-                    "label='" + label + '\'' +
-                    ", value='" + (value != null && !value.isEmpty()) + '\'' +
-                    '}';
         }
 
         @Override

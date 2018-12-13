@@ -13,6 +13,8 @@ import java.util.Arrays;
 
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertFalse;
 
 public class CodeTest {
 
@@ -104,5 +106,74 @@ public class CodeTest {
                 .build();
         code.execute(recordService);
         verify(storedRecord, times(2)).getMeta();
+    }
+
+    @Test
+    public void testEvalAfterReplicationCode() {
+        AfterReplicationCode code = new AfterReplicationCode.Builder()
+                .setCode("unintelligible; recordService.findAll();")
+                .build();
+        code.execute(recordService);
+        verify(recordService, times(0)).findAll();
+    }
+
+    @Test
+    public void testEvalOnReplicationCode() {
+        OnReplicationCode code = new OnReplicationCode.Builder()
+                .setCode("unintelligible; storedRecord.getMeta();")
+                .build();
+        code.execute(storedRecord);
+        verify(storedRecord, times(0)).getMeta();
+    }
+
+    @Test
+    public void testCodeEmptyDefault() {
+        OnReplicationCode code = new OnReplicationCode.Builder()
+                .build();
+        assertTrue(code.isEmpty());
+    }
+
+    @Test
+    public void testCodeEmpty() {
+        OnReplicationCode code = new OnReplicationCode.Builder()
+                .setCode("")
+                .setExceptionHandler("")
+                .setFinallyHandler("")
+                .build();
+        assertTrue(code.isEmpty());
+    }
+
+    @Test
+    public void testCodeEmpty_Null() {
+        OnReplicationCode code = new OnReplicationCode.Builder()
+                .setCode(null)
+                .setExceptionHandler(null)
+                .setFinallyHandler(null)
+                .build();
+        assertTrue(code.isEmpty());
+    }
+
+    @Test
+    public void testCodeEmptyNotEmpty_Code() {
+        OnReplicationCode code = new OnReplicationCode.Builder()
+                .setCode("a")
+                .build();
+        assertFalse(code.isEmpty());
+    }
+
+    @Test
+    public void testCodeEmptyNotEmpty_ExceptionHandler() {
+        OnReplicationCode code = new OnReplicationCode.Builder()
+                .setExceptionHandler("a")
+                .build();
+        assertFalse(code.isEmpty());
+    }
+
+    @Test
+    public void testCodeEmptyNotEmpty_FinallyCode() {
+        OnReplicationCode code = new OnReplicationCode.Builder()
+                .setFinallyHandler("a")
+                .build();
+        assertFalse(code.isEmpty());
     }
 }

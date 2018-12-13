@@ -9,8 +9,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 public class AfterReplicationCode extends Code {
-    public AfterReplicationCode(String name, String code, String exceptionHandler, String finallyHandler) {
-        super(name, code, exceptionHandler, finallyHandler);
+    public AfterReplicationCode(String code, String exceptionHandler, String finallyHandler) {
+        super(code, exceptionHandler, finallyHandler);
     }
 
     public void execute(RecordService recordService) {
@@ -36,7 +36,7 @@ public class AfterReplicationCode extends Code {
     public static class Builder extends Code.Builder<Builder> {
         @Override
         public AfterReplicationCode build() {
-            return new AfterReplicationCode(name, code, exceptionHandler, finallyHandler);
+            return new AfterReplicationCode(code, exceptionHandler, finallyHandler);
         }
     }
 

@@ -1,6 +1,5 @@
 export default interface ICode {
     type: string;
-    name: string;
     code: string;
     methodHeader: string;
     exceptionHandler: string;

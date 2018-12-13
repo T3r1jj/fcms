@@ -149,6 +149,11 @@ public class HistoryServiceTest {
     }
 
     @Test
+    public void testGetBandwidthFromEventsEmpty() {
+        assertTrue(service.getBandwidthFromEvents().isEmpty());
+    }
+
+    @Test
     public void testGetNoBandwidthFromEvents() {
         assertTrue(service.getBandwidthFromEvents().isEmpty());
     }

@@ -1,15 +1,14 @@
 package io.github.t3r1jj.fcms.backend.controller;
 
 import io.github.t3r1jj.fcms.backend.service.NotificationService;
-import org.atmosphere.cpr.AtmosphereRequest;
-import org.atmosphere.cpr.AtmosphereResource;
-import org.atmosphere.cpr.AtmosphereResourceEvent;
+import org.atmosphere.cpr.*;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.*;
+import static org.testng.Assert.*;
 
 public class NotificationControllerTest {
 
@@ -71,5 +70,24 @@ public class NotificationControllerTest {
         notificationController.onDisconnect(resourceEvent);
 
         verify(notificationService).cleanUp(resourceEvent);
+    }
+
+    @Test
+    public void testCorsInterceptor() {
+        NotificationController.MyCorsInterceptor corsInterceptor = new NotificationController.MyCorsInterceptor();
+        AtmosphereResourceImpl resource = spy(new AtmosphereResourceImpl());
+        AtmosphereRequest request = spy(AtmosphereRequestImpl.newInstance());
+        AtmosphereResponse response = spy(AtmosphereResponseImpl.newInstance());
+        doReturn(request).when(resource).getRequest();
+        doReturn(request).when(resource).getRequest(false);
+        doReturn(response).when(resource).getResponse();
+        doReturn(response).when(resource).getResponse(false);
+        doReturn(null).when(request).getAttribute(FrameworkConfig.WEBSOCKET_MESSAGE);
+        request.method("OPTIONS");
+        corsInterceptor.inspect(resource);
+        assertTrue(response.getHeader("Access-Control-Allow-Headers").contains("Authorization"), "Request contains authorization header");
+        assertNotEquals(response.getHeader("Access-Control-Allow-Headers"), ", Authorization", "Request contains additional headers");
+        assertEquals(response.getHeader("Access-Control-Allow-Origin"), "*", "Any origin");
+        assertEquals(response.getHeader("Access-Control-Allow-Credentials"), "false", "Don't allow credentials (manual credentials, not supplied by the browser)");
     }
 }

@@ -5,8 +5,7 @@ import org.testng.annotations.Test;
 import java.math.BigInteger;
 import java.time.Instant;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 public class HealthTest {
 
@@ -30,6 +29,43 @@ public class HealthTest {
         assertEquals(loadedSize.getStart(), bandwidthSize.getStart());
         assertEquals(loadedSize.getEnd(), bandwidthSize.getEnd());
         assertEquals(loadedSize.getDuration(), bandwidthSize.getDuration());
+    }
+
+    @Test
+    public void testLoadFromText_NoDuration() {
+        Health.BandwidthSize bandwidthSize = new Health.BandwidthSize();
+        assertFalse(bandwidthSize.loadFromText("Downloaded: 0 Bytes. Uploaded: 0 Bytes."));
+    }
+
+    @Test
+    public void testLoadFromText_NoDownload() {
+        Health.BandwidthSize bandwidthSize = new Health.BandwidthSize();
+        assertFalse(bandwidthSize.loadFromText("Duration: 00:00:00. Uploaded: 0 Bytes."));
+    }
+
+    @Test
+    public void testLoadFromText_NoUpload() {
+        Health.BandwidthSize bandwidthSize = new Health.BandwidthSize();
+        assertFalse(bandwidthSize.loadFromText("Duration: 00:00:00. Downloaded: 0 Bytes."));
+    }
+
+    @Test
+    public void testLoadFromText_DurationWithoutSettingEnd() {
+        Health.BandwidthSize bandwidthSize = new Health.BandwidthSize();
+        assertTrue(bandwidthSize.loadFromText("Duration: 00:00:00. Downloaded: 0 Bytes. Uploaded: 0 Bytes."));
+        assertNull(bandwidthSize.getStart());
+        assertNotNull(bandwidthSize.getDuration());
+        assertNull(bandwidthSize.getEnd());
+    }
+
+    @Test
+    public void testLoadFromText() {
+        Health.BandwidthSize bandwidthSize = new Health.BandwidthSize();
+        assertTrue(bandwidthSize.loadFromText("Duration: 00:00:00. Downloaded: 0 Bytes. Uploaded: 0 Bytes."));
+        bandwidthSize.setEnd(Instant.now());
+        assertNotNull(bandwidthSize.getStart());
+        assertNotNull(bandwidthSize.getDuration());
+        assertNotNull(bandwidthSize.getEnd());
     }
 
 }

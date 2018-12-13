@@ -14,6 +14,7 @@ import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,7 +100,8 @@ public class StorageFactory {
         Object[] params = Stream.of(service.getApiKeys()).map(ExternalService.ApiKey::getValue).toArray();
         try {
             return constructor.newInstance(params);
-        } catch (Exception e) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            logger.fatal("Error while instantiating storage", e);
             throw new RuntimeException(e);
         }
     }

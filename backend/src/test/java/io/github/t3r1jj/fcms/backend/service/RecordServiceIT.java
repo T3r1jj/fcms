@@ -77,6 +77,36 @@ public class RecordServiceIT extends AbstractTestNGSpringContextTests {
     }
 
     @Test
+    public void updateYoungestChild() {
+        StoredRecord storedRecord = new StoredRecord("a", "a");
+        StoredRecord childRecord = new StoredRecord("2", "2", null, storedRecord.getId().toString());
+        StoredRecord youngestChildRecord = new StoredRecord("2", "2", null, storedRecord.getId().toString());
+        recordService.store(storedRecord);
+        recordService.store(childRecord);
+        recordService.store(youngestChildRecord);
+        youngestChildRecord.getBackups().put("new backup", new RecordMeta("x", "y", 0));
+        recordService.update(youngestChildRecord);
+        storedRecord = recordRepository.findById(storedRecord.getId()).get();
+        assertEquals(recordRepository.count(), 1);
+        assertEquals(storedRecord.getVersions().get(1).getBackups().size(), 1);
+    }
+
+    @Test
+    public void updateGrandchild() {
+        StoredRecord storedRecord = new StoredRecord("a", "a");
+        StoredRecord childRecord = new StoredRecord("2", "2", null, storedRecord.getId().toString());
+        StoredRecord grandchildRecord = new StoredRecord("2", "2", null, childRecord.getId().toString());
+        recordService.store(storedRecord);
+        recordService.store(childRecord);
+        recordService.store(grandchildRecord);
+        grandchildRecord.getBackups().put("new backup", new RecordMeta("x", "y", 0));
+        recordService.update(grandchildRecord);
+        storedRecord = recordRepository.findById(storedRecord.getId()).get();
+        assertEquals(recordRepository.count(), 1);
+        assertEquals(storedRecord.getVersions().get(0).getVersions().get(0).getBackups().size(), 1);
+    }
+
+    @Test
     public void findAll() {
         StoredRecord storedRecord = new StoredRecord("a", "a");
         StoredRecord storedRecord2 = new StoredRecord("2", "2");

@@ -67,26 +67,12 @@ public class Event {
         return read;
     }
 
-    public void setRead(boolean read) {
-        this.read = read;
-    }
-
     public ObjectId getId() {
         return id;
     }
 
     public Payload getPayload() {
         return payload;
-    }
-
-    @Override
-    public String toString() {
-        return "Event{" +
-                "title='" + title + '\'' +
-                ", description='" + description + '\'' +
-                ", type=" + type +
-                ", time=" + time +
-                '}';
     }
 
     public enum Type {
@@ -98,7 +84,6 @@ public class Event {
         private String description;
         private Payload payload;
         private Type type;
-        private boolean read;
         private Instant time;
 
         public Builder formatTitle(String title, Object... args) {
@@ -121,18 +106,13 @@ public class Event {
             return this;
         }
 
-        public Builder setRead(boolean read) {
-            this.read = read;
-            return this;
-        }
-
         public Builder setTime(Instant time) {
             this.time = time;
             return this;
         }
 
         public Event build() {
-            return new Event(title, description, type, time, read, payload);
+            return new Event(title, description, type, time, false, payload);
         }
     }
 }
